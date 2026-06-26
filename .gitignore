@@ -1,1 +1,177 @@
+# ── Repo harness scratch ─────────────────────────────────────────────────────
 .context/
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+wheels/
+sdist/
+develop-eggs/
+.eggs/
+lib/
+lib64/
+parts/
+var/
+.installed.cfg
+MANIFEST
+
+# virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.local
+.env.*.local
+.python-version.local
+
+# type checkers & linters
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+.ruff_cache/
+pyrightconfig.json
+
+# testing
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+nosetests.xml
+pytest.xml
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# ── Node / JS / TS ───────────────────────────────────────────────────────────
+node_modules/
+.npm/
+.yarn/
+.pnp.*
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+.stylelintcache
+
+# build output (adjust to your framework)
+.next/
+.nuxt/
+.output/
+.cache/
+out/
+
+# ── Rust ─────────────────────────────────────────────────────────────────────
+target/
+Cargo.lock          # keep for binaries; remove this line for libraries
+
+# ── Go ───────────────────────────────────────────────────────────────────────
+*.test
+*.out
+
+# ── Editors ──────────────────────────────────────────────────────────────────
+# VS Code — keep .vscode/extensions.json (useful); ignore personal settings
+.vscode/settings.json
+.vscode/launch.json
+.vscode/*.log
+
+# JetBrains
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+.emacs.desktop
+.emacs.desktop.lock
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Secrets & credentials ────────────────────────────────────────────────────
+# Commit .env.example (safe template), never the real .env
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+credentials.json
+service-account.json
+secrets.json
+*_rsa
+*_dsa
+*_ecdsa
+*_ed25519
+.netrc
+.npmrc-private
+
+# ── Large / binary data ──────────────────────────────────────────────────────
+# Use Git LFS or release assets instead.
+# Uncomment patterns relevant to your project:
+# *.pkl
+# *.h5
+# *.hdf5
+# *.parquet
+# *.feather
+# *.arrow
+# *.npz
+# *.npy
+# *.pt
+# *.pth
+# *.onnx
+# *.safetensors
+# *.db
+# *.sqlite
+# *.sqlite3
+
+# ── Docker ───────────────────────────────────────────────────────────────────
+.dockerignore.local
+
+# ── Terraform / IaC ──────────────────────────────────────────────────────────
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraformrc
+terraform.rc
+
+# ── Logs & temp ──────────────────────────────────────────────────────────────
+*.log
+*.log.*
+logs/
+tmp/
+temp/
+
+# ── Pre-commit ───────────────────────────────────────────────────────────────
+# (pre-commit itself is tracked; ignore its local cache)
+.pre-commit-cache/

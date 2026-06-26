@@ -1,0 +1,117 @@
+# ci/examples/ci.yml
+# Copy to .github/workflows/ci.yml to activate.
+# Fast-lane CI: lint, type check, tests, secret scan, dep audit.
+# Target: < 5 min on a cold runner.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Python — ruff
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check .
+
+      # Markdown
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npx --yes markdownlint-cli "**/*.md" --ignore node_modules
+
+      # Shell
+      - uses: ludeeus/action-shellcheck@master
+        with:
+          severity: warning
+
+      # GitHub Actions lint
+      - uses: rhysd/actionlint@v1
+
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install basedpyright
+        # Replace with: pip install -e ".[dev]" if using a pyproject.toml
+      - run: basedpyright
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install pytest pytest-cov
+        # Replace with: pip install -e ".[dev]"
+      - run: pytest --tb=short --cov=. --cov-report=xml
+      - uses: codecov/codecov-action@v4   # optional; requires CODECOV_TOKEN secret
+        if: always()
+        with:
+          files: coverage.xml
+        continue-on-error: true
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for gitleaks
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dep-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install pip-audit
+      - run: pip-audit
+        # For Node projects, add:
+        # - run: npm ci && npm audit --audit-level=moderate
+
+  policy:
+    name: Repo policy checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: File size policy
+        run: |
+          git diff --name-only HEAD~1 HEAD | xargs python hooks/scripts/check_file_size.py
+      - name: Doc freshness policy
+        env:
+          POLICY_WARN_AS_ERROR: "0"   # set to 1 to block on stale docs
+        run: |
+          git diff --name-only HEAD~1 HEAD | grep '\.md$' | xargs python hooks/scripts/check_doc_freshness.py || true

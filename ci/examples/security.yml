@@ -1,0 +1,77 @@
+# ci/examples/security.yml
+# Copy to .github/workflows/security.yml to activate.
+# Slow-lane security: SAST (Semgrep/OWASP), TruffleHog history, grype container scan.
+# Runs on PRs to main AND on a weekly schedule. Does not block fast CI.
+
+name: Security
+
+on:
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 3 * * 1"   # Mondays at 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write   # for CodeQL / SARIF upload
+
+jobs:
+  semgrep:
+    name: SAST – Semgrep (OWASP Top 10)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          semgrep --config=p/owasp-top-ten \
+                  --config=p/python-security \
+                  --sarif --output=semgrep.sarif \
+                  --error \
+                  .
+        continue-on-error: true   # remove to gate on findings
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+
+  trufflehog:
+    name: Secret history scan – TruffleHog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          extra_args: --only-verified
+
+  grype:
+    name: Vulnerability scan – grype
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anchore/scan-action@v3
+        id: scan
+        with:
+          path: "."
+          fail-build: false       # set to true to gate on critical findings
+          severity-cutoff: critical
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+
+  checkov:
+    name: IaC scan – Checkov
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('**/*.tf', '**/Dockerfile', '**/k8s/**') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bridgecrewio/checkov-action@master
+        with:
+          quiet: true
+          soft_fail: true         # set to false to gate on IaC findings

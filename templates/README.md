@@ -1,0 +1,31 @@
+# Templates
+
+Last reviewed: 2026-06-26
+
+Fill-in artifact forms. Use these when you need a structured output document — a plan to
+review and approve, a completed assessment to store, an ADR to record a decision.
+
+For the *prompts* that instruct an agent to produce these outputs, see [`prompts/`](../prompts/).
+
+## Available templates
+
+| Template | Use when |
+|---|---|
+| [plan.md](plan.md) | Starting a non-trivial task; need a reviewable plan before coding |
+| [design.md](design.md) | Making a non-obvious architecture or UX decision |
+| [adr.md](adr.md) | Recording a durable architecture decision and its rationale |
+| [bug-review.md](bug-review.md) | Documenting a bug investigation and its fix |
+| [security-review.md](security-review.md) | Scoped security assessment of code, config, or a change |
+| [safety-review.md](safety-review.md) | Assessing AI/ML model behavior, outputs, or deployment safety |
+| [qi-assessment.md](qi-assessment.md) | Quality improvement scan — prioritized findings without refactoring |
+| [testing-assessment.md](testing-assessment.md) | Test coverage audit and testing strategy review |
+| [refactor-assessment.md](refactor-assessment.md) | Pre-refactor risk and leverage analysis |
+
+## Conventions
+
+- Fill in every section; remove sections that don't apply.
+- Keep the file name stable (e.g. `plans/2026-06-26-auth-refactor.md`) so it is linkable.
+- Date assessments; they become stale. If stored in `assessments/` or `plans/`, they're
+  historical record — don't update in place, create a new one.
+- If a template grows beyond ~300 lines, it's trying to be a doc, not an assessment —
+  split the supporting material into a linked doc.

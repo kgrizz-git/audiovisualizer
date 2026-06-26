@@ -8,6 +8,29 @@ workflows for a new project.
 
 ---
 
+## Orchestration tier decision guide
+
+Choose the lightest orchestration that fits the project. Heavier tiers have real setup
+and maintenance cost — only pay it when the complexity justifies it.
+
+| Situation | Tier | Tool |
+|---|---|---|
+| Single agent, simple task, IDE workflow | `none` | Plain prompts + AGENTS.md |
+| 3–10 agents, file-based handoffs, IDE (Cursor/Claude Code) | `hub-and-spoke` | Notes_and_Ideas pattern (see `catalog-skills-agents.md`) |
+| Complex branching, cyclical plan→act→observe loops, local or API | `langgraph` | LangGraph + LangSmith |
+| Production multi-agent API: structured routing, retry, observability | `symphony` | OpenAI Symphony or LangGraph + LangSmith at scale |
+
+**Key rule:** Symphony is right for production APIs with structured delegation at scale.
+It is not the right default for IDE-based agentic work where file-based handoffs and
+the hub-and-spoke orchestrator pattern (hub reads `plans/orchestration-state.md`,
+dispatches subagents, merges results) are lighter and fully sufficient.
+
+Record the chosen tier in `.context/project-profile.md` under "Agent orchestration."
+Revisit the choice when the number of active subagents exceeds 10, or when the project
+needs durable state across process restarts.
+
+---
+
 ## Essential reading
 
 ### Anthropic — Effective Harnesses for Long-Running Agents

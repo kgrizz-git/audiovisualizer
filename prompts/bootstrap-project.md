@@ -18,6 +18,17 @@ Ask concise questions before choosing a stack or writing many files:
 
 Summarize the answers back to the user. List assumptions and open questions.
 
+## 1.5. Capture The Project Profile
+
+Run `prompts/project-init-profile.md` now. It asks follow-up questions (project type,
+orchestration tier, domain, constraints) and writes `.context/project-profile.md`.
+
+That file is the single fast-load summary every future agent session reads. Without it,
+returning agents rediscover the project type from scratch on every session.
+
+Use the profile's **Relevant inventory** section to decide which inventory files to read
+in step 3 — do not load all 18 files by default.
+
 ## 2. Protect The Template Remote
 
 Before the first project commit or push:
@@ -44,26 +55,38 @@ git remote add origin <new-project-remote-url>
 
 ## 3. Read The Template Inventories
 
-Read [inventory/README.md](../inventory/README.md) first, then inspect topic files that match the project. Choose tools and skills deliberately. Do not install or configure everything by default.
+Read [inventory/README.md](../inventory/README.md), then open **only** the topic files
+listed in the project profile's "Relevant inventory" section. Choose tools and skills
+deliberately. Do not load everything.
 
-Ask the user if there are other repos or sources to inspect for useful skills, prompts, conventions, build systems, or design patterns.
+Ask the user if there are other repos or sources to inspect for useful skills, prompts,
+conventions, build systems, or design patterns — record them in
+[inventory/source-repos-to-review.md](../inventory/source-repos-to-review.md).
 
-## 4. Study Agent-First Engineering References
+**Code map:** if the project has more than ~50 source files, or the project type is
+`research`, `rag-knowledge`, or `agentic`, set up a code map early — before writing
+significant new code. Options: `aider --show-repo-map` (zero setup), sift-kg (deeper
+graph), tree-sitter index. See [inventory/knowledge-graph-code-mapping.md](../inventory/knowledge-graph-code-mapping.md).
+Record the chosen tool in the project profile under "Knowledge index."
 
-Read these references and make a short project-specific plan to implement the applicable lessons from them:
+## 4. Apply Agent-First Engineering Principles
 
-- OpenAI Harness Engineering: https://openai.com/index/harness-engineering/
-- OpenAI Symphony: https://github.com/openai/symphony
-- OpenAI Codex subagents: https://developers.openai.com/codex/subagents
+Read `inventory/harness-engineering.md` for the full reference list. The actionable
+principles for this project:
 
-Apply the ideas selectively. Do not cargo-cult the examples; translate the useful patterns into this project's scale and domain:
+- Keep repository knowledge legible to agents — good AGENTS.md, indexed docs, code map.
+- Small entrypoint → deep docs. Do not make AGENTS.md a monolith.
+- Make local run/test/validate cycles fast and agent-accessible. Agents use feedback loops.
+- Encode project taste as checks (lint, tests, policy scripts), not only prose.
+- Use short-lived plans and versioned ADRs for decisions future agents must see.
+- Use subagents for bounded parallel work, then merge into one coherent plan.
+- Prefer reversible actions; design checkpoints before irreversible ones.
 
-- Keep repository knowledge legible to agents.
-- Prefer a small agent entrypoint that maps to deeper docs instead of a giant instruction blob.
-- Make local development, tests, logs, UI state, and validation outputs accessible to the agent.
-- Encode important architecture, security, and quality rules as checks where practical.
-- Use short-lived plans and versioned docs for decisions that future agents must see.
-- Use subagents for bounded, parallel work, then merge findings into one coherent plan.
+**Orchestration:** the project profile captures the orchestration tier. Match the choice
+to actual complexity — see the decision table in `inventory/harness-engineering.md`.
+Do not default to Symphony for an IDE-based workflow; hub-and-spoke costs far less.
+Symphony is right for production multi-agent APIs that need structured routing and
+observability at scale.
 
 ## 5. Make A Scaffold Plan Before Writing The Scaffold
 
@@ -115,3 +138,9 @@ When the initial scaffold is complete, report:
 - What checks passed.
 - What decisions are still open.
 - The next 3 practical steps.
+
+Tell the user:
+- Future agent sessions should start with `prompts/new-agent-session.md`.
+- Periodic repo health checks use `prompts/maintenance-loop.md` (weekly or monthly).
+- The project profile lives at `.context/project-profile.md`; update it when the stack
+  or orchestration tier changes significantly.

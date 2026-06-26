@@ -1,0 +1,40 @@
+# ci/examples/dependabot.yml
+# Copy to .github/dependabot.yml to activate.
+# Dependabot keeps dependencies and GitHub Actions versions current.
+# Adjust package-ecosystem entries to match your project.
+
+version: 2
+updates:
+  # Python pip dependencies
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    groups:
+      python-minor:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Pin any packages that must not auto-update:
+      # - dependency-name: "some-package"
+      #   versions: ["2.x"]
+
+  # Node / npm dependencies (remove if not a Node project)
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    groups:
+      npm-minor:
+        update-types: ["minor", "patch"]
+
+  # GitHub Actions versions — always enable this
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"

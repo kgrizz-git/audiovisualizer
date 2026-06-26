@@ -14,10 +14,33 @@ This repository is a minimal starter for creating future projects with help from
 
 ## What Is Included
 
-- [prompts/bootstrap-project.md](prompts/bootstrap-project.md): the main prompt for turning a fresh clone into a project-specific base.
-- [prompts/](prompts): reusable prompts for refactor reviews, docs audits, TODO audits, and subagent workflows.
-- [inventory/](inventory): indexes of skills, tools, MCP servers, security tools, Python defaults, frontend/design resources, and AI agent platforms.
-- [VERSION](VERSION): SemVer version for this template.
+### Prompts
+- [`prompts/bootstrap-project.md`](prompts/bootstrap-project.md) — main prompt for turning a fresh clone into a project-specific base
+- [`prompts/`](prompts/) — reusable prompts: refactor assessment, docs audit, TODO audit, subagent workflow, bug/security/safety review
+
+### Templates
+- [`templates/`](templates/) — fill-in artifacts for: plan, design doc, ADR, bug review, security review, safety review, QI assessment, testing assessment, refactor assessment
+
+### Policies
+- [`policies/`](policies/) — durable repo rules: file size/counts, doc freshness, commits/branches, security baseline, garbage collection
+
+### Hooks
+- [`hooks/`](hooks/) — pre-commit configuration and Python policy-check scripts (file size, doc freshness)
+
+### CI
+- [`ci/`](ci/) — CI selection guidance and example GitHub Actions workflows (fast lane, security/SAST, CodeQL, Dependabot)
+
+### Inventory
+- [`inventory/`](inventory/) — curated menus of tools, skills, platforms, and references. Key topics:
+  - Skills/agents catalog (Notes_and_Ideas collection, K-Dense scientific skills, official sources)
+  - Security/quality tools and OWASP Top 10 mapping
+  - RAG building blocks, search APIs, knowledge-graph tools
+  - Cloud/infra (Cloudflare, Google, Modal, VPS), AI agent platforms (Ollama, vLLM, LangGraph)
+  - Scientific/domain libraries (medical imaging, EM/FDTD simulation, financial modeling)
+  - GitHub apps, harness engineering references, source repos to review
+
+### Other
+- [`VERSION`](VERSION) — SemVer version for this template
 
 ## Template Development Notes
 

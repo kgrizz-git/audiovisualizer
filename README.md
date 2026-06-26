@@ -1,5 +1,7 @@
 # Project Seed Template
 
+Last reviewed: 2026-06-26
+
 This repository is a minimal starter for creating future projects with help from an AI coding agent. It is not an application scaffold. Its main asset is a structured bootstrap prompt plus curated inventories of tools, skills, MCP servers, and reusable prompt patterns.
 
 ## Start A New Project

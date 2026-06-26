@@ -1,5 +1,7 @@
 # AGENTS.md
 
+Last reviewed: 2026-06-26
+
 Single source of truth for AI coding agents working in this repository. Other agent
 entrypoints (`CLAUDE.md`, `GEMINI.md`, `QWEN.md`, `.github/copilot-instructions.md`,
 `.cursor/rules/`, `.windsurf/rules/`) are thin pointers back to this file.

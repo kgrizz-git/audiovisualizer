@@ -16,7 +16,8 @@ Defaults are deliberately generous; tighten per project. Configure in one place
 | Rule | Default | Tier |
 |---|---|---|
 | Max lines per source file | 400 (soft), 800 (hard) | soft→hard gate |
-| Max lines per function/method | 80 | advisory |
+| Max lines per function/method | 60 (soft), 100 (hard) | advisory → soft gate |
+| Max cyclomatic complexity per function | 10 (soft), 15 (hard) | advisory |
 | Max bytes per committed file (non-binary) | 500 KB | hard gate |
 | Max files per directory (excl. generated) | 40 | advisory |
 | Disallow committing large binaries | > 5 MB | hard gate (use Git LFS / release assets) |
@@ -28,6 +29,33 @@ Defaults are deliberately generous; tighten per project. Configure in one place
   style imports are exempt. Mark exempt paths in the checker's ignore list.
 - A file may exceed a soft cap with a one-line justification comment:
   `# policy:file-size allow=600 reason=<why>`.
+
+## Function size & complexity
+
+Function length and cyclomatic complexity are advisory (no automated pre-commit block by
+default) because they require language-level parsing.
+
+**Python — check with radon or ruff:**
+
+```bash
+# Cyclomatic complexity (A=1-5, B=6-10, C=11-15, D=16-20, E=21-25, F=26+)
+pip install radon
+radon cc . --min C --show-complexity   # flag C-and-above
+
+# Function length: ruff rule C901 (complexity) + PLR0912/PLR0915 (branches/statements)
+ruff check --select C901,PLR0912,PLR0915 .
+```
+
+**JavaScript / TypeScript — ESLint:**
+
+```json
+"complexity": ["warn", 10],
+"max-lines-per-function": ["warn", {"max": 60}]
+```
+
+**Rationale:** functions over 60 lines usually have more than one responsibility. High
+cyclomatic complexity (>10) correlates with defect density and is hard to test. Treat
+these as signals to extract helpers, not mandatory refactors on day one.
 
 ## Remediation when a check fails
 

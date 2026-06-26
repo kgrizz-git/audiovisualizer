@@ -17,12 +17,16 @@ Do not load everything. Start here, then open only what the task needs.
 | If you are… | Read |
 |---|---|
 | Starting a new project from this template | [`prompts/bootstrap-project.md`](prompts/bootstrap-project.md) |
+| Starting a work session on an existing project | [`prompts/new-agent-session.md`](prompts/new-agent-session.md) |
+| Capturing what kind of project this is | [`prompts/project-init-profile.md`](prompts/project-init-profile.md) |
+| Running periodic repo health checks | [`prompts/maintenance-loop.md`](prompts/maintenance-loop.md) |
 | Looking for a tool / library / service | [`inventory/README.md`](inventory/README.md) (a menu, not a checklist) |
 | Adding/enforcing repo rules | [`policies/README.md`](policies/README.md) |
 | Wiring local checks | [`hooks/README.md`](hooks/README.md) |
 | Setting up CI | [`ci/README.md`](ci/README.md) |
 | Writing a plan / design / review | [`templates/`](templates/) and [`prompts/`](prompts/) |
 | Installing skills or subagents | [`inventory/catalog-skills-agents.md`](inventory/catalog-skills-agents.md) |
+| Choosing an orchestration approach | [`inventory/harness-engineering.md`](inventory/harness-engineering.md) |
 
 ## Operating principles
 

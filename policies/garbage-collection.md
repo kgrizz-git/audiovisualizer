@@ -69,10 +69,10 @@ npx depcheck
 
 ```bash
 # List merged branches (safe to delete)
-git branch --merged main | grep -v '^\*\|main\|master\|develop'
+git branch --merged main | grep -v '^\*\|main\|develop'
 
 # Delete them
-git branch --merged main | grep -v '^\*\|main\|master\|develop' | xargs git branch -d
+git branch --merged main | grep -v '^\*\|main\|develop' | xargs git branch -d
 
 # Prune remote-tracking references
 git remote prune origin

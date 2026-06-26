@@ -7,7 +7,7 @@ name: Security
 
 on:
   pull_request:
-    branches: [main, master]
+    branches: [main]
   schedule:
     - cron: "0 3 * * 1"   # Mondays at 03:00 UTC
   workflow_dispatch:

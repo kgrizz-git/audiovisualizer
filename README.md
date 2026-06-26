@@ -1,46 +1,27 @@
-# Project Seed Template
+# Repo Harness Template
 
 Last reviewed: 2026-06-26
 
-This repository is a minimal starter for creating future projects with help from an AI coding agent. It is not an application scaffold. Its main asset is a structured bootstrap prompt plus curated inventories of tools, skills, MCP servers, and reusable prompt patterns.
+A project seed for AI-assisted development — policies, hooks, CI examples, templates, and curated tool inventories baked in from day one.
 
-## Start A New Project
+**To start a new project:** clone this repo, open it in your AI coding environment, and feed the agent [`prompts/bootstrap-project.md`](prompts/bootstrap-project.md). The agent interviews you, captures a project profile, and scaffolds only what you need.
 
-1. Clone or copy this template into a new local repo.
-2. Open the cloned repo in your AI coding environment.
-3. Feed the agent [prompts/bootstrap-project.md](prompts/bootstrap-project.md).
-4. Let the agent interview you before it writes a large scaffold.
-5. Before the first project commit or push, have the agent walk you through changing the Git remote so the new project does not push back to this template repository.
+**Returning to an existing project:** run [`prompts/new-agent-session.md`](prompts/new-agent-session.md) at the start of each session.
 
-## What Is Included
+---
 
-### Prompts
-- [`prompts/bootstrap-project.md`](prompts/bootstrap-project.md) — main prompt for turning a fresh clone into a project-specific base
-- [`prompts/`](prompts/) — reusable prompts: refactor assessment, docs audit, TODO audit, subagent workflow, bug/security/safety review
+## What's here and why
 
-### Templates
-- [`templates/`](templates/) — fill-in artifacts for: plan, design doc, ADR, bug review, security review, safety review, QI assessment, testing assessment, refactor assessment
+| Directory | What it is |
+|---|---|
+| [`prompts/`](prompts/) | Reusable agent prompts: bootstrap, session-start, maintenance, reviews, audits |
+| [`templates/`](templates/) | Fill-in artifacts: plan, design doc, ADR, bug/security/safety review, assessments |
+| [`policies/`](policies/) | Durable repo rules: file size, doc freshness, commits, security baseline, garbage collection |
+| [`hooks/`](hooks/) | Pre-commit config + Python policy-check scripts (enforces the policies above) |
+| [`ci/`](ci/) | CI selection guidance and example GitHub Actions workflows |
+| [`inventory/`](inventory/) | Curated menus of tools, skills, platforms, libraries, and references — load what you need |
 
-### Policies
-- [`policies/`](policies/) — durable repo rules: file size/counts, doc freshness, commits/branches, security baseline, garbage collection
-
-### Hooks
-- [`hooks/`](hooks/) — pre-commit configuration and Python policy-check scripts (file size, doc freshness)
-
-### CI
-- [`ci/`](ci/) — CI selection guidance and example GitHub Actions workflows (fast lane, security/SAST, CodeQL, Dependabot)
-
-### Inventory
-- [`inventory/`](inventory/) — curated menus of tools, skills, platforms, and references. Key topics:
-  - Skills/agents catalog (Notes_and_Ideas collection, K-Dense scientific skills, official sources)
-  - Security/quality tools and OWASP Top 10 mapping
-  - RAG building blocks, search APIs, knowledge-graph tools
-  - Cloud/infra (Cloudflare, Google, Modal, VPS), AI agent platforms (Ollama, vLLM, LangGraph)
-  - Scientific/domain libraries (medical imaging, EM/FDTD simulation, financial modeling)
-  - GitHub apps, harness engineering references, source repos to review
-
-### Other
-- [`VERSION`](VERSION) — SemVer version for this template
+Full contents: see [`inventory/README.md`](inventory/README.md) for the tool/skill menu and [`AGENTS.md`](AGENTS.md) for agent navigation.
 
 ## Template Development Notes
 

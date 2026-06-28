@@ -1,0 +1,40 @@
+# codecov.yml — place this at the repo root to configure Codecov behavior.
+# Reference: https://docs.codecov.com/docs/codecov-yaml
+#
+# The codecov/codecov-action in ci/examples/ci.yml uploads coverage.xml;
+# this file controls how Codecov evaluates and reports that data.
+
+coverage:
+  precision: 2          # decimal places in coverage percentages
+  round: down           # conservative rounding
+  range: "70...100"     # color gradient: red <70%, green = 100%
+
+  status:
+    project:            # overall repo coverage gate
+      default:
+        target: 70%     # minimum total coverage to pass
+        threshold: 2%   # allow up to 2% drop before failing
+        if_no_uploads: error
+        if_not_found: success   # first upload has no baseline to compare
+
+    patch:              # coverage of lines changed in this PR
+      default:
+        target: 80%     # new/changed lines must be ≥80% covered
+        threshold: 5%
+        if_no_uploads: error
+
+comment:
+  layout: "condensed_header, diff, flags, files"
+  behavior: default     # update existing comment; post new one if none exists
+  require_changes: true # only comment when coverage actually changes
+  require_base: false
+  require_head: true
+  hide_project_coverage: false
+
+ignore:
+  - "tests/**"
+  - "**/*_test.py"
+  - "docs/**"
+  - "ci/**"
+  - "hooks/**"
+  - "*.md"

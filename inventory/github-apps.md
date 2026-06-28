@@ -52,6 +52,8 @@ grouping or scheduling is insufficient.
 Coverage reports, PR comments showing changed-file coverage delta, trend graphs.
 Free for public repos. Integrates with `pytest --cov` via `codecov/codecov-action`.
 Useful early — coverage delta on PRs catches regressions without enforcing a hard threshold.
+See `ci/examples/ci.yml` for the upload step and `ci/examples/codecov.yml` for threshold config.
+Requires a `CODECOV_TOKEN` secret (Settings → Secrets → Actions) for both public and private repos on v4+.
 
 ## Selection guidance
 

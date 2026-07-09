@@ -1,0 +1,33 @@
+# Example: daily advisory listing of open pull requests.
+#
+# Copy to .github/workflows/ only if the team wants a scheduled reminder in
+# Actions logs. This job is advisory (continue-on-error) and must never be a
+# required check. Prefer the local script + agent prompts for most projects:
+#   python3 ci/scripts/check_open_prs.py --once-per-day
+#
+# Minutes estimate (private repos): ~1 run/day × ~30s Linux ≈ <1 min/month.
+# Public repos: standard hosted runners are generally free; still avoid adding
+# more frequent crons. See policies/github-actions-usage.md.
+
+name: Open PRs advisory
+
+on:
+  schedule:
+    # Once daily (UTC). Adjust or remove if unused.
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  list-open-prs:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: List open pull requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 ci/scripts/check_open_prs.py --repo "${{ github.repository }}"

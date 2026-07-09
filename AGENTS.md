@@ -25,6 +25,7 @@ Do not load everything. Start here, then open only what the task needs.
 | Wiring local checks | [`hooks/README.md`](hooks/README.md) |
 | Setting up CI | [`ci/README.md`](ci/README.md) |
 | Checking Actions minutes / storage | [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py), [`policies/github-actions-usage.md`](policies/github-actions-usage.md) |
+| Checking open PRs after push / daily | [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py), [`policies/commits-and-branches.md`](policies/commits-and-branches.md) |
 | Writing a plan / design / review | [`templates/`](templates/) and [`prompts/`](prompts/) |
 | Installing skills or subagents | [`inventory/catalog-skills-agents.md`](inventory/catalog-skills-agents.md) |
 | Choosing an orchestration approach | [`inventory/harness-engineering.md`](inventory/harness-engineering.md) |
@@ -61,6 +62,7 @@ Do not load everything. Start here, then open only what the task needs.
 | Source/doc line caps (soft **600** / hard **1000**) | [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md) |
 | Secret scanning + lint hooks | [`hooks/README.md`](hooks/README.md), [`policies/security-baseline.md`](policies/security-baseline.md) |
 | GitHub Actions minutes/storage (estimate before expanding CI) | [`policies/github-actions-usage.md`](policies/github-actions-usage.md), [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py) |
+| Open PRs after push (advisory, not a hook) | [`policies/commits-and-branches.md`](policies/commits-and-branches.md), [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py) |
 
 **Notes_and_Ideas vs this template:** personal research dumps, private key dashboards, and
 exploratory idea notes belong in a Notes_and_Ideas (or similar) repo. Index only durable,

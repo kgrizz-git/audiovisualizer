@@ -56,5 +56,32 @@ class GhaUsageScriptTests(unittest.TestCase):
         self.assertIn("Actions", result.stdout)
 
 
+class OpenPrsScriptTests(unittest.TestCase):
+    def test_help_exits_zero(self) -> None:
+        cmd = [sys.executable, str(ROOT / "ci" / "scripts" / "check_open_prs.py"), "--help"]
+        result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("open", result.stdout.lower())
+
+    def test_once_per_day_skips_when_stamp_fresh(self) -> None:
+        stamp = ROOT / ".context" / "open-prs-check-test.stamp"
+        stamp.parent.mkdir(parents=True, exist_ok=True)
+        stamp.write_text("fresh\n", encoding="utf-8")
+        cmd = [
+            sys.executable,
+            str(ROOT / "ci" / "scripts" / "check_open_prs.py"),
+            "--once-per-day",
+            "--stamp-file",
+            str(stamp),
+            "--max-age-hours",
+            "24",
+        ]
+        result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("skipped", result.stdout.lower())
+        if stamp.exists():
+            stamp.unlink()
+
+
 if __name__ == "__main__":
     unittest.main()

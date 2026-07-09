@@ -7,6 +7,15 @@ Developer-only detail (hooks internals, inventory menus, tests/CI) lives in
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project
 uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.4] - 2026-07-09
+
+### Added
+- Advisory open-PR check for agents after push / about once a day
+  (`ci/scripts/check_open_prs.py`, guidance in commits policy and session prompts).
+  Optional non-blocking daily workflow example; not a git hook.
+  Agents check `.context/open-prs-check.stamp` first and skip the script when
+  the stamp is fresh (saves tokens vs always launching the check).
+
 ## [0.4.3] - 2026-07-09
 
 ### Added

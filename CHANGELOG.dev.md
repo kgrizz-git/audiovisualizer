@@ -3,6 +3,21 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
+## [0.4.4] - 2026-07-09
+
+### Added
+- `ci/scripts/check_open_prs.py` — advisory `gh pr list` helper with `--branch`,
+  `--once-per-day` stamp under `.context/`, and `--json`.
+- `ci/examples/open-prs-advisory.yml` — optional daily/advisory Actions reminder
+  (`continue-on-error`; never a required check).
+- Agent wiring: `policies/commits-and-branches.md`, `prompts/new-agent-session.md`,
+  `prompts/maintenance-loop.md`, `AGENTS.md`, `hooks/README.md`, `ci/README.md`.
+- Smoke tests for `--help` and once-per-day stamp skip.
+
+### Changed
+- Daily open-PR guidance: agents must inspect `.context/open-prs-check.stamp`
+  first and skip the script when fresh (token-cheaper than invoking Python/`gh`).
+
 ## [0.4.3] - 2026-07-09
 
 ### Added

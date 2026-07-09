@@ -37,6 +37,22 @@ git status --short
 ```
 Surface any uncommitted work or recent commits relevant to the current task.
 
+**Open PRs (advisory, ~once a day):** if `gh` is available and this is a GitHub
+remote:
+
+1. **Check the stamp first** (cheaper than launching the script): look at
+   `.context/open-prs-check.stamp`. If it exists and was modified within the last
+   24 hours, **skip** — do not run the script.
+2. Otherwise run:
+   ```bash
+   python3 ci/scripts/check_open_prs.py --once-per-day
+   ```
+   (`--once-per-day` is a safety net if the stamp check was skipped.)
+
+Report any open PRs that overlap the current branch or task. Prefer updating an
+existing PR over opening a duplicate. This must never block the session. See
+[`policies/commits-and-branches.md`](../policies/commits-and-branches.md).
+
 ---
 
 ## Step 3: Load only the relevant inventory

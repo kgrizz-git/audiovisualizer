@@ -27,6 +27,7 @@ expand schedules/matrices/artifacts without a rough usage estimate in the PR.
 | Docs accuracy review | — | — | — | ✅ primary |
 | Security / safety review | — | — | — | ✅ primary |
 | Refactor / GC assessment | — | — | — | ✅ primary |
+| Open PRs after push / daily reminder | — | — | optional advisory schedule | ✅ primary (local script) |
 
 **Fast lane** (must stay < 5 min): lint, types, tests, secret scan, dep audit.
 **Slow lane** (can run on schedule or on PR to main): SAST, CodeQL, container scans.
@@ -76,7 +77,9 @@ this script uses the consolidated usage summary API plus per-run timing.
 | `examples/ci.yml` | Combined fast-lane: lint + types + tests + dep audit |
 | `examples/codeql.yml` | CodeQL on PRs to main and on schedule |
 | `examples/dependabot.yml` | Dependabot config for Python, npm, and GitHub Actions |
+| `examples/open-prs-advisory.yml` | Optional daily/advisory listing of open PRs (`continue-on-error`) |
 | `scripts/check_gha_usage.py` | Report repo + account Actions/storage usage |
+| `scripts/check_open_prs.py` | Advisory open-PR listing (local / agent; never a push gate) |
 
 ## Dependency update bots
 

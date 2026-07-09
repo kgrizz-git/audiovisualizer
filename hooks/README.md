@@ -47,6 +47,7 @@ See [`policies/security-baseline.md`](../policies/security-baseline.md) and
 | Lint, format, file size, TODO size, secret scanning | **pre-commit** (local) | Fast, catches cheaply before push |
 | SAST (Semgrep/CodeQL), dep audit, OWASP scan | **CI** | Slower; needs full context or network |
 | Doc freshness, TODO comment audit, policy drift | **CI** or **agent** | Doesn't need to run on every commit |
+| Open PRs after push / once a day | **agent** (+ optional advisory CI) | Informational; never a pre-push gate — see `ci/scripts/check_open_prs.py` |
 | Security / architecture / refactor review | **agent prompt** / Codex Security plugin | Judgment-based; humans approve |
 | Dependency updates | **Dependabot/Renovate** | Automated PR; not a hook |
 

@@ -130,6 +130,16 @@ sift-kg index .
 - Is Dependabot / Renovate configured and processing updates?
 - Are any GitHub apps (CodeRabbit, DeepSource, Codecov) showing unresolved issues?
 
+### Open pull requests (advisory)
+
+```bash
+python3 ci/scripts/check_open_prs.py --force
+```
+
+List stale or duplicate open PRs. Prefer closing/superseding duplicates and
+updating the surviving PR. Do not treat a missing PR as a failure — this check
+is informational only (see [`policies/commits-and-branches.md`](../policies/commits-and-branches.md)).
+
 ---
 
 ## 9. Report

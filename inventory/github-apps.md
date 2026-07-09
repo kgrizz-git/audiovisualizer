@@ -45,6 +45,14 @@ Use when the project has compliance requirements or ships container images.
 Automated dependency update PRs; free for all repos. Enable via
 `ci/examples/dependabot.yml`. The baseline choice — enable by default.
 
+**GitHub Open Source License Compliance** (public preview) —
+https://github.blog/changelog/2026-06-30-open-source-license-compliance-is-in-public-preview/
+
+Enterprise-wide license policy + ruleset gate (“Require license compliance check results
+before merging”). Annotates PRs that add noncompliant deps. Requires GitHub Enterprise
+Cloud + Advanced Security Code Security. Use when legal/compliance owns an allow-list of
+licenses; pair with Snyk/Dependabot for vulns.
+
 **Renovate** — https://renovatebot.com
 More configurable than Dependabot: monorepo grouping, custom schedules, semantic
 version ranges, more ecosystems (Helm, Docker, terraform, etc.). Use when Dependabot's

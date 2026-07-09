@@ -1,6 +1,6 @@
 # Templates
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Fill-in artifact forms. Use these when you need a structured output document — a plan to
 review and approve, a completed assessment to store, an ADR to record a decision.
@@ -27,5 +27,9 @@ For the *prompts* that instruct an agent to produce these outputs, see [`prompts
 - Keep the file name stable (e.g. `plans/2026-06-26-auth-refactor.md`) so it is linkable.
 - Date assessments; they become stale. If stored in `assessments/` or `plans/`, they're
   historical record — don't update in place, create a new one.
+- When a plan is complete or abandoned, move it to `plans/archive/` (see
+  [`policies/plans-and-todos.md`](../policies/plans-and-todos.md)).
 - If a template grows beyond ~300 lines, it's trying to be a doc, not an assessment —
   split the supporting material into a linked doc.
+- Release notes: public vs developer changelog split is documented in
+  [`policies/changelog-conventions.md`](../policies/changelog-conventions.md).

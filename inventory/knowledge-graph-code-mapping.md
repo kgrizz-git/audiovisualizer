@@ -1,6 +1,6 @@
 # Knowledge Graph & Code Mapping Tools
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Tools for building structural maps of codebases, understanding cross-file relationships,
 and creating knowledge graphs that agents and humans can query. Useful for large repos,
@@ -17,12 +17,26 @@ Builds a navigable knowledge graph of a codebase using static analysis. Extracts
 entities (functions, classes, modules, calls) and their relationships into a graph
 structure. Good starting point for code-grounded RAG or agent context injection.
 
+### Graphify + NetworkX
+https://www.marktechpost.com/2026/06/24/using-graphify-and-networkx-to-map-python-codebase-structure-with-god-nodes-communities-and-architecture-visualizations/
+
+Offline Python/SQL structure extraction (tree-sitter via Graphify; PyPI package often
+`graphifyy`) into `graph.json`, then NetworkX for god-node centrality, Louvain
+communities, shortest paths, and Matplotlib/Pyvis visualizations. Prefer when you want
+local architecture maps without an LLM backend.
+
 ### GraphRAG (Microsoft)
 https://github.com/microsoft/graphrag
 
 General-purpose graph RAG framework. Builds community-structured knowledge graphs from
 text corpora (including code docs/comments). Better for documentation and prose than
 raw code structure; combine with a code-structure tool for full coverage.
+
+### GraphRAG Workbench
+https://github.com/ChristopherLyon/graphrag-workbench
+
+Interactive 3D visualization of Microsoft GraphRAG outputs (entities, relationships,
+communities). Use after a GraphRAG run when humans need to explore the graph visually.
 
 ### Neo4j + LLM patterns
 https://neo4j.com/developer/graph-rag/
@@ -80,14 +94,81 @@ call which; useful for onboarding and identifying coupling.
 
 ---
 
+## AI-generated code wikis & repo documentation
+
+LLM-generated, navigable documentation over a whole repository (architecture pages,
+diagrams, chat). Distinct from structural graphs above: these optimize for human/agent
+*reading* and Q&A, not necessarily blast-radius graphs. Prefer self-hosted options for
+private/proprietary code; SaaS is fine for public or non-sensitive repos.
+
+### Category survey — Ry Walker
+https://rywalker.com/research/code-intelligence-tools
+
+Comparative research on code-intelligence tools for AI agents (local graphs, semantic
+search, context packing, MCP). Good starting map of the category before picking a wiki
+or graph product.
+
+### Google Code Wiki
+https://codewiki.google/
+
+Gemini-generated interactive wiki for repositories (featured public repos; private-repo
+connect advertised as coming soon). Auto-updates with merges; section deep-dives,
+diagrams, and codebase chat. Hosted Google product — check data-handling before private
+code.
+
+### DeepWiki (SaaS)
+https://deepwiki.com/
+
+Hosted AI wiki + chat over GitHub repos (Devin / Cognition indexing). Fast zero-config
+onboarding for public or non-sensitive code. Code leaves your infra for processing —
+usually a non-starter for regulated private repos.
+
+### deepwiki-open (OSS)
+https://github.com/AsyncFuncAI/deepwiki-open
+
+Open-source DeepWiki-style generator for GitHub/GitLab/Bitbucket: structure analysis,
+docs, diagrams, navigable wiki. Also shipped as Grok Wiki (https://grok-wiki.com/).
+MIT. Prefer when you want DeepWiki UX without the closed SaaS.
+
+### RepoWiki
+https://github.com/he-yufeng/RepoWiki
+
+Open-source DeepWiki alternative: generate wiki docs for a codebase from the terminal
+or browser. PyPI: https://pypi.org/project/repowiki/ (MIT). Lightweight local option.
+
+### CodeWiki (FSoft-AI4Code)
+https://github.com/FSoft-AI4Code/CodeWiki
+
+Open-source framework for holistic, architecture-aware repo documentation (ACL 2026 /
+arXiv). Hierarchical decomposition + multi-agent generation; Mermaid diagrams; CLI
+(`codewiki generate`); multi-language; optional MCP. Strong when you need research-grade,
+structured docs you can regenerate in CI. Site: https://fsoft-ai4code.github.io/CodeWiki/
+
+### repowise
+https://github.com/repowise-dev/repowise
+
+Self-hosted codebase intelligence (AGPL): LLM docs, git hotspots/ownership, dependency
+graphs, dead-code signals, MCP tools for agents. Comparison vs DeepWiki SaaS:
+https://www.repowise.dev/blog/comparisons/repowise-vs-deepwiki — use when privacy + agent
+MCP matter more than zero-config SaaS.
+
+---
+
 ## Selection guidance
 
 | Need | Tool |
 |---|---|
 | Fast structural graph of any language codebase | tree-sitter + sift-kg |
+| Offline Python structure + god nodes / communities | Graphify + NetworkX |
 | Compact repo map for LLM context | aider repomap |
 | Cross-repo search at scale | Sourcegraph |
 | Persistent queryable knowledge graph | Neo4j + GraphRAG |
+| Explore GraphRAG output visually | GraphRAG Workbench |
 | Quick Python import graph | pydeps |
 | Classic symbol index (editors/agents) | universal-ctags |
 | RAG over code + documentation | sift-kg + GraphRAG combination |
+| Survey of agent code-intelligence tools | Ry Walker research |
+| Hosted wiki for public/non-sensitive repos | DeepWiki or Google Code Wiki |
+| Self-hosted DeepWiki-style wiki | deepwiki-open or RepoWiki |
+| Architecture-aware generated docs + CLI/CI | CodeWiki (FSoft) |
+| Self-hosted wiki + git intelligence + MCP | repowise |

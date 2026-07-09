@@ -33,6 +33,22 @@ repos:
         pass_filenames: true
         description: "Enforces policies/doc-freshness.md (Last reviewed marker + staleness)."
 
+      - id: check-todo-limits
+        name: "policy: TODO / to_do size"
+        entry: python hooks/scripts/check_todo_limits.py
+        language: python
+        files: '(^|/)(to_do|TODO|todo|TO_DO|backlog)\.md$'
+        pass_filenames: true
+        description: "Warns/blocks oversized living backlog files (policies/plans-and-todos.md)."
+
+      # Optional: uncomment if your team uses gitignored backups/ before edits
+      # - id: prune-backups
+      #   name: "hygiene: prune old backups/"
+      #   entry: bash hooks/scripts/prune_backups.sh
+      #   language: system
+      #   pass_filenames: false
+      #   always_run: true
+
   # ── Secret scanning (always on) ────────────────────────────────────────────
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.2

@@ -1,6 +1,6 @@
 # Policy: File Size & Counts ("file life counts")
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 Enforced by: [`hooks/scripts/check_file_size.py`](../hooks/scripts/check_file_size.py)
 
 ## Why
@@ -10,18 +10,19 @@ context. Caps keep modules legible, reviewable, and easy for an agent to load wh
 
 ## Rules & defaults
 
-Defaults are deliberately generous; tighten per project. Configure in one place
-(`hooks/scripts/check_file_size.py` constants, or a `[tool.repo-policy]` block if adopted).
+Defaults are deliberately generous; tighten per project. Configure via environment
+variables (see [`hooks/README.md`](../hooks/README.md)) or the script defaults.
 
 | Rule | Default | Tier |
 |---|---|---|
-| Max lines per source file | 400 (soft), 800 (hard) | soft→hard gate |
+| Max lines per source file | **600** (soft warn), **1000** (hard) | soft→hard gate |
 | Max lines per function/method | 60 (soft), 100 (hard) | advisory → soft gate |
 | Max cyclomatic complexity per function | 10 (soft), 15 (hard) | advisory |
 | Max bytes per committed file (non-binary) | 500 KB | hard gate |
 | Max files per directory (excl. generated) | 40 | advisory |
 | Disallow committing large binaries | > 5 MB | hard gate (use Git LFS / release assets) |
 | Doc (`.md`) max lines | 1000 | advisory (split into linked docs) |
+| Living `to_do` / `TODO.md` backlog | 150 (soft), 300 (hard) | see [`plans-and-todos.md`](plans-and-todos.md) |
 
 ### Exemptions
 
@@ -66,5 +67,7 @@ these as signals to extract helpers, not mandatory refactors on day one.
 
 ## Rationale notes
 
-These are taste defaults, not science. The 400-line soft cap is a common legibility
-threshold; the point is a *consistent, visible* limit with an easy override, not the exact number.
+These are taste defaults, not science. The **600-line soft warn** is a practical
+legibility threshold for agent-loaded modules; the point is a *consistent, visible*
+limit with an easy override, not the exact number. Older projects may keep soft=400
+via `POLICY_SOFT_LINE_CAP=400`.

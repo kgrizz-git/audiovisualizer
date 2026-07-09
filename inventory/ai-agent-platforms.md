@@ -38,6 +38,13 @@ Workflow orchestration engine originally from Netflix. Supports distributed, lon
 workflows with retry, error handling, and state persistence. Not LLM-specific but a solid
 durable workflow engine for agent task pipelines that need reliability guarantees.
 
+### Archon
+https://github.com/coleam00/archon · https://archon.diy
+
+Open-source command layer / harness builder for coding agents: YAML workflow DAGs,
+multi-channel dispatch (CLI, Slack, GitHub comments, …), isolated git worktrees per run,
+BYO agent (Claude Code, Codex, …). See also `inventory/harness-engineering.md`.
+
 ### MCP (Model Context Protocol)
 https://modelcontextprotocol.io / https://github.com/anthropics/mcp
 

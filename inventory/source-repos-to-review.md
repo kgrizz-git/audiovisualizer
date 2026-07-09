@@ -18,6 +18,8 @@ ideas. This is a starting list — add entries as you discover new candidates.
 | https://github.com/obra/superpowers | Agentic skills framework + core methodology (planning, TDD, debugging, review) |
 | https://github.com/obra/superpowers-skills | Community-editable Superpowers skills companion |
 | https://github.com/garry-tan/gstack | Agentic workflow conventions and project scaffolding patterns |
+| https://github.com/coleam00/archon | Open-source harness builder / command layer for coding agents (YAML workflows, worktrees, multi-channel dispatch). See `inventory/harness-engineering.md` |
+| https://github.com/TheMrGU/Ai-Agent-Context-Passoff | MCP handoff between Cursor / Claude Code / Codex (local SQLite). Cross-IDE session continuity |
 | https://github.com/anthropics/mcp | Model Context Protocol reference implementation and server examples |
 
 ---

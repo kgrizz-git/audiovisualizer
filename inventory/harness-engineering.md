@@ -69,8 +69,37 @@ Key lessons:
 ### Addy Osmani — Loop Engineering
 https://addyosmani.com/blog/loop-engineering/
 
+Also summarized on The New Stack:
+https://thenewstack.io/loop-engineering/
+
 Tight agent feedback loops: run → observe → correct without human intervention on each
 micro-step. Complements Anthropic/OpenAI harness guidance above.
+
+### Addy Osmani — Agent Harness Engineering
+https://addyosmani.com/blog/agent-harness-engineering/
+
+Agent = model + harness. Treat prompts, hooks, tools, sandboxes, and recovery paths as
+first-class engineering: every agent mistake becomes a durable rule or gate (the ratchet).
+
+### Addy Osmani — The Factory Model
+https://addyosmani.com/blog/factory-model/
+
+Shift from writing code to building the factory that builds software: fleets of agents,
+precise specs, strong tests (red/green TDD), and verification as the bottleneck—not
+generation.
+
+### Addy Osmani — Long-running Agents
+https://addyosmani.com/blog/long-running-agents/
+
+Persistence across sessions/sandboxes: external state, handoffs, and self-verification so
+agents keep progress over hours/days without context-window amnesia.
+
+### Salesforce Engineering — Code Quality at Agent Speed (7 patterns)
+https://engineering.salesforce.com/maintaining-code-quality-at-agent-speed-7-patterns-for-agentic-engineering/
+
+Verification-first agentic SDLC: independent author/judge for tests, quality gates over
+prompts, mutation testing, and engineering the full lifecycle (review/CI/release) so
+confidence scales with generation speed.
 
 ### Agent Patterns
 https://agentpatterns.ai/
@@ -111,11 +140,40 @@ Workflow orchestration engine (Netflix origin) for long-running, distributed tas
 Not LLM-specific but well-suited for durable agent task queues with retry, timeout,
 and human-in-the-loop patterns.
 
+### Archon
+https://github.com/coleam00/archon · https://archon.diy
+
+Open-source **harness builder / command layer** for AI coding agents (MIT). Package
+workflows as YAML DAGs (loops, gates, conditions); dispatch from terminal, Slack,
+Telegram, GitHub comments, or web; each run gets an isolated git worktree for parallel
+agents. Bring your own agent (Claude Code, Codex, …). Prefer when you want repeatable,
+fleet-style dispatch without reinventing orchestration. Install sketch:
+`curl -fsSL https://archon.diy/install | bash` (review the script before running).
+
 ### MCP (Model Context Protocol)
 https://modelcontextprotocol.io
 
 Standard protocol for exposing tools, resources, and context to LLM agents. Use when
 building custom tool servers for agents; see `inventory/mcp-servers.md`.
+
+---
+
+## Cross-IDE session handoffs
+
+When you switch between Cursor, Claude Code, Codex, etc., context usually dies. Prefer
+**structured handoff artifacts** (markdown + MCP) over re-prompting. Discussion seed:
+https://www.reddit.com/r/cursor/comments/1stt6i0/built_a_claude_code_cursor_handoff_system_today/
+
+Concrete options to evaluate (menu, not mandate):
+
+| Tool | Approach |
+|---|---|
+| [Passoff](https://github.com/TheMrGU/Ai-Agent-Context-Passoff) | MCP + slash commands (`/passoff`, `/passoff-load`); local SQLite; provenance across clients |
+| [handoff](https://github.com/zhangluka/handoff) | Parse Claude Code session JSONL → inject `.cursor/rules/handoff-context.mdc` (no LLM) |
+| [ai-sync](https://github.com/oreolion/ai-sync-plugin) | Shared `.ai-sync/HANDOFF.md` + adapters for Cursor/Claude/Codex/Windsurf/… |
+
+This template’s hub-and-spoke pattern (`plans/orchestration-state.md` + HANDOFF blocks)
+is the same idea in-repo — use a dedicated tool when you switch **IDEs** mid-task.
 
 ---
 

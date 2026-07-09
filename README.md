@@ -1,6 +1,6 @@
 # Repo Harness Template
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 A project seed for AI-assisted development — policies, hooks, CI examples, templates, and curated tool inventories baked in from day one.
 
@@ -16,15 +16,18 @@ A project seed for AI-assisted development — policies, hooks, CI examples, tem
 |---|---|
 | [`prompts/`](prompts/) | Reusable agent prompts: bootstrap, session-start, maintenance, reviews, audits |
 | [`templates/`](templates/) | Fill-in artifacts: plan, design doc, ADR, bug/security/safety review, assessments |
-| [`policies/`](policies/) | Durable repo rules: file size, doc freshness, commits, security baseline, garbage collection |
-| [`hooks/`](hooks/) | Pre-commit config + Python policy-check scripts (enforces the policies above) |
+| [`policies/`](policies/) | Durable repo rules: file size, plans/todos, changelogs, doc freshness, commits, security, GC |
+| [`hooks/`](hooks/) | Pre-commit config + policy scripts (file size, TODO limits, secrets, lint) |
 | [`ci/`](ci/) | CI selection guidance and example GitHub Actions workflows |
 | [`inventory/`](inventory/) | Curated menus of tools, skills, platforms, libraries, and references — load what you need |
+| [`plans/`](plans/) | Optional active plans + archive convention (see policies) |
 
 Full contents: see [`inventory/README.md`](inventory/README.md) for the tool/skill menu and [`AGENTS.md`](AGENTS.md) for agent navigation.
+
+Changelogs: user-facing [`CHANGELOG.md`](CHANGELOG.md); developer/internal [`CHANGELOG.dev.md`](CHANGELOG.dev.md) — see [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
 ## Template Development Notes
 
 Use `.context/` for temporary artifacts while developing this template, such as scratch plans, research notes, draft inventories, and evaluation checklists. In Conductor workspaces this directory is ignored by Git and should not become part of the reusable template.
 
-Keep committed content small and durable. Prefer adding a focused inventory entry or reusable prompt over adding a complete framework scaffold that future projects may need to delete.
+Keep committed content small and durable. Prefer adding a focused inventory entry or reusable prompt over adding a complete framework scaffold that future projects may need to delete. Personal API key pages and exploratory dumps belong in Notes_and_Ideas, not here.

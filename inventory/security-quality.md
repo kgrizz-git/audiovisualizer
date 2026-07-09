@@ -144,6 +144,18 @@ syft . -o spdx-json > sbom.json && grype sbom:sbom.json
 
 ---
 
+## Agent-side security review plugins
+
+### Codex Security plugin (OpenAI)
+https://openai.com/daybreak/codex-security-plugin/
+
+Installable Codex plugin that runs a guided security scan over a chosen project folder
+(Desktop Codex or Codex CLI). Use as an **agent-side** review pass alongside (not instead
+of) gitleaks / Semgrep / CodeQL in hooks and CI. Good for exploratory findings before a
+PR; keep automated secret/SAST gates as the hard floor.
+
+---
+
 ## Agent-friendly guardrails
 
 Prefer checks that produce **actionable error messages** pointing to a specific file and
@@ -153,3 +165,6 @@ remediation path (in `policies/`) so future agents can fix failures without gues
 The `.cursor/rules/` and `.windsurf/rules/` CodeGuard rule files in this repo implement
 OWASP principles as per-file coding guidance — they are active during editing, not just
 at commit time.
+
+This template's example pre-commit config already wires **gitleaks**, **detect-private-key**,
+**ruff**, **markdownlint**, and **shellcheck** — see [`hooks/.pre-commit-config.yaml`](../hooks/.pre-commit-config.yaml).

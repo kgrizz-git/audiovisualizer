@@ -9,8 +9,8 @@ Exit codes: 0 = pass (warnings printed but not blocking), 1 = hard violation.
 
 Thresholds are read from environment variables so CI can tighten them without
 editing this file:
-  POLICY_SOFT_LINE_CAP      (default 400)
-  POLICY_HARD_LINE_CAP      (default 800)
+  POLICY_SOFT_LINE_CAP      (default 600)
+  POLICY_HARD_LINE_CAP      (default 1000)
   POLICY_MAX_BYTES          (default 512000 = 500 KB)
   POLICY_BINARY_HARD_BYTES  (default 5242880 = 5 MB)
   POLICY_DOC_SOFT_LINE_CAP  (default 1000)
@@ -25,8 +25,8 @@ import sys
 from pathlib import Path
 
 # ── Thresholds ────────────────────────────────────────────────────────────────
-SOFT_LINE_CAP = int(os.getenv("POLICY_SOFT_LINE_CAP", "400"))
-HARD_LINE_CAP = int(os.getenv("POLICY_HARD_LINE_CAP", "800"))
+SOFT_LINE_CAP = int(os.getenv("POLICY_SOFT_LINE_CAP", "600"))
+HARD_LINE_CAP = int(os.getenv("POLICY_HARD_LINE_CAP", "1000"))
 MAX_BYTES = int(os.getenv("POLICY_MAX_BYTES", str(500 * 1024)))
 BINARY_HARD_BYTES = int(os.getenv("POLICY_BINARY_HARD_BYTES", str(5 * 1024 * 1024)))
 DOC_SOFT_LINE_CAP = int(os.getenv("POLICY_DOC_SOFT_LINE_CAP", "1000"))

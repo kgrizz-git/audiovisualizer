@@ -1,6 +1,6 @@
 # Developer Tools Index
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Starting menu for project setup and developer workflows. Select only what the project
 needs. See `inventory/security-quality.md` for security/lint/SAST tools and
@@ -47,7 +47,14 @@ needs. See `inventory/security-quality.md` for security/lint/SAST tools and
 - **MkDocs** (+ Material theme) — Python-centric docs sites
 - **Docusaurus** — React-based docs site; good for developer portals
 - **VitePress** — Vue-based; fast and lightweight
-- **Sphinx** — Python API docs; integrates with autodoc
+- **Sphinx** https://www.sphinx-doc.org — Python API / reference docs; autodoc, napoleon,
+  intersphinx; strong for libraries and scientific packages. Pair with Read the Docs or
+  GitHub Pages. Prefer when you need versioned API reference from docstrings, not only
+  narrative Markdown.
+- **Pandoc** https://pandoc.org — universal document converter (Markdown ↔ HTML/PDF/DOCX/
+  LaTeX/EPUB, …). Useful for releasing agent-written Markdown as PDF/DOCX, academic
+  pipelines, and Sphinx/MkDocs adjacent export. Install via package manager; keep
+  conversion scripts in-repo when formats are part of the deliverable.
 - **Mermaid** — lightweight diagrams embedded in Markdown
 - **ADRs** — durable architecture decisions; see `templates/adr.md`
 
@@ -62,6 +69,7 @@ Useful for scientific computing, ML research, and domain-specific projects.
 
 | Tool | What it does | Cost |
 |---|---|---|
+| **Pantheon** https://pantheon.k-dense.ai | K-Dense multi-persona brainstorm: one question → ~80 AI personas (scientists, philosophers, founders, ML researchers) with cited sources + consensus. Great for early ideation / framing — not a fact oracle. Free; rate-limited. | Free |
 | **Elicit** https://elicit.com | AI research assistant; structured literature review; extracts evidence from papers | Free tier / paid |
 | **Research Rabbit** https://researchrabbitapp.com | Visualizes paper citation networks; discovers related work; free for academics | Free |
 | **Connected Papers** https://connectedpapers.com | Graph visualization of paper relationships; explore clusters of related research | Free / paid |

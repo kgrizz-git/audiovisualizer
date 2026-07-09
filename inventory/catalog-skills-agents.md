@@ -166,6 +166,18 @@ Notable categories in the repo (browse the README for the full list):
 - Data analysis and ML (sklearn, PyTorch, Hugging Face)
 - Academic writing and LaTeX
 
+### Pantheon (K-Dense) — multi-persona brainstorming
+https://pantheon.k-dense.ai/
+
+Free hosted tool: ask one science/research question and get ~80 AI personas answering
+in parallel (philosophers, scientists, founders, ML researchers), with cited web sources
+and a consensus synthesis. Built on K-Dense Mimeographs; replies are style-transfers, not
+quotations from real people. **Use for brainstorming and framing**, not as a sole
+authority. Complements in-repo skills such as `scientific-brainstorming` /
+`consciousness-council` (Notes_and_Ideas) when you want a quick external panel.
+
+Also listed under `inventory/tools-index.md` → Research tools.
+
 ---
 
 ## Obra Superpowers

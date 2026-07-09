@@ -1,9 +1,14 @@
 # CI Guidance
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Guidance for selecting, structuring, and gating CI checks. Example workflows live in
 `ci/examples/` — copy the ones you need to `.github/workflows/` to activate them.
+
+**Minutes & storage:** use Actions deliberately — see
+[`policies/github-actions-usage.md`](../policies/github-actions-usage.md) and
+[`scripts/check_gha_usage.py`](scripts/check_gha_usage.py). Do not avoid GHA; do not
+expand schedules/matrices/artifacts without a rough usage estimate in the PR.
 
 ## What to gate in CI vs pre-commit vs agent
 
@@ -40,6 +45,27 @@ Guidance for selecting, structuring, and gating CI checks. Example workflows liv
    high-value steps; prevents supply-chain drift.
 6. **Dependabot for Actions.** Enable `package-ecosystem: github-actions` in
    `dependabot.yml` so action versions stay current.
+7. **Estimate minutes/storage** when changing triggers, schedules, matrices, runners,
+   or artifact retention (see policy above). Prefer path filters and infrequent crons.
+
+## Checking Actions minutes and storage
+
+```bash
+# Current repo: recent run wall-clock + billable minutes (via run timing API)
+python3 ci/scripts/check_gha_usage.py --repo
+
+# Authenticated account (user or org): billing usage summary (Actions + storage SKUs)
+python3 ci/scripts/check_gha_usage.py --account
+
+# Both (default), JSON, or custom lookback
+python3 ci/scripts/check_gha_usage.py --days 14 --json
+```
+
+Requires [`gh`](https://cli.github.com/) authenticated. Repo timing needs normal repo
+read. Account billing summary needs billing/admin access on the user or org; if the API
+returns 403, use https://github.com/settings/billing (or org Billing) instead. Legacy
+product-specific endpoints (`/settings/billing/actions`, `shared-storage`) are retired —
+this script uses the consolidated usage summary API plus per-run timing.
 
 ## Example files in this directory
 
@@ -50,6 +76,7 @@ Guidance for selecting, structuring, and gating CI checks. Example workflows liv
 | `examples/ci.yml` | Combined fast-lane: lint + types + tests + dep audit |
 | `examples/codeql.yml` | CodeQL on PRs to main and on schedule |
 | `examples/dependabot.yml` | Dependabot config for Python, npm, and GitHub Actions |
+| `scripts/check_gha_usage.py` | Report repo + account Actions/storage usage |
 
 ## Dependency update bots
 

@@ -1,6 +1,6 @@
 # Policies
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Durable, opt-in repo rules a project can adopt and enforce. Each policy states the rule,
 the rationale, sensible defaults, and how it is enforced (hook, CI, or convention).
@@ -13,9 +13,13 @@ in one place and let [`hooks/`](../hooks/) and [`ci/`](../ci/) enforce them.
 | Policy | Enforced by |
 |---|---|
 | [file-size-and-counts.md](file-size-and-counts.md) — file/function size & per-dir file counts | `hooks/scripts/check_file_size.py` |
+| [plans-and-todos.md](plans-and-todos.md) — plans lifecycle, archiving, living `to_do` caps | `hooks/scripts/check_todo_limits.py` + convention |
+| [changelog-conventions.md](changelog-conventions.md) — public vs developer changelogs + SemVer | convention / release hygiene |
 | [doc-freshness.md](doc-freshness.md) — `Last reviewed` markers & staleness windows | `hooks/scripts/check_doc_freshness.py` |
 | [commits-and-branches.md](commits-and-branches.md) — commit messages, branch naming, PR hygiene | convention + optional CI |
 | [security-baseline.md](security-baseline.md) — secrets, deps, SAST expectations | hooks + CI (see `inventory/security-quality.md`) |
+| [github-actions-usage.md](github-actions-usage.md) — Actions minutes/storage stewardship | convention + `ci/scripts/check_gha_usage.py` |
+| [garbage-collection.md](garbage-collection.md) — dead code, stale TODOs, unused deps | CI + agent prompts |
 
 ## How to adopt
 

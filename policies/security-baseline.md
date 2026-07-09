@@ -12,7 +12,7 @@ known-vulnerable deps) before they reach history or production.
 
 | Area | Rule | Default tool | Tier |
 |---|---|---|---|
-| Secrets | No secrets in commits or history | gitleaks (pre-commit + CI), trufflehog (history) | hard gate |
+| Secrets | No secrets in commits or history | gitleaks (pre-commit + CI), trufflehog (history); optional Codex Security plugin for agent-side review | hard gate |
 | Dependencies | No known-critical vulns in direct deps | pip-audit / npm audit / osv-scanner | soft→hard gate |
 | Dependency updates | Automated update PRs enabled | Dependabot or Renovate | advisory |
 | SAST | Static analysis on changed code | Semgrep and/or CodeQL | soft gate |

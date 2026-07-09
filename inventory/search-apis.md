@@ -1,9 +1,12 @@
 # Search & Web APIs
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Free and low-cost search APIs for agent-driven web research, RAG pipelines, and
 grounded generation. Ordered roughly by ease of use for agents.
+
+**Credentials:** never commit API keys. Store them in a secrets manager or local env
+(`.env`, gitignored).
 
 ---
 
@@ -91,6 +94,17 @@ affiliations, and open-access links. Good alternative to Semantic Scholar.
 
 ---
 
+## Crawl / scrape for agent context
+
+### Firecrawl
+https://www.firecrawl.dev
+
+Hosted crawl/scrape API that returns clean markdown or structured data for RAG and
+agent research. Prefer Jina Reader for one-off URL→markdown with no key; use Firecrawl
+when you need site-wide crawl, JS rendering, or structured extraction at scale.
+
+---
+
 ## Open data & web archives
 
 ### Wikipedia API
@@ -117,5 +131,6 @@ web data extraction; not suitable for real-time agent queries.
 | Medical / life science | PubMed API |
 | Preprints (CS, ML, physics) | arXiv API |
 | URL → clean text for RAG | Jina Reader (no key) |
+| Site crawl / JS-heavy pages | Firecrawl |
 | Google-fidelity results | SerpAPI (paid) |
 | Independent index / privacy | Brave Search API |

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Single source of truth for AI coding agents working in this repository. Other agent
 entrypoints (`CLAUDE.md`, `GEMINI.md`, `QWEN.md`, `.github/copilot-instructions.md`,
@@ -24,6 +24,7 @@ Do not load everything. Start here, then open only what the task needs.
 | Adding/enforcing repo rules | [`policies/README.md`](policies/README.md) |
 | Wiring local checks | [`hooks/README.md`](hooks/README.md) |
 | Setting up CI | [`ci/README.md`](ci/README.md) |
+| Checking Actions minutes / storage | [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py), [`policies/github-actions-usage.md`](policies/github-actions-usage.md) |
 | Writing a plan / design / review | [`templates/`](templates/) and [`prompts/`](prompts/) |
 | Installing skills or subagents | [`inventory/catalog-skills-agents.md`](inventory/catalog-skills-agents.md) |
 | Choosing an orchestration approach | [`inventory/harness-engineering.md`](inventory/harness-engineering.md) |
@@ -43,20 +44,27 @@ Do not load everything. Start here, then open only what the task needs.
 
 - `prompts/` — reusable prompts (bootstrap, refactor, docs audit, subagent workflow, reviews).
 - `templates/` — fill-in artifacts (plan, design, ADR, bug/security/safety review, assessments).
-- `policies/` — durable repo rules (file size/counts, doc freshness, commits, security baseline).
-- `hooks/` — pre-commit config + policy-check scripts.
+- `policies/` — durable repo rules (file size/counts, plans/todos, changelogs, doc freshness, commits, security).
+- `hooks/` — pre-commit config + policy-check scripts (file size, TODO limits, secrets, lint).
 - `ci/` — CI selection guidance and example workflows.
 - `inventory/` — curated indexes of tools, skills, MCP servers, references (install-on-demand).
+- `plans/` — (when adopted) active implementation plans; archive completed ones under `plans/archive/`.
 - `.cursor/`, `.windsurf/` — editor rule sets (CodeGuard security rules).
 - `.context/` — scratch only; never required reading, never committed.
 
-## Conventions
+## Conventions (changelog, plans, sizes)
 
-- **Commits/branches:** see [`policies/commits-and-branches.md`](policies/commits-and-branches.md).
-- **Doc freshness:** durable docs carry a `Last reviewed: YYYY-MM-DD` marker; see
-  [`policies/doc-freshness.md`](policies/doc-freshness.md).
-- **File size limits:** see [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md).
-- **SemVer:** the template itself is versioned in [`VERSION`](VERSION).
+| Topic | Where documented |
+|---|---|
+| Public vs developer changelogs + SemVer | [`policies/changelog-conventions.md`](policies/changelog-conventions.md) |
+| Plans lifecycle, marking done, archiving, `to_do` caps | [`policies/plans-and-todos.md`](policies/plans-and-todos.md) |
+| Source/doc line caps (soft **600** / hard **1000**) | [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md) |
+| Secret scanning + lint hooks | [`hooks/README.md`](hooks/README.md), [`policies/security-baseline.md`](policies/security-baseline.md) |
+| GitHub Actions minutes/storage (estimate before expanding CI) | [`policies/github-actions-usage.md`](policies/github-actions-usage.md), [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py) |
+
+**Notes_and_Ideas vs this template:** personal research dumps, private key dashboards, and
+exploratory idea notes belong in a Notes_and_Ideas (or similar) repo. Index only durable,
+reusable menus and conventions here.
 
 ## Agent compatibility
 

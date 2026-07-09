@@ -1,6 +1,6 @@
 # Hooks
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Pre-commit hooks and policy-check scripts. The `.pre-commit-config.yaml` in this
 directory is an **example** — copy it to your project root to activate it.
@@ -70,3 +70,20 @@ Set these in CI environment config or a project-level `.env.ci` (not committed).
 2. Write the policy it enforces in `policies/`.
 3. Add an entry in `.pre-commit-config.yaml` under the `local` repo block.
 4. Document the threshold env vars here.
+
+## Optional: prune local `backups/`
+
+If agents copy files into a gitignored `backups/` folder before edits, add a local
+pre-commit (or post-commit) hook that deletes backup snapshots older than the last
+**5 commits** so the folder does not grow unbounded. Example sketch:
+
+```bash
+# hooks/scripts/prune_backups.sh — keep only backups newer than HEAD~5
+KEEP_SINCE=$(git log -5 --pretty=format:%ct | tail -1)
+find backups -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read -r d; do
+  # timestamped dirs like backups/YYYYMMDD-HHMMSS/
+  :
+done
+```
+
+Wire it only if your team actually uses `backups/`; it is not enabled by default.

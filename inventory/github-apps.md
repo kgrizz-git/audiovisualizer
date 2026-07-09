@@ -1,6 +1,6 @@
 # GitHub-Connected Apps & Review Bots
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Apps and services that connect to GitHub to augment CI, code review, security scanning,
 and coverage. All are install-on-demand — evaluate per project before enabling.
@@ -19,6 +19,10 @@ expanding. Pairs well with ruff for Python projects.
 Generates tests for changed code and reviews PR logic. Useful when test coverage is low.
 
 ## Static analysis & autofix
+
+**SonarQube Community** — https://docs.sonarsource.com/sonarqube-community-build/try-out-sonarqube
+Self-hosted quality/security gate (bugs, smells, coverage, some vulns). Prefer when you
+want an on-prem dashboard; pair with Semgrep/CodeQL in CI rather than replacing them.
 
 **DeepSource** — https://deepsource.com
 Continuous static analysis with autofix PRs. Supports Python, JS/TS, Go, Ruby, Rust,

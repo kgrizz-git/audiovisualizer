@@ -4,7 +4,8 @@ Review these sources when choosing agent skills, prompts, rules, or workflows fo
 
 ## Core Sources
 
-- Obra superpowers: planning, debugging, TDD, review, and agentic workflow patterns.
+- Obra Superpowers (`obra/superpowers` + optional `obra/superpowers-skills`): planning, debugging, TDD, review, and agentic workflow patterns.
+- genius-code-review: https://claudskills.com/skills/genius-code-review/SKILL.md — install-on-demand code-review skill; evaluate before adopting.
 - GStack: reusable agent workflow and tooling patterns where applicable.
 - KDense scientific skills: scientific, data, research, and domain-specific workflows where applicable.
 - Official OpenAI skills, Codex workflows, subagents, and prompt patterns.

@@ -1,6 +1,6 @@
 # AI Agent Platforms & Workflow Frameworks
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Platforms, frameworks, and local model runners for building and hosting agentic AI
 workflows. See also `inventory/harness-engineering.md` for repo-level harness articles
@@ -179,6 +179,13 @@ https://opencode.ai
 
 Terminal-based AI coding agent. AGENTS.md-compatible. Good alternative for
 terminal-centric workflows where a full IDE is not needed.
+
+When constraining agent filesystem access (e.g. block writes outside the repo):
+- Config overview: https://opencode.ai/docs/config/
+- Permissions: https://opencode.ai/docs/config/#permissions
+- Local directories: https://opencode.ai/docs/references/#local-directories
+- Agents: https://opencode.ai/docs/agents/
+- Plugins: https://opencode.ai/docs/ecosystem#plugins
 
 ### Warp Agent Platform
 https://www.warp.dev/agents

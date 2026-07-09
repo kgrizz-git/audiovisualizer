@@ -1,6 +1,6 @@
 # Skills & Agents Catalog (Install-On-Demand)
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 An index of agent skills and subagent definitions available to install when a project
 needs them. Nothing here is vendored into this template — this is a menu, not a
@@ -168,16 +168,19 @@ Notable categories in the repo (browse the README for the full list):
 
 ---
 
-## Obra superprompts
+## Obra Superpowers
 
-Source: https://github.com/obraunsdorf/obra-superprompts (verify for latest)
+Sources:
+- https://github.com/obra/superpowers — main framework + core skills methodology
+- https://github.com/obra/superpowers-skills — community-editable skills companion
+- https://github.com/obra/superpowers-marketplace — plugin marketplace install path
 
-Planning, debugging, TDD, review, and agentic workflow patterns. Designed for use as
-system-prompt snippets or skill bodies. Covers structured problem decomposition,
-test-first implementation, and multi-step review workflows.
+Composable `SKILL.md` workflows for planning, TDD, debugging, subagent-driven development,
+and two-stage code review. Install per host (Claude Code, Cursor, Codex, OpenCode, etc.);
+evaluate skills individually before adopting into automated workflows.
 
-> **Trust level:** Public repository; community-maintained. Verify license and inspect
-> content before adding to automated workflows.
+> **Trust level:** Public; MIT; actively maintained. Prefer the core repo for methodology;
+> pull community skills selectively from `superpowers-skills`.
 
 ---
 

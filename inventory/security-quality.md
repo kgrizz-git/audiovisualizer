@@ -1,6 +1,6 @@
 # Security And Quality Tools
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Choose tools based on project language, deployment model, data sensitivity, and team workflow.
 See [`policies/security-baseline.md`](../policies/security-baseline.md) for what to enforce
@@ -112,6 +112,7 @@ syft . -o spdx-json > sbom.json && grype sbom:sbom.json
 | **CodeQL** | 10+ languages | Deep dataflow analysis; built into GitHub Actions |
 | **Bandit** | Python | Quick, maps to CWE/OWASP categories |
 | **Snyk Code** | Multi-language | Integrated with Snyk platform |
+| **SonarQube Community** | Multi-language | Self-hosted quality + security gate; try: https://docs.sonarsource.com/sonarqube-community-build/try-out-sonarqube |
 
 ---
 

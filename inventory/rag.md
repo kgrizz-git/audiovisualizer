@@ -1,6 +1,6 @@
 # RAG Building Blocks
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Components for Retrieval-Augmented Generation pipelines: vector databases, frameworks,
 embeddings, rerankers, and document parsers. Choose based on deployment model (local vs
@@ -109,6 +109,13 @@ https://cloud.llamaindex.ai/parse
 
 LlamaIndex's managed PDF parser. Handles complex layouts; integrates directly with
 LlamaIndex pipelines.
+
+### lift (Datalab)
+https://github.com/datalab-to/lift
+
+9B open-weights vision model: schema-constrained JSON extraction from PDFs/images.
+Use when a project needs structured document fields (invoices, forms) rather than
+plain text chunks for RAG. Apache-2.0; local (HF) or vLLM.
 
 ---
 

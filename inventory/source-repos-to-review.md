@@ -1,6 +1,6 @@
 # Source Repositories To Review
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Repos worth inspecting for reusable skills, prompts, conventions, tools, or architecture
 ideas. This is a starting list — add entries as you discover new candidates.
@@ -15,7 +15,8 @@ ideas. This is a starting list — add entries as you discover new candidates.
 | https://github.com/K-Dense-AI/claude-scientific-skills | Large library of `SKILL.md`-format scientific skills (bio, chem, physics, ML, writing). MIT license. See `inventory/catalog-skills-agents.md` |
 | https://github.com/openai/symphony | OpenAI multi-agent orchestration framework. Task graphs, routing, parallelism, observability |
 | https://github.com/juanceresa/sift-kg | Knowledge graph construction from codebases for LLM grounding. See `inventory/knowledge-graph-code-mapping.md` |
-| https://github.com/obraunsdorf/obra-superprompts | Planning, debugging, TDD, review, and agentic workflow prompt patterns |
+| https://github.com/obra/superpowers | Agentic skills framework + core methodology (planning, TDD, debugging, review) |
+| https://github.com/obra/superpowers-skills | Community-editable Superpowers skills companion |
 | https://github.com/garry-tan/gstack | Agentic workflow conventions and project scaffolding patterns |
 | https://github.com/anthropics/mcp | Model Context Protocol reference implementation and server examples |
 

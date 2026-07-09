@@ -1,6 +1,6 @@
 # Harness Engineering & Agent Platform References
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-09
 
 Key articles, frameworks, and tools for building repos and systems that are legible,
 testable, and maintainable by AI coding agents. Read these before designing agent
@@ -65,6 +65,20 @@ Key lessons:
 - Sub-agents should not share mutable state; use files or a message-passing interface.
 - Give each sub-agent a narrow tool set — broad tool access degrades performance.
 - Merge sub-agent outputs into one coherent plan before broad changes.
+
+### Addy Osmani — Loop Engineering
+https://addyosmani.com/blog/loop-engineering/
+
+Tight agent feedback loops: run → observe → correct without human intervention on each
+micro-step. Complements Anthropic/OpenAI harness guidance above.
+
+### Agent Patterns
+https://agentpatterns.ai/
+
+Catalog of agent workflow patterns. Start with:
+- https://agentpatterns.ai/workflows/ — reusable workflow shapes
+- https://agentpatterns.ai/workflows/central-repo-shared-agent-standards/ — shared standards in a central repo (aligns with this template)
+- https://agentpatterns.ai/code-review/agent-assisted-code-review/ — agent-assisted review patterns
 
 ---
 

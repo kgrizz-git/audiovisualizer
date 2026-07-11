@@ -1,10 +1,11 @@
 # Plans
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-11
 
 Optional folder for implementation plans. Adopt when the project uses plan-driven or
 multi-agent work. Conventions: [`policies/plans-and-todos.md`](../policies/plans-and-todos.md).
-Template: [`templates/plan.md`](../templates/plan.md).
+Templates: [`templates/plan.md`](../templates/plan.md),
+[`templates/orchestration-state.md`](../templates/orchestration-state.md).
 
 ## Layout
 

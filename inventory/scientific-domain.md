@@ -1,6 +1,6 @@
 # Scientific & Domain Libraries
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-11
 
 Domain-specific Python libraries for medical imaging, EM/FDTD simulation, scientific
 computing, and related fields. See `inventory/catalog-skills-agents.md` for agent skills
@@ -113,6 +113,15 @@ The baseline scientific Python stack — brief mentions only; assume these are a
 | matplotlib / seaborn / plotly | Visualization |
 | statsmodels | Econometrics, time series, statistical tests |
 | pingouin | Statistical tests with effect sizes and power analysis |
+
+## Equation discovery and interpretable dynamics
+
+### KANDy
+https://github.com/KindXiaoming/kandy
+
+Combines Kolmogorov-Arnold Networks with Koopman-style lifts for discovering
+interpretable ODEs, maps, and PDEs from data. Consider alongside SINDy-style approaches
+when the project needs governing-equation discovery rather than black-box forecasting.
 
 ---
 

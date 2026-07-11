@@ -17,6 +17,12 @@ Scope: [module, feature, or full repo]
 
 ## Test quality findings
 
+### Test-related TODOs
+
+| Location | Item | Recommended disposition |
+|---|---|---|
+| `file.py:42` | [TODO, skipped test, xfail, coverage gap] | fix now / plan / issue / remove as stale |
+
 ### Missing coverage (ranked by risk)
 
 | Area | Why it matters | Suggested test |

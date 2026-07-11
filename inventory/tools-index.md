@@ -1,6 +1,6 @@
 # Developer Tools Index
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-11
 
 Starting menu for project setup and developer workflows. Select only what the project
 needs. See `inventory/security-quality.md` for security/lint/SAST tools and
@@ -30,6 +30,8 @@ needs. See `inventory/security-quality.md` for security/lint/SAST tools and
 ## Testing & automation
 
 - **Playwright** — browser automation, end-to-end tests, screenshots, visual regression
+- **instagui** — turns a CLI's `--help` into a local web form; useful for exposing
+  complex internal tools to non-CLI users or quick operator panels
 - **pytest** — Python testing; pairs with `pytest-cov` for coverage
 - **Vitest / Jest / node:test** — JavaScript and TypeScript unit/integration tests
 - **Storybook** — component development catalog; test runner for visual components
@@ -98,6 +100,7 @@ Useful for scientific computing, ML research, and domain-specific projects.
 
 | Tool | Purpose |
 |---|---|
+| **Goodfire Silico** https://goodfire.ai | Mechanistic interpretability platform for inspecting model internals and debugging LLM behavior |
 | **DVC** https://dvc.org | Data and model versioning; pipeline tracking alongside Git |
 | **MLflow** https://mlflow.org | Experiment tracking, model registry, artifact storage |
 | **Weights & Biases** https://wandb.ai | Experiment tracking, hyperparameter sweeps, model comparison |

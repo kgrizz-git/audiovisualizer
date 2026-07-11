@@ -1,6 +1,6 @@
 # Frontend, Design, UX & UI
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-11
 
 Design tools, component libraries, frontend tooling, and UX patterns for projects with
 a user interface. Use this as a menu — choose based on platform, audience, and stack.
@@ -44,6 +44,13 @@ direct design-to-code workflows in Claude Code and Cursor.
 ---
 
 ## Open design tools
+
+### Open Design
+https://github.com/BrowserCat/open-design
+
+Local-first open-source vibe-design workspace. Use as a self-hostable design exploration
+alternative when you want AI-assisted UI ideation without committing to a hosted product
+or production design-system source of truth.
 
 ### Penpot
 https://penpot.design
@@ -119,4 +126,5 @@ Operational / admin tools → dense, calm, scannable → Carbon or Polaris as re
 Consumer / marketing → expressive → consider Open Props + custom system.
 Rapid prototype → shadcn/ui + Tailwind → own the code from day one.
 Accessibility-critical → Radix UI or Headless UI as the primitive layer.
-Open-source / self-hosted design tool → Penpot.
+Open-source / self-hosted design tool → Penpot for structured design systems; Open Design
+for AI-assisted local exploration.

@@ -59,6 +59,17 @@ Read [inventory/README.md](../inventory/README.md), then open **only** the topic
 listed in the project profile's "Relevant inventory" section. Choose tools and skills
 deliberately. Do not load everything.
 
+For each relevant area, produce a short adoption list:
+
+- **Install/configure now** — tools, hooks, skills, services, or libraries needed for
+  the first useful scaffold.
+- **Evaluate later** — promising options that depend on future scale, data, users,
+  deployment targets, or workflow maturity.
+- **Skip for now** — options that are interesting but not justified by this project.
+
+Record the choices and rationale in the scaffold plan or `.context/project-profile.md`
+so future agents know why tools were or were not adopted.
+
 Ask the user if there are other repos or sources to inspect for useful skills, prompts,
 conventions, build systems, or design patterns — record them in
 [inventory/source-repos-to-review.md](../inventory/source-repos-to-review.md).
@@ -94,6 +105,7 @@ Produce a plan that includes:
 
 - Project purpose and target users.
 - Recommended stack and alternatives considered.
+- Tool/skill adoption list: install now, evaluate later, skip for now.
 - Proposed file tree.
 - Development environment setup.
 - Local run commands.

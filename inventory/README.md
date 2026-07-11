@@ -1,6 +1,6 @@
 # Inventory
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-11
 
 A curated index of tools, skills, MCP servers, libraries, cloud services, and source
 repositories that may help an AI agent scaffold or improve a project.
@@ -31,6 +31,7 @@ repo — not committed into this template.
 - [mcp-servers.md](mcp-servers.md) — MCP and agent tool server candidates
 - [extensions-software.md](extensions-software.md) — local apps, editor extensions, CLIs, and hosted services
 - [github-apps.md](github-apps.md) — GitHub-connected apps (AI review, SAST, coverage, vulnerability scanning)
+- [linear-workflows.md](linear-workflows.md) — when to use Linear vs in-repo plans and TODOs
 
 ### Cloud & platforms
 - [cloud-and-infra.md](cloud-and-infra.md) — Cloudflare, Google Cloud/Colab/AI Studio, serverless GPU (Modal, HF Spaces), VPS options

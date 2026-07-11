@@ -1,5 +1,6 @@
 # Safety Review: [Title / Scope]
 
+Last reviewed: 2026-07-11
 Date: YYYY-MM-DD
 Reviewer: [agent or human]
 Scope: [model, feature, dataset, prompt, or deployment under review]

@@ -16,7 +16,14 @@ needs. See `inventory/security-quality.md` for security/lint/SAST tools and
 - Pre-commit (`pre-commit install` — see `hooks/`)
 - Docker or another container runtime when useful
 - EditorConfig
-- direnv for environment switching across directories
+- **direnv** — auto-loads and unloads `.envrc` when you `cd` into or out of a
+  directory. Recommend it on almost every project: it keeps API keys, runtime env
+  vars, and PATH changes project-scoped instead of leaking into the global shell
+  profile. Pairs well with `pyenv` and `uv` — add `layout python3` or `layout uv`
+  to `.envrc` and the virtualenv activates automatically on directory entry. One-time
+  setup: `brew install direnv` + shell hook (`eval "$(direnv hook zsh)"` in `.zshrc`);
+  per-project: create `.envrc`, run `direnv allow`. Add `.envrc` to `.gitignore` if
+  it contains secrets; commit a `.envrc.example` for teammates instead.
 
 ---
 

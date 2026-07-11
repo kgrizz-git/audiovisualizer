@@ -1,5 +1,7 @@
 # Python Project Inventory
 
+Last reviewed: 2026-07-11
+
 If the target project uses Python, recommend a local setup that is reproducible and easy for agents to inspect.
 
 ## Baseline Recommendations

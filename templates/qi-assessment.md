@@ -1,5 +1,6 @@
 # Quality Improvement Assessment: [Scope]
 
+Last reviewed: 2026-07-11
 Date: YYYY-MM-DD
 Reviewer: [agent or human]
 Scope: [files, module, or system]

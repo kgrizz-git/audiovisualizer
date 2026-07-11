@@ -1,5 +1,6 @@
 # ADR-[NNN]: [Title]
 
+Last reviewed: 2026-07-11
 Date: YYYY-MM-DD
 Status: proposed | accepted | deprecated | superseded by [ADR-NNN]
 Deciders: [names or roles]

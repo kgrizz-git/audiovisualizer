@@ -1,26 +1,27 @@
 # Security Review: [Title / Scope]
 
+Last reviewed: 2026-07-11
 Date: YYYY-MM-DD
 Reviewer: [agent or human]
 Scope: [files, PR, feature, or system under review]
 Classification: routine | elevated | critical
 
-## OWASP Top 10 checklist (2021)
+## OWASP Top 10 checklist (2025)
 
 Mark each as ✅ checked-clean | ⚠️ finding | N/A not applicable | — not checked.
 
 | # | Risk | Status | Notes |
 |---|---|---|---|
 | A01 | Broken Access Control | — | |
-| A02 | Cryptographic Failures | — | |
-| A03 | Injection | — | |
-| A04 | Insecure Design | — | |
-| A05 | Security Misconfiguration | — | |
-| A06 | Vulnerable & Outdated Components | — | |
-| A07 | Identification & Auth Failures | — | |
-| A08 | Software & Data Integrity Failures | — | |
-| A09 | Security Logging & Monitoring | — | |
-| A10 | Server-Side Request Forgery | — | |
+| A02 | Security Misconfiguration | — | |
+| A03 | Software Supply Chain Failures | — | |
+| A04 | Cryptographic Failures | — | |
+| A05 | Injection | — | |
+| A06 | Insecure Design | — | |
+| A07 | Authentication Failures | — | |
+| A08 | Software or Data Integrity Failures | — | |
+| A09 | Security Logging and Alerting Failures | — | |
+| A10 | Mishandling of Exceptional Conditions | — | |
 
 ## Automated scan results
 

@@ -1,5 +1,7 @@
 # Skills And Prompt Sources
 
+Last reviewed: 2026-07-11
+
 Review these sources when choosing agent skills, prompts, rules, or workflows for a new project. Prefer official and actively maintained sources where possible, and ask the user before importing large conventions from another repo.
 
 ## Core Sources

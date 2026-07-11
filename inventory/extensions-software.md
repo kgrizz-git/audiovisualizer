@@ -1,5 +1,7 @@
 # Extensions, Software, CLIs, And Services
 
+Last reviewed: 2026-07-11
+
 Use this file for non-library tooling that may help the local development loop, agent workflow, design workflow, or delivery process.
 
 ## Editors And AI Coding Environments

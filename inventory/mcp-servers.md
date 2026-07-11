@@ -1,5 +1,7 @@
 # MCP Servers And Agent Tooling
 
+Last reviewed: 2026-07-11
+
 Consider MCP servers when they make important project state directly legible to agents. Avoid adding servers that create complexity without improving validation or feedback loops.
 
 ## Useful Categories

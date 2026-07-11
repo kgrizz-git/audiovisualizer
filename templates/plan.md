@@ -1,5 +1,6 @@
 # Plan: [Title]
 
+Last reviewed: 2026-07-11
 Date: YYYY-MM-DD
 Author: [agent or human]
 Status: draft | approved | in-progress | complete | abandoned

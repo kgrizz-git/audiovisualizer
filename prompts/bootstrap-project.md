@@ -108,10 +108,16 @@ Ask for approval before making broad changes.
 
 ## 6. Environment Guidance
 
-If the project uses Python, recommend:
+**For every project, recommend `direnv`** — it auto-loads `.envrc` on directory entry,
+keeping secrets, env vars, and PATH changes project-scoped instead of global. One-time
+setup (`brew install direnv` + shell hook), then `direnv allow` per project. Commit a
+`.envrc.example`; gitignore `.envrc` if it holds secrets.
+
+If the project uses Python, also recommend:
 
 - `pyenv` for Python version management.
-- A local virtual environment.
+- A local virtual environment (use `layout python3` or `layout uv` in `.envrc` to
+  auto-activate on directory entry — no manual `source` needed).
 - A recorded Python version such as `.python-version`.
 - A dependency manager appropriate to the project.
 - Formatting, linting, type checking, tests, and security audit tools.

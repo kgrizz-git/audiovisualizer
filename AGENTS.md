@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-11
 
 Single source of truth for AI coding agents working in this repository. Other agent
 entrypoints (`CLAUDE.md`, `GEMINI.md`, `QWEN.md`, `.github/copilot-instructions.md`,
@@ -44,7 +44,7 @@ Do not load everything. Start here, then open only what the task needs.
 ## Repo map
 
 - `prompts/` — reusable prompts (bootstrap, refactor, docs audit, subagent workflow, reviews).
-- `templates/` — fill-in artifacts (plan, design, ADR, bug/security/safety review, assessments).
+- `templates/` — fill-in artifacts (briefs, plans, designs, ADRs, runbooks, releases, reviews, assessments).
 - `policies/` — durable repo rules (file size/counts, plans/todos, changelogs, doc freshness, commits, security).
 - `hooks/` — pre-commit config + policy-check scripts (file size, TODO limits, secrets, lint).
 - `ci/` — CI selection guidance and example workflows.

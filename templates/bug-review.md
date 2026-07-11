@@ -1,5 +1,6 @@
 # Bug Review: [Title]
 
+Last reviewed: 2026-07-11
 Date: YYYY-MM-DD
 Severity: critical | high | medium | low
 Status: investigating | confirmed | fixed | wont-fix | duplicate

@@ -1,6 +1,6 @@
 # Repo Harness Template
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-11
 
 A project seed for AI-assisted development — policies, hooks, CI examples, templates, and curated tool inventories baked in from day one.
 
@@ -15,7 +15,7 @@ A project seed for AI-assisted development — policies, hooks, CI examples, tem
 | Directory | What it is |
 |---|---|
 | [`prompts/`](prompts/) | Reusable agent prompts: bootstrap, session-start, maintenance, reviews, audits |
-| [`templates/`](templates/) | Fill-in artifacts: plan, design doc, ADR, bug/security/safety review, assessments |
+| [`templates/`](templates/) | Fill-in artifacts: briefs, plans, designs, ADRs, runbooks, release checklists, reviews, assessments |
 | [`policies/`](policies/) | Durable repo rules: file size, plans/todos, changelogs, doc freshness, commits, security, GC |
 | [`hooks/`](hooks/) | Pre-commit config + policy scripts (file size, TODO limits, secrets, lint) |
 | [`ci/`](ci/) | CI selection guidance and example GitHub Actions workflows |

@@ -47,6 +47,13 @@ radon cc . --min C --show-complexity   # flag C-and-above
 ruff check --select C901,PLR0912,PLR0915 .
 ```
 
+**Polyglot — check with lizard:**
+
+```bash
+pip install lizard
+lizard . --CCN 10 --length 60
+```
+
 **JavaScript / TypeScript — ESLint:**
 
 ```json

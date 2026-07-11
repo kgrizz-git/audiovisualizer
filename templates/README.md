@@ -12,6 +12,7 @@ For the *prompts* that instruct an agent to produce these outputs, see [`prompts
 | Template | Use when |
 |---|---|
 | [plan.md](plan.md) | Starting a non-trivial task; need a reviewable plan before coding |
+| [orchestration-state.md](orchestration-state.md) | Tracking multi-agent or parallel plan execution state |
 | [project-brief.md](project-brief.md) | Capturing project purpose, users, constraints, and success criteria |
 | [design.md](design.md) | Making a non-obvious architecture or UX decision |
 | [adr.md](adr.md) | Recording a durable architecture decision and its rationale |

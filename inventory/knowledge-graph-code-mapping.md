@@ -1,6 +1,6 @@
 # Knowledge Graph & Code Mapping Tools
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-11
 
 Tools for building structural maps of codebases, understanding cross-file relationships,
 and creating knowledge graphs that agents and humans can query. Useful for large repos,
@@ -24,6 +24,13 @@ Offline Python/SQL structure extraction (tree-sitter via Graphify; PyPI package 
 `graphifyy`) into `graph.json`, then NetworkX for god-node centrality, Louvain
 communities, shortest paths, and Matplotlib/Pyvis visualizations. Prefer when you want
 local architecture maps without an LLM backend.
+
+### Understand Anything
+https://github.com/yoheinakajima/understand-anything
+
+Interactive codebase/wiki knowledge graph with guided tours, diff impact exploration,
+and chat over mapped repositories. Use when humans need a browsable graph UI rather than
+only static diagrams or generated Markdown docs.
 
 ### GraphRAG (Microsoft)
 https://github.com/microsoft/graphrag
@@ -160,6 +167,7 @@ MCP matter more than zero-config SaaS.
 |---|---|
 | Fast structural graph of any language codebase | tree-sitter + sift-kg |
 | Offline Python structure + god nodes / communities | Graphify + NetworkX |
+| Interactive codebase knowledge graph UI | Understand Anything |
 | Compact repo map for LLM context | aider repomap |
 | Cross-repo search at scale | Sourcegraph |
 | Persistent queryable knowledge graph | Neo4j + GraphRAG |

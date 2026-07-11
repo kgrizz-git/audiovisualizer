@@ -1,6 +1,6 @@
 # Skills & Agents Catalog (Install-On-Demand)
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-11
 
 An index of agent skills and subagent definitions available to install when a project
 needs them. Nothing here is vendored into this template — this is a menu, not a
@@ -9,6 +9,11 @@ pre-install list.
 **How to use:** Find the skill or agent that fits the task, follow the source link,
 copy the folder into `.claude/skills/<name>/` or `.claude/agents/<name>.md`, then verify
 it loads correctly in your IDE.
+
+Before installing or invoking skills, use [`prompts/select-agent-skills.md`](../prompts/select-agent-skills.md)
+to choose the smallest useful set. When installed in a project created from this template,
+planner/orchestrator/coder/reviewer/tester/secops/ux skills should prefer local prompts,
+templates, and policies when those files exist.
 
 ---
 

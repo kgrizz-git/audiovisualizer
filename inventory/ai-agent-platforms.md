@@ -1,6 +1,6 @@
 # AI Agent Platforms & Workflow Frameworks
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-11
 
 Platforms, frameworks, and local model runners for building and hosting agentic AI
 workflows. See also `inventory/harness-engineering.md` for repo-level harness articles
@@ -55,6 +55,13 @@ natively. See `inventory/mcp-servers.md` for server candidates.
 ---
 
 ## Browser & web automation
+
+### Cloudflare Browser Run
+https://developers.cloudflare.com/browser-rendering/
+
+Managed browser automation on Cloudflare's network: remote Chrome, CDP, MCP-style agent
+workflows, live view, crawling, and human-in-the-loop browser tasks. Use when local
+Playwright is not enough or browser work should run close to edge infrastructure.
 
 ### browser-use
 https://github.com/browser-use/browser-use

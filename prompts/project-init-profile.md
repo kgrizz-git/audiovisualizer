@@ -40,6 +40,11 @@ Ask conversationally — do not dump all questions at once. Group them into 2-3 
 
 **Key constraints** — e.g., air-gapped, HIPAA, GDPR, no-GPU, open-source-only, budget limit
 
+**Data classification** — `public`, `internal`, `confidential`, `regulated`, or `TBD`; state
+whether real PII/PHI, customer exports, screenshots, logs, or other production data are
+prohibited, and record any approved exception/handling design. This selects the hygiene tier
+in [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
+
 ---
 
 ## Step 2: Determine orchestration tier and relevant inventory
@@ -67,6 +72,7 @@ covers most local multi-agent workflows without the infrastructure cost.
 | data-pipeline | python, cloud-and-infra, scientific-domain (if scientific data) |
 | design | frontend-design-ux, cloud-and-infra |
 | agentic | ai-agent-platforms, harness-engineering, catalog-skills-agents, rag |
+| medical domain or regulated data classification | medical-data-security, security-quality, github-apps (only after data-flow approval) |
 | any | security-quality (always), github-apps (if using GitHub CI) |
 
 ---
@@ -101,6 +107,8 @@ Package manager: uv | pip | poetry | npm | pnpm | cargo | other
 
 Team size: solo | small-team | large-team
 Key constraints: (or none)
+Data classification: public | internal | confidential | regulated | TBD
+Repository data rule: (e.g., synthetic fixtures only; real PII/PHI prohibited)
 
 ## Agent orchestration
 

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Last reviewed: 2026-07-11
+Last reviewed: 2026-07-14
 
 Single source of truth for AI coding agents working in this repository. Other agent
 entrypoints (`CLAUDE.md`, `GEMINI.md`, `QWEN.md`, `.github/copilot-instructions.md`,
@@ -24,6 +24,7 @@ Do not load everything. Start here, then open only what the task needs.
 | Adding/enforcing repo rules | [`policies/README.md`](policies/README.md) |
 | Wiring local checks | [`hooks/README.md`](hooks/README.md) |
 | Setting up CI | [`ci/README.md`](ci/README.md) |
+| Working with PII, PHI, medical/FHIR/HL7/DICOM, or regulated data | [`prompts/strict-phi-agent-guidance.md`](prompts/strict-phi-agent-guidance.md) **before editing or configuring tools** |
 | Checking Actions minutes / storage | [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py), [`policies/github-actions-usage.md`](policies/github-actions-usage.md) |
 | Checking open PRs after push / daily | [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py), [`policies/commits-and-branches.md`](policies/commits-and-branches.md) |
 | Writing a plan / design / review | [`templates/`](templates/) and [`prompts/`](prompts/) |
@@ -50,6 +51,8 @@ Do not load everything. Start here, then open only what the task needs.
 - `ci/` — CI selection guidance and example workflows.
 - `inventory/` — curated indexes of tools, skills, MCP servers, references (install-on-demand).
 - `plans/` — (when adopted) active implementation plans; archive completed ones under `plans/archive/`.
+- `hooks/scripts/check_sensitive_data.py` — opt-in strict medical-data gate; scans every tracked file and requires exact human approval for opaque files.
+- `inventory/medical-data-security.md` — strict guard setup and medical-data scanner menu.
 - `.cursor/`, `.windsurf/` — editor rule sets (CodeGuard security rules).
 - `.context/` — scratch only; never required reading, never committed.
 
@@ -63,6 +66,7 @@ Do not load everything. Start here, then open only what the task needs.
 | Secret scanning + lint hooks | [`hooks/README.md`](hooks/README.md), [`policies/security-baseline.md`](policies/security-baseline.md) |
 | GitHub Actions minutes/storage (estimate before expanding CI) | [`policies/github-actions-usage.md`](policies/github-actions-usage.md), [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py) |
 | Open PRs after push (advisory, not a hook) | [`policies/commits-and-branches.md`](policies/commits-and-branches.md), [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py) |
+| Strict PII/PHI controls, approval inventory, and agent behavior | [`prompts/strict-phi-agent-guidance.md`](prompts/strict-phi-agent-guidance.md), [`inventory/medical-data-security.md`](inventory/medical-data-security.md) |
 
 **Notes_and_Ideas vs this template:** personal research dumps, private key dashboards, and
 exploratory idea notes belong in a Notes_and_Ideas (or similar) repo. Index only durable,

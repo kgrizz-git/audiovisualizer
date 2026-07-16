@@ -32,11 +32,20 @@ in step 3 — do not load all 18 files by default.
 
 **Medical or regulated data trigger:** if the user indicates PII, PHI, clinical/FHIR/HL7/DICOM,
 or similarly regulated data, read
-[`prompts/strict-phi-agent-guidance.md`](strict-phi-agent-guidance.md) and
+[`prompts/strict-phi-agent-guidance.md`](strict-phi-agent-guidance.md),
+[`prompts/sensitive-data-leak-prevention.md`](sensitive-data-leak-prevention.md), and
 [`inventory/medical-data-security.md`](../inventory/medical-data-security.md) before creating
 fixtures or configuring external tools. Have a human create the exact-file approval inventory,
 wire the strict local hook and required CI job, and protect those controls with CODEOWNERS before
-the first relevant commit. Do not let an agent add approval entries. If the project ingests,
+the first relevant commit. Do not let an agent add approval entries. Beyond keeping data out of
+the repo, design the code so it does not leak PII/PHI/secrets/usernames/IPs/hostnames/paths into
+logs, temp files, test/CI output, caches, telemetry, or third-party/AI calls (in production *or*
+development): sanitize at the boundary, gitignore and document any sensitive-capable sinks, and
+ship a one-command way to clear local logs/caches/temp artifacts — see
+[`prompts/sensitive-data-leak-prevention.md`](sensitive-data-leak-prevention.md) for the
+how, and wire the tiered checks in
+[`policies/sensitive-data-runtime-leaks.md`](../policies/sensitive-data-runtime-leaks.md)
+(gitignore artifact dirs, `make clean-sensitive`, log-scanning tests, HoundDog data-flow scan). If the project ingests,
 processes, or exports scanned documents, PDFs, images, or DICOM files, inventory options for
 local OCR or local multimodal vision models to detect burned-in text/PII before data ingestion.
 A full-history PII/PHI audit is not meaningful on a freshly bootstrapped repo—instead, record it

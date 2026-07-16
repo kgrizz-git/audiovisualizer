@@ -82,8 +82,10 @@ sanitized issue or incident reference.
 
 Use the strict guard with—not instead of—threat modeling, access control, encryption, audit,
 retention, incident response, and legal/privacy review. See
-[`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md) and
-[`prompts/strict-phi-agent-guidance.md`](../prompts/strict-phi-agent-guidance.md).
+[`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md),
+[`prompts/strict-phi-agent-guidance.md`](../prompts/strict-phi-agent-guidance.md), and
+[`prompts/sensitive-data-leak-prevention.md`](../prompts/sensitive-data-leak-prevention.md)
+(runtime/dev leak prevention: redaction, temp files, caches, telemetry, easy clearance).
 
 ### Local OCR and AI vision evaluation guidance
 

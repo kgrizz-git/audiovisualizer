@@ -8,6 +8,20 @@ Internal / developer-facing changes that do not belong in the public
 ### Added
 - `template-checks` GitHub Actions workflow: path-filtered validation for maintained
   Markdown, Actions examples, shell hooks, Python policy scripts, and committed secrets.
+- `prompts/sensitive-data-leak-prevention.md`: runtime/dev leak-prevention guidance
+  (logs, temp files, test/CI output, caches, telemetry, third-party/AI egress) with
+  a leak-surface control table, awareness/easy-clearance practices, and verification
+  steps. Wired into the bootstrap medical/regulated trigger, `AGENTS.md`,
+  `strict-phi-agent-guidance.md`, and `inventory/medical-data-security.md`.
+- `policies/sensitive-data-runtime-leaks.md`: registers the runtime-leak rule with
+  tiered enforcement (gitignore artifact dirs + strict guard, `make clean-sensitive`,
+  log-scanning tests, telemetry-egress review, HoundDog data-flow scan) and clear
+  remediation; intentionally no false "redaction" hard gate. Listed in
+  `policies/README.md`, `AGENTS.md`, and the bootstrap wiring step.
+- `inventory/cloud-and-infra.md`: **Observability & error monitoring** section —
+  self-hosted Sentry (`getsentry/self-hosted`), managed Sentry free tier, GlitchTip,
+  and OpenTelemetry, with the keep-event-data-on-your-infra / no-BAA-on-free-tiers
+  caveat cross-linked to the runtime-leak policy and prompt.
 
 ### Changed
 - Template CI pins Markdownlint and applies the repository's established style choices;

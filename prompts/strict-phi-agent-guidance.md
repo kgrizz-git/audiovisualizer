@@ -7,6 +7,11 @@ clinical records, FHIR/HL7, DICOM, patient data, regulated data, or comparable i
 Read [`inventory/medical-data-security.md`](../inventory/medical-data-security.md) before
 selecting tooling.
 
+This document keeps sensitive data **out of the repository and Git history**. For the
+complementary risk — code that leaks PII/PHI/secrets/usernames/IPs/hostnames/paths at runtime
+into logs, temp files, test/CI output, caches, telemetry, or third-party/AI calls (in production
+*or* development) — see [`sensitive-data-leak-prevention.md`](sensitive-data-leak-prevention.md).
+
 ## Non-negotiable agent behavior
 
 - Treat real PII/PHI and production-derived data as prohibited from the repository unless the

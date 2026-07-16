@@ -1,6 +1,6 @@
 # Cloud & Infrastructure
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-16
 
 Cloud platforms, serverless compute, managed AI services, and VPS options relevant to
 AI/ML projects. Organized by provider; choose based on cost, latency, and ecosystem fit.
@@ -114,3 +114,25 @@ backends on your own hardware.
 
 For local model inference on VPS: see `inventory/ai-agent-platforms.md` (Ollama,
 llama.cpp, LM Studio, MLX).
+
+---
+
+## Observability & error monitoring
+
+Error/performance monitoring for apps and services. **Self-hosting keeps event data —
+which often carries PII/PHI, tokens, request bodies, and stack locals — on infrastructure
+you control**, which is the right default for regulated data (managed free tiers offer no
+BAA). Whatever you pick, scrub before send and never ship raw request bodies/PII; see
+[`policies/sensitive-data-runtime-leaks.md`](../policies/sensitive-data-runtime-leaks.md)
+and [`prompts/sensitive-data-leak-prevention.md`](../prompts/sensitive-data-leak-prevention.md).
+
+| Option | Notes |
+|---|---|
+| **Sentry — self-hosted** https://develop.sentry.dev/self-hosted/ (`getsentry/self-hosted`) | Full error + performance monitoring on your own host; no event caps or per-seat limits. Docker-Compose stack is resource-heavy (multi-GB RAM, Kafka/ClickHouse/Postgres) — size a VPS accordingly. Best when data must not leave your infrastructure. |
+| **Sentry — managed free ("Developer")** https://sentry.io/pricing/ | 1 user, ~5K errors/mo plus small performance/replay/cron quotas. Fine for solo/hobby/OSS; the single seat is the pinch. **No BAA on free/low tiers — not for PHI.** Sentry has also historically offered sponsored plans for qualifying OSS projects (apply-based). |
+| **GlitchTip** https://glitchtip.com | Lightweight, Sentry-SDK-compatible open-source error tracking; far smaller footprint than self-hosted Sentry. Good self-host option when full Sentry is overkill. Managed tier also exists. |
+| **OpenTelemetry** https://opentelemetry.io | Vendor-neutral instrumentation standard (traces/metrics/logs). Instrument once, export to a self-hosted collector or any backend; avoids lock-in. Apply the same scrubbing before export. |
+
+Managed **Datadog** is a broad infra/APM/logs platform, not an error-tracker peer: its free
+tier is narrow (~5 hosts, 1-day retention, no meaningful APM/error tracking), and a BAA is
+enterprise-only. Reach for it when you have real org-wide observability needs and budget.

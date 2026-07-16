@@ -25,6 +25,7 @@ Do not load everything. Start here, then open only what the task needs.
 | Wiring local checks | [`hooks/README.md`](hooks/README.md) |
 | Setting up CI | [`ci/README.md`](ci/README.md) |
 | Working with PII, PHI, medical/FHIR/HL7/DICOM, or regulated data | [`prompts/strict-phi-agent-guidance.md`](prompts/strict-phi-agent-guidance.md) **before editing or configuring tools** |
+| Making sure code doesn't leak sensitive data at runtime (logs, temp files, caches, test/CI output, telemetry) | [`prompts/sensitive-data-leak-prevention.md`](prompts/sensitive-data-leak-prevention.md) |
 | Checking Actions minutes / storage | [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py), [`policies/github-actions-usage.md`](policies/github-actions-usage.md) |
 | Checking open PRs after push / daily | [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py), [`policies/commits-and-branches.md`](policies/commits-and-branches.md) |
 | Writing a plan / design / review | [`templates/`](templates/) and [`prompts/`](prompts/) |
@@ -67,6 +68,7 @@ Do not load everything. Start here, then open only what the task needs.
 | GitHub Actions minutes/storage (estimate before expanding CI) | [`policies/github-actions-usage.md`](policies/github-actions-usage.md), [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py) |
 | Open PRs after push (advisory, not a hook) | [`policies/commits-and-branches.md`](policies/commits-and-branches.md), [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py) |
 | Strict PII/PHI controls, approval inventory, and agent behavior | [`prompts/strict-phi-agent-guidance.md`](prompts/strict-phi-agent-guidance.md), [`inventory/medical-data-security.md`](inventory/medical-data-security.md) |
+| Runtime/dev leak prevention (redaction, temp files, caches, telemetry, easy clearance) | [`prompts/sensitive-data-leak-prevention.md`](prompts/sensitive-data-leak-prevention.md) (how), [`policies/sensitive-data-runtime-leaks.md`](policies/sensitive-data-runtime-leaks.md) (rule + tiers) |
 
 **Notes_and_Ideas vs this template:** personal research dumps, private key dashboards, and
 exploratory idea notes belong in a Notes_and_Ideas (or similar) repo. Index only durable,

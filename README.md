@@ -1,6 +1,6 @@
 # Repo Harness Template
 
-Last reviewed: 2026-07-11
+Last reviewed: 2026-07-13
 
 A project seed for AI-assisted development — policies, hooks, CI examples, templates, and curated tool inventories baked in from day one.
 
@@ -25,6 +25,8 @@ A project seed for AI-assisted development — policies, hooks, CI examples, tem
 Full contents: see [`inventory/README.md`](inventory/README.md) for the tool/skill menu and [`AGENTS.md`](AGENTS.md) for agent navigation.
 
 Changelogs: user-facing [`CHANGELOG.md`](CHANGELOG.md); developer/internal [`CHANGELOG.dev.md`](CHANGELOG.dev.md) — see [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
+
+GitHub setup and sensitive-data controls: [`policies/github-repository-hygiene.md`](policies/github-repository-hygiene.md) scales default-branch rules, required checks, scanning, hooks, and PII/PHI/absolute-path gates to the project’s data classification.
 
 ## Template Development Notes
 

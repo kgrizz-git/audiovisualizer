@@ -1,6 +1,6 @@
 # Security And Quality Tools
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-14
 
 Choose tools based on project language, deployment model, data sensitivity, and team workflow.
 See [`policies/security-baseline.md`](../policies/security-baseline.md) for what to enforce
@@ -78,6 +78,27 @@ gitleaks detect --source . --verbose
 pip install trufflehog
 trufflehog git file://. --only-verified
 ```
+
+---
+
+## Sensitive-data detection (PII / PHI)
+
+These tools supplement—never prove—the rule that production and real regulated data should
+not enter source control. Run them locally or on an approved runner, redact matches from logs,
+and validate recall and false positives using synthetic fixtures before making a check block a
+PR. See [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md)
+for the required-check and data-handling model. For a strict first-party hook, human approval
+inventory, and medical setup instructions, see
+[`inventory/medical-data-security.md`](medical-data-security.md).
+
+| Tool | Best fit | Notes |
+|---|---|---|
+| [Microsoft Presidio](https://microsoft.github.io/presidio/) | Text, structured data, and images; custom PII recognizers | Local/open-source detection and redaction components; add domain-specific recognizers. It explicitly does not guarantee that all sensitive information is found. |
+| [phi-scan](https://pypi.org/project/phi-scan/) | Healthcare/FHIR source, config, and structured-data diffs | Local-first PHI/PII scanner with pre-commit/CI-oriented diff scanning and SARIF output. Pin and test before adoption; its PyPI release is currently marked alpha. |
+
+For medical images, scanned PDFs, and other binaries, evaluate both metadata and visual/OCR
+paths—or prohibit those file types outright—because a text-only scanner will not see embedded
+or burned-in identifiers.
 
 ---
 

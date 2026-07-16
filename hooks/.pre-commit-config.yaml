@@ -41,6 +41,29 @@ repos:
         pass_filenames: true
         description: "Warns/blocks oversized living backlog files (policies/plans-and-todos.md)."
 
+      # Strict PII/PHI guard: enable only after a human has created and reviewed
+      # .phi-security-approvals.json from hooks/phi-security-approvals.json.example.
+      # It ignores pre-commit filenames and scans every file tracked in the Git index,
+      # including tests and workbooks. See inventory/medical-data-security.md.
+      # - id: check-sensitive-data
+      #   name: "security: strict PII/PHI and opaque-file gate"
+      #   entry: python hooks/scripts/check_sensitive_data.py
+      #   language: python
+      #   pass_filenames: false
+      #   always_run: true
+      #   description: "Blocks suspected PII/PHI, hardcoded usernames/paths, images, DICOM, extensionless, and opaque files without exact human approval."
+
+      # Strict commit-message gate for medical/regulated repositories. Enable with
+      # check-sensitive-data and never allowlist a commit message: use a sanitized
+      # issue or incident reference instead of PHI, usernames, paths, or endpoints.
+      # - id: check-commit-message-sensitive-data
+      #   name: "security: strict sensitive commit-message gate"
+      #   entry: python hooks/scripts/check_commit_message_sensitive_data.py
+      #   language: python
+      #   stages: [commit-msg]
+      #   pass_filenames: true
+      #   description: "Blocks PII/PHI, local paths/usernames, private IPs, and internal endpoints in commit messages."
+
       # Optional: uncomment if your team uses gitignored backups/ before edits
       # - id: prune-backups
       #   name: "hygiene: prune old backups/"

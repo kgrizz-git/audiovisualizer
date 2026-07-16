@@ -1,6 +1,6 @@
 # Policies
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-13
 
 Durable, opt-in repo rules a project can adopt and enforce. Each policy states the rule,
 the rationale, sensible defaults, and how it is enforced (hook, CI, or convention).
@@ -18,6 +18,7 @@ in one place and let [`hooks/`](../hooks/) and [`ci/`](../ci/) enforce them.
 | [doc-freshness.md](doc-freshness.md) — `Last reviewed` markers & staleness windows | `hooks/scripts/check_doc_freshness.py` |
 | [commits-and-branches.md](commits-and-branches.md) — commit messages, branch naming, PR hygiene, advisory open-PR check | convention + `ci/scripts/check_open_prs.py` (+ optional daily workflow) |
 | [security-baseline.md](security-baseline.md) — secrets, deps, SAST expectations | hooks + CI (see `inventory/security-quality.md`) |
+| [github-repository-hygiene.md](github-repository-hygiene.md) — default-branch rulesets, reviews/checks, GitHub security, and PII/PHI/path gates | GitHub settings + hooks + required CI |
 | [github-actions-usage.md](github-actions-usage.md) — Actions minutes/storage stewardship | convention + `ci/scripts/check_gha_usage.py` |
 | [garbage-collection.md](garbage-collection.md) — dead code, stale TODOs, unused deps | CI + agent prompts |
 

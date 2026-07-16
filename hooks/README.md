@@ -1,6 +1,6 @@
 # Hooks
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-14
 
 Pre-commit hooks and policy-check scripts. The `.pre-commit-config.yaml` in this
 directory is an **example** — copy it to your project root to activate it.
@@ -22,6 +22,9 @@ pre-commit run --all-files  # first-run check
 | `scripts/check_file_size.py` | Enforces [`policies/file-size-and-counts.md`](../policies/file-size-and-counts.md) (soft **600** / hard **1000** lines) |
 | `scripts/check_doc_freshness.py` | Enforces [`policies/doc-freshness.md`](../policies/doc-freshness.md) |
 | `scripts/check_todo_limits.py` | Enforces living backlog size ([`policies/plans-and-todos.md`](../policies/plans-and-todos.md); soft **150** / hard **300**) |
+| `scripts/check_sensitive_data.py` | Opt-in strict PII/PHI, hardcoded username/path, and opaque-file gate; scans **every tracked file**, including tests and `.xlsx` contents |
+| `scripts/check_commit_message_sensitive_data.py` | Opt-in `commit-msg` hard gate for sensitive details, local identities, paths, and internal endpoints in Git history |
+| `phi-security-approvals.json.example` | Root-level exact-file inventory a human must complete before enabling the strict gate |
 | `scripts/prune_backups.sh` | Optional: delete `backups/` dirs older than last N commits |
 
 ## Built-in secret detection and linting
@@ -38,7 +41,43 @@ The example config already includes (leave them on unless the project cannot use
 | Semgrep / Checkov | Commented optional SAST / IaC blocks |
 
 See [`policies/security-baseline.md`](../policies/security-baseline.md) and
-[`inventory/security-quality.md`](../inventory/security-quality.md).
+[`inventory/security-quality.md`](../inventory/security-quality.md). For a configurable
+PII/PHI and absolute-path gate that is paired with required CI, see
+[`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
+
+## Medical / PII / PHI repositories: strict gate
+
+When the project profile identifies medical or regulated data, read
+[`prompts/strict-phi-agent-guidance.md`](../prompts/strict-phi-agent-guidance.md) and wire the
+commented `check-sensitive-data` local hook. The first-party script is intentionally stricter
+than normal pre-commit checks: it reads `git ls-files --cached` and scans all tracked files,
+not only filenames supplied by pre-commit. It inspects UTF-8 text and `.xlsx` XML/text parts,
+then blocks suspected fields/identifiers, hardcoded usernames, and absolute/home paths. It also
+blocks private IPs/internal hostnames/PACS URLs, log/cache artifacts, notebook outputs, every
+image, DICOM or DICOM-looking file, extensionless file, symbolic link, unreadable binary, and
+oversized file.
+
+PDFs always require an exact human approval because they may contain rasterized or vector image
+content. If optional `pypdf` is installed, the guard also scans extracted PDF text before it
+blocks the file; human visual review remains mandatory. `.tex` and UTF-8 `.ps` files are scanned
+as text; unreadable PostScript fails closed as binary.
+
+The guard recursively scans ZIP/TAR/GZIP contents (including nested archives within bounded size
+and depth limits), then blocks the archive pending exact human approval; encrypted or unreadable
+archives fail closed. It scans extractable XML/text in `.docx`, `.pptx`, `.odt`, and `.ods`, but
+still requires manual review for embedded media. SQLite/Parquet/Avro/Feather/HDF5 datasets and
+audio/video files are manual-review artifacts. DICOM-SR (`.sr`) is treated as DICOM.
+
+Before enabling it, a **human** must create `.phi-security-approvals.json` from
+`hooks/phi-security-approvals.json.example` and remove the placeholder. The only bypass is an
+exact relative path plus a matching SHA-256 and named human approval metadata. Never add a
+directory, glob, test, generated-file, or agent exemption. Pair it with the required CI job in
+[`ci/examples/strict-sensitive-data.yml`](../ci/examples/strict-sensitive-data.yml) and protect
+the inventory, hook, workflow, and fixtures with CODEOWNERS.
+
+Enable the adjacent `check-commit-message-sensitive-data` block as well. Unlike file approvals,
+commit messages have no bypass: replace patient, path, username, IP/hostname, PACS endpoint, or
+other sensitive context with a sanitized issue or incident reference before committing.
 
 ## When to use pre-commit vs CI vs agent-side checks
 

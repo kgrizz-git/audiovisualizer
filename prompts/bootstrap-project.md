@@ -13,6 +13,7 @@ Ask concise questions before choosing a stack or writing many files:
 - What are the expected platforms, runtimes, languages, deployment targets, and integrations?
 - Is this a library, app, website, CLI, service, research project, automation workflow, data project, design prototype, or something else?
 - What matters most: speed, correctness, user experience, security, scientific rigor, maintainability, cost, portability, or learning?
+- What data can enter this repository (including fixtures, screenshots, logs, and workflow artifacts)? Is real PII, PHI, regulated, or customer data prohibited, or is there an approved handling design?
 - Are there existing repos, docs, style guides, prompts, agent skills, product specs, designs, or examples you should inspect?
 - Should you use subagents or parallel workers for research, planning, review, or implementation?
 
@@ -28,6 +29,16 @@ returning agents rediscover the project type from scratch on every session.
 
 Use the profile's **Relevant inventory** section to decide which inventory files to read
 in step 3 — do not load all 18 files by default.
+
+**Medical or regulated data trigger:** if the user indicates PII, PHI, clinical/FHIR/HL7/DICOM,
+or similarly regulated data, read
+[`prompts/strict-phi-agent-guidance.md`](strict-phi-agent-guidance.md) and
+[`inventory/medical-data-security.md`](../inventory/medical-data-security.md) before creating
+fixtures or configuring external tools. Have a human create the exact-file approval inventory,
+wire the strict local hook and required CI job, and protect those controls with CODEOWNERS before
+the first relevant commit. Do not let an agent add approval entries. If the project ingests,
+processes, or exports scanned documents, PDFs, images, or DICOM files, inventory options for
+local OCR or local multimodal vision models to detect burned-in text/PII before data ingestion.
 
 ## 2. Protect The Template Remote
 
@@ -113,6 +124,9 @@ Produce a plan that includes:
 - Formatting, linting, type checking, and security checks.
 - Documentation structure.
 - CI and dependency update strategy.
+- GitHub hygiene: default-branch ruleset/branch protection, required PR reviews and checks,
+  ownership of security alerts, hooks, and a data/path-exposure gate appropriate to the
+  project classification. Read [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
 - Release and versioning approach using SemVer when appropriate.
 - Maintenance loop for improving prompts, skills, tools, inventories, docs, and architecture over time.
 

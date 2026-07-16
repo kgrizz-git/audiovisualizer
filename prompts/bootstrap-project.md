@@ -39,6 +39,10 @@ wire the strict local hook and required CI job, and protect those controls with 
 the first relevant commit. Do not let an agent add approval entries. If the project ingests,
 processes, or exports scanned documents, PDFs, images, or DICOM files, inventory options for
 local OCR or local multimodal vision models to detect burned-in text/PII before data ingestion.
+A full-history PII/PHI audit is not meaningful on a freshly bootstrapped repo—instead, record it
+as a recurring control: set up a local-first repo-wide audit (for example
+[Octopii](https://github.com/redhuntlabs/Octopii)) to run periodically via
+[`prompts/maintenance-loop.md`](maintenance-loop.md), and note the schedule in the project profile.
 
 ## 2. Protect The Template Remote
 

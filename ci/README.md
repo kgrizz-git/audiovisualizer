@@ -5,6 +5,11 @@ Last reviewed: 2026-07-14
 Guidance for selecting, structuring, and gating CI checks. Example workflows live in
 `ci/examples/` — copy the ones you need to `.github/workflows/` to activate them.
 
+This repository also ships a small required-check candidate at
+[`.github/workflows/template-checks.yml`](../.github/workflows/template-checks.yml). It validates
+the template's maintained Markdown, workflow examples, and hook scripts; it is not an
+application test, type-check, coverage, or dependency-audit workflow.
+
 **Minutes & storage:** use Actions deliberately — see
 [`policies/github-actions-usage.md`](../policies/github-actions-usage.md) and
 [`scripts/check_gha_usage.py`](scripts/check_gha_usage.py). Do not avoid GHA; do not

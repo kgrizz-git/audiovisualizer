@@ -1,0 +1,12 @@
+config:
+  MD004: false # Existing lists consistently use both dash and plus markers.
+  MD013: false # Line length is intentionally flexible for template prose and tables.
+  MD022: false # Existing changelog sections omit blank lines between nested headings.
+  MD024: false # Repeated "Added" and "Changed" headings are valid across releases.
+  MD032: false # Existing changelog lists omit surrounding blank lines.
+  MD034: false # Inventories intentionally display reference URLs directly.
+  MD036: false # A few templates use bold labels instead of headings.
+  MD040: false # Empty code placeholders do not have a meaningful language.
+  MD060: false # Existing tables deliberately use compact or aligned pipe styles.
+  MD029: false # Long procedures intentionally use continuous ordered-list numbers.
+  MD031: false # Existing prompt and policy blocks omit surrounding blank lines.

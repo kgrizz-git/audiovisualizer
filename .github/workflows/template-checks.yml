@@ -1,0 +1,79 @@
+name: Template checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - "AGENTS.md"
+      - "README.md"
+      - "CHANGELOG*.md"
+      - "ci/**"
+      - "hooks/**"
+      - "inventory/**"
+      - "policies/**"
+      - "prompts/**"
+      - "templates/**"
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "AGENTS.md"
+      - "README.md"
+      - "CHANGELOG*.md"
+      - "ci/**"
+      - "hooks/**"
+      - "inventory/**"
+      - "policies/**"
+      - "prompts/**"
+      - "templates/**"
+
+permissions:
+  contents: read
+
+jobs:
+  template-checks:
+    name: Validate template assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate GitHub Actions workflows
+        uses: raven-actions/actionlint@v2
+        with:
+          files: >-
+            .github/workflows/*.yml, ci/examples/ci.yml, ci/examples/codeql.yml,
+            ci/examples/open-prs-advisory.yml, ci/examples/security.yml,
+            ci/examples/strict-sensitive-data.yml
+
+      - name: Check shell scripts
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: hooks/scripts
+          severity: warning
+
+      - name: Check Python policy scripts compile
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m compileall -q hooks/scripts ci/scripts
+
+      - name: Lint maintained Markdown
+        run: >-
+          npx --yes markdownlint-cli2@0.23.0
+          "AGENTS.md" "README.md" "CHANGELOG.md" "CHANGELOG.dev.md"
+          "ci/**/*.md" "hooks/**/*.md" "inventory/**/*.md" "policies/**/*.md"
+          "prompts/**/*.md" "templates/**/*.md"
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

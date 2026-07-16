@@ -68,10 +68,18 @@ jobs:
   checkov:
     name: IaC scan – Checkov
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('**/*.tf', '**/Dockerfile', '**/k8s/**') != '' }}
     steps:
       - uses: actions/checkout@v4
+      - id: iac
+        name: Detect IaC source
+        run: |
+          if find . \( -name '*.tf' -o -name Dockerfile -o -type d -name k8s \) -print -quit | grep -q .; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: bridgecrewio/checkov-action@master
+        if: steps.iac.outputs.present == 'true'
         with:
           quiet: true
           soft_fail: true         # set to false to gate on IaC findings

@@ -3,6 +3,16 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
+## Unreleased
+
+### Added
+- `template-checks` GitHub Actions workflow: path-filtered validation for maintained
+  Markdown, Actions examples, shell hooks, Python policy scripts, and committed secrets.
+
+### Changed
+- Template CI pins Markdownlint and applies the repository's established style choices;
+  gitleaks receives the read-only pull-request permission it needs for PR scans.
+
 ## [0.4.4] - 2026-07-09
 
 ### Added

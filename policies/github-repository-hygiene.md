@@ -1,6 +1,6 @@
 # Policy: GitHub Repository Hygiene & Sensitive-Data Gates
 
-Last reviewed: 2026-07-14
+Last reviewed: 2026-07-15
 Enforced by: GitHub rulesets/branch protection, hooks, CI, and selected GitHub Apps.
 
 ## Purpose
@@ -128,6 +128,16 @@ domain-approved recognizers and include OCR/image/PDF handling if those files ar
 permitted—otherwise block those file types outright. Do not send repository contents to an
 external DLP, AI review, or GitHub App without confirming data residency, retention, access
 controls, contractual terms, and any required BAA/DPA.
+
+Per-commit and per-PR gates only see the current diff. For Sensitive and Regulated tiers, also
+schedule a periodic **repo-wide, full-history PII/PHI audit** (analogous to the scheduled
+credential history scan above)—the working tree and every reachable commit, not just recent
+changes. There is no official GitHub "PII audit" product; GitHub-native scanning covers
+credentials, not personal data. Use a local-first tool such as [Octopii](https://github.com/redhuntlabs/Octopii)
+(OCR + NLP + regex over images, PDFs, and documents) or a Presidio-based scan; run it offline
+against a local checkout and treat findings as triage for human review. Do not route a regulated
+repo's contents through a SaaS repo scanner without the data-residency and BAA/DPA review above.
+This audit runs periodically, not at bootstrap—see [`prompts/maintenance-loop.md`](../prompts/maintenance-loop.md).
 
 ### Recommended implementation contract
 

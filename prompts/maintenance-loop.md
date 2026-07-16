@@ -74,6 +74,27 @@ npm audit --audit-level=high
 Check Dependabot or Renovate alerts on GitHub if enabled.
 Review any Semgrep SARIF results from the last CI security run.
 
+### Full-history PII/PHI audit (Sensitive and Regulated tiers)
+
+Per-commit hooks only see the diff. On a schedule (monthly, or after any large data-bearing
+import), run a **repo-wide, full-history** PII/PHI audit against a local checkout—the working
+tree and past commits, not just recent changes. This complements, and does not replace, the
+strict local gate and human approval. Keep it local-first; do not route a regulated repo's
+contents through a SaaS scanner without the data-residency/BAA review in
+[`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
+
+```bash
+# OCR + NLP + regex over images/PDFs/docs in the working tree (pin a reviewed commit).
+# See inventory/medical-data-security.md for setup and cautions.
+python octopii.py <local-checkout-path>
+
+# Sweep past commits for anything a current-tree scan would miss.
+git log --all --oneline | wc -l   # scope check; then scan blobs from history as justified
+```
+
+Record only sanitized finding categories, paths, and remediation—never detected values—and
+keep scan reports out of Git. Treat hits as triage for human review, not proof of absence.
+
 ---
 
 ## 4. Policy checks

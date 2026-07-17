@@ -45,9 +45,18 @@ into logs, temp files, test/CI output, caches, telemetry, or third-party/AI call
    Enable `check-commit-message-sensitive-data` at the same time.
 3. Copy `ci/examples/strict-sensitive-data.yml` to `.github/workflows/` and require the
    `security / sensitive data` job in the default-branch ruleset.
-4. Add CODEOWNERS coverage for `.phi-security-approvals.json`, the hook, workflow, and data
-   fixture paths. Require a human security/privacy owner to approve those changes.
-5. Run `python3 hooks/scripts/check_sensitive_data.py` before opening the first PR and after
+4. Wire the structural gates in
+   [`policies/sensitive-data-scan-gates.md`](../policies/sensitive-data-scan-gates.md): copy
+   `hooks/gitignore-protected.example` → `.gitignore-protected` (protects required ignore rules),
+   `hooks/forbidden-paths.example` → `.forbidden-paths` (forbids tracking data/export dirs), and —
+   if heavy scanners apply — `hooks/scan-contract.json.example` → `.scan-contract.json` with a
+   committed `.scan-ledger.json`. Enable the matching commented hooks. Only re-`record` a scanner
+   after actually running it.
+5. Add CODEOWNERS coverage for `.phi-security-approvals.json`, the hooks, workflows, the gate
+   configs (`.gitignore`, `.gitignore-protected`, `.forbidden-paths`, `.scan-contract.json`,
+   `.scan-ledger.json`), and data fixture paths. Require a human security/privacy owner to approve
+   those changes.
+6. Run `python3 hooks/scripts/check_sensitive_data.py` before opening the first PR and after
    any tool/configuration change.
 
 ## What the first-party guard blocks

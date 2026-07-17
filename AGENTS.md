@@ -16,7 +16,7 @@ Do not load everything. Start here, then open only what the task needs.
 
 | If you are… | Read |
 |---|---|
-| Starting a new project from this template | [`prompts/bootstrap-project.md`](prompts/bootstrap-project.md) |
+| Starting a new project from this template | [`prompts/bootstrap-project.md`](prompts/bootstrap-project.md) (+ tick-list [`prompts/bootstrap-checklist.md`](prompts/bootstrap-checklist.md)) |
 | Starting a work session on an existing project | [`prompts/new-agent-session.md`](prompts/new-agent-session.md) |
 | Capturing what kind of project this is | [`prompts/project-init-profile.md`](prompts/project-init-profile.md) |
 | Running periodic repo health checks | [`prompts/maintenance-loop.md`](prompts/maintenance-loop.md) |
@@ -53,6 +53,7 @@ Do not load everything. Start here, then open only what the task needs.
 - `inventory/` — curated indexes of tools, skills, MCP servers, references (install-on-demand).
 - `plans/` — (when adopted) active implementation plans; archive completed ones under `plans/archive/`.
 - `hooks/scripts/check_sensitive_data.py` — opt-in strict medical-data gate; scans every tracked file and requires exact human approval for opaque files.
+- `hooks/scripts/check_gitignore_protected.py`, `check_forbidden_paths.py`, `check_scan_contract.py` — opt-in structural sensitive-data gates (see `policies/sensitive-data-scan-gates.md`).
 - `inventory/medical-data-security.md` — strict guard setup and medical-data scanner menu.
 - `.cursor/`, `.windsurf/` — editor rule sets (CodeGuard security rules).
 - `.context/` — scratch only; never required reading, never committed.
@@ -69,6 +70,7 @@ Do not load everything. Start here, then open only what the task needs.
 | Open PRs after push (advisory, not a hook) | [`policies/commits-and-branches.md`](policies/commits-and-branches.md), [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py) |
 | Strict PII/PHI controls, approval inventory, and agent behavior | [`prompts/strict-phi-agent-guidance.md`](prompts/strict-phi-agent-guidance.md), [`inventory/medical-data-security.md`](inventory/medical-data-security.md) |
 | Runtime/dev leak prevention (redaction, temp files, caches, telemetry, easy clearance) | [`prompts/sensitive-data-leak-prevention.md`](prompts/sensitive-data-leak-prevention.md) (how), [`policies/sensitive-data-runtime-leaks.md`](policies/sensitive-data-runtime-leaks.md) (rule + tiers) |
+| Structural sensitive-data gates (protected `.gitignore`, forbidden tracked paths, heavy-scanner contract/ledger) | [`policies/sensitive-data-scan-gates.md`](policies/sensitive-data-scan-gates.md) |
 
 **Notes_and_Ideas vs this template:** personal research dumps, private key dashboards, and
 exploratory idea notes belong in a Notes_and_Ideas (or similar) repo. Index only durable,

@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "_comment": [
+    "Copy to .scan-contract.json in the repo root, then keep only the scanners you adopt.",
+    "'paths' are gitignore-ish globs (support **, *, ?, trailing / for a directory).",
+    "'record_command' is what a human or CI runs AFTER actually running that scanner.",
+    "The gate blocks when covered files change but the scanner has not been re-recorded.",
+    "See policies/sensitive-data-scan-gates.md and inventory/medical-data-security.md."
+  ],
+  "scanners": [
+    {
+      "id": "presidio-text",
+      "description": "Microsoft Presidio text PII/PHI analysis, run locally on an approved runner.",
+      "paths": ["**/*.py", "**/*.md", "**/*.csv", "**/*.json", "**/*.txt"],
+      "record_command": "python3 hooks/scripts/check_scan_contract.py record presidio-text --by <reviewer>"
+    },
+    {
+      "id": "presidio-image",
+      "description": "Presidio image redaction / OCR image PII detection (ExifTool for metadata) on approved image fixtures.",
+      "paths": ["fixtures/images/", "**/*.png", "**/*.jpg", "**/*.tiff"],
+      "record_command": "python3 hooks/scripts/check_scan_contract.py record presidio-image --by <reviewer>"
+    },
+    {
+      "id": "ocr",
+      "description": "Local OCR (rapidocr/pytesseract/surya; Poppler pdftoppm/pdftotext to extract) over scanned PDFs/images before ingestion.",
+      "paths": ["**/*.pdf", "fixtures/scans/"],
+      "record_command": "python3 hooks/scripts/check_scan_contract.py record ocr --by <reviewer>"
+    },
+    {
+      "id": "dicom-phi-scan",
+      "description": "DICOM metadata + burned-in pixel OCR review (pinned commit, synthetic DICOM only).",
+      "paths": ["**/*.dcm", "fixtures/dicom/"],
+      "record_command": "python3 hooks/scripts/check_scan_contract.py record dicom-phi-scan --by <reviewer>"
+    },
+    {
+      "id": "phi-scan",
+      "description": "Local-first phi-scan over source, config, and structured data (pinned version).",
+      "paths": ["src/", "config/", "**/*.csv", "**/*.json"],
+      "record_command": "python3 hooks/scripts/check_scan_contract.py record phi-scan --by <reviewer>"
+    },
+    {
+      "id": "hounddog",
+      "description": "HoundDog local CLI/Docker data-flow privacy scan (local only until authorized).",
+      "paths": ["src/"],
+      "record_command": "python3 hooks/scripts/check_scan_contract.py record hounddog --by <reviewer>"
+    },
+    {
+      "id": "sonarqube-ce",
+      "description": "Self-hosted SonarQube Community Edition scan run locally against a code snapshot.",
+      "paths": ["src/", "**/*.py", "**/*.ts"],
+      "record_command": "python3 hooks/scripts/check_scan_contract.py record sonarqube-ce --by <reviewer>"
+    }
+  ]
+}

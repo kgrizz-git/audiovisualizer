@@ -64,6 +64,32 @@ repos:
       #   pass_filenames: true
       #   description: "Blocks PII/PHI, local paths/usernames, private IPs, and internal endpoints in commit messages."
 
+      # Structural sensitive-data gates (see policies/sensitive-data-scan-gates.md).
+      # Each is inert until its root config file exists, so it is safe to leave wired.
+      # - id: check-gitignore-protected
+      #   name: "security: protected .gitignore rules"
+      #   entry: python hooks/scripts/check_gitignore_protected.py
+      #   language: python
+      #   pass_filenames: false
+      #   always_run: true
+      #   description: "Blocks removal of a required .gitignore rule (config: .gitignore-protected)."
+
+      # - id: check-forbidden-paths
+      #   name: "security: forbidden tracked paths"
+      #   entry: python hooks/scripts/check_forbidden_paths.py
+      #   language: python
+      #   pass_filenames: false
+      #   always_run: true
+      #   description: "Blocks tracking files under never-commit paths (config: .forbidden-paths)."
+
+      # - id: check-scan-contract
+      #   name: "security: heavy-scanner contract"
+      #   entry: python hooks/scripts/check_scan_contract.py
+      #   language: python
+      #   pass_filenames: false
+      #   always_run: true
+      #   description: "Blocks when a required local scanner (Presidio/OCR/phi-scan/HoundDog/SonarQube CE) is stale vs covered files (config: .scan-contract.json + .scan-ledger.json)."
+
       # Optional: uncomment if your team uses gitignored backups/ before edits
       # - id: prune-backups
       #   name: "hygiene: prune old backups/"

@@ -24,7 +24,11 @@ pre-commit run --all-files  # first-run check
 | `scripts/check_todo_limits.py` | Enforces living backlog size ([`policies/plans-and-todos.md`](../policies/plans-and-todos.md); soft **150** / hard **300**) |
 | `scripts/check_sensitive_data.py` | Opt-in strict PII/PHI, hardcoded username/path, and opaque-file gate; scans **every tracked file**, including tests and `.xlsx` contents |
 | `scripts/check_commit_message_sensitive_data.py` | Opt-in `commit-msg` hard gate for sensitive details, local identities, paths, and internal endpoints in Git history |
+| `scripts/check_gitignore_protected.py` | Opt-in gate blocking removal of required `.gitignore` rules (config: `.gitignore-protected`) |
+| `scripts/check_forbidden_paths.py` | Opt-in gate blocking any tracked file under never-commit paths (config: `.forbidden-paths`) |
+| `scripts/check_scan_contract.py` | Opt-in ledger gate: blocks when a required heavy scanner is stale vs the files it covers (config: `.scan-contract.json` + `.scan-ledger.json`) |
 | `phi-security-approvals.json.example` | Root-level exact-file inventory a human must complete before enabling the strict gate |
+| `gitignore-protected.example`, `forbidden-paths.example`, `scan-contract.json.example` | Starter configs for the structural sensitive-data gates ([`policies/sensitive-data-scan-gates.md`](../policies/sensitive-data-scan-gates.md)) |
 | `scripts/prune_backups.sh` | Optional: delete `backups/` dirs older than last N commits |
 
 ## Built-in secret detection and linting
@@ -78,6 +82,23 @@ the inventory, hook, workflow, and fixtures with CODEOWNERS.
 Enable the adjacent `check-commit-message-sensitive-data` block as well. Unlike file approvals,
 commit messages have no bypass: replace patient, path, username, IP/hostname, PACS endpoint, or
 other sensitive context with a sanitized issue or incident reference before committing.
+
+## Structural sensitive-data gates
+
+For `regulated` (or `confidential`-with-customer-data) repos, three cheaper gates protect the
+controls themselves and force heavy scanners to run. Each is **inert until its root config file
+exists**, so the commented blocks are safe to leave wired. See
+[`policies/sensitive-data-scan-gates.md`](../policies/sensitive-data-scan-gates.md).
+
+| Gate | Config | Blocks |
+|---|---|---|
+| `check-gitignore-protected` | `.gitignore-protected` | Removal of a required `.gitignore` rule (a data dir getting silently un-ignored). |
+| `check-forbidden-paths` | `.forbidden-paths` | Any tracked file under a never-commit path — catches `git add -f` and pre-existing files a `.gitignore` rule can't. |
+| `check-scan-contract` | `.scan-contract.json` + `.scan-ledger.json` | A commit where a required heavy scanner (Presidio text/image, OCR, dicom-phi-scan, phi-scan, HoundDog local, SonarQube CE local) hasn't re-run since its covered files changed. |
+
+The scan contract records Git blob state per scanner; run the scanner, then
+`python3 hooks/scripts/check_scan_contract.py record <id>` to advance the ledger (commit it). Copy
+the `*.example` files to enable, and CODEOWNER-protect every config.
 
 ## When to use pre-commit vs CI vs agent-side checks
 

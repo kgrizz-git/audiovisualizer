@@ -55,6 +55,11 @@ htmlcov/
 nosetests.xml
 pytest.xml
 
+# SonarQube / code quality scanners
+.sonar
+.sonarqube
+.scannerwork
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb_checkpoints/

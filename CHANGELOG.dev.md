@@ -6,6 +6,24 @@ Internal / developer-facing changes that do not belong in the public
 ## Unreleased
 
 ### Added
+- Structural sensitive-data gates: `hooks/scripts/check_gitignore_protected.py` (blocks
+  removal of required `.gitignore` rules), `check_forbidden_paths.py` (blocks tracking
+  files under never-commit paths), and `check_scan_contract.py` (a git-blob-hash ledger
+  that blocks when a required heavy scanner — Presidio text/image, local OCR,
+  dicom-phi-scan, phi-scan, HoundDog local, or a local SonarQube CE scan — has not been
+  re-run since the files it covers changed). Each is inert until its root config exists.
+  Ships `hooks/{gitignore-protected,forbidden-paths}.example` and
+  `hooks/scan-contract.json.example`, `policies/sensitive-data-scan-gates.md`, commented
+  `.pre-commit-config.yaml` blocks, and smoke tests. Wired into the bootstrap
+  medical/regulated trigger, `strict-phi-agent-guidance.md`, `AGENTS.md`,
+  `inventory/medical-data-security.md` (also adds a SonarQube CE row), and both READMEs.
+- `prompts/bootstrap-checklist.md`: a phase-by-phase tick-list companion to
+  `bootstrap-project.md`, including the conditional sensitive-data branch (Phase S).
+- `inventory/medical-data-security.md`: added ExifTool (metadata detect/strip),
+  Poppler (PDF text/page-image/attachment extraction backend), and pypdf (pure-Python
+  text-layer extraction; the strict guard's optional PDF pass) as the extraction/
+  sanitization backends feeding the OCR → Presidio redaction chain, plus an
+  "extract before you scan" step and cross-references in `hooks/scan-contract.json.example`.
 - `template-checks` GitHub Actions workflow: path-filtered validation for maintained
   Markdown, Actions examples, shell hooks, Python policy scripts, and committed secrets.
 - `prompts/sensitive-data-leak-prevention.md`: runtime/dev leak-prevention guidance

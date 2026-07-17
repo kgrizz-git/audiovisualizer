@@ -39,12 +39,15 @@ ENV/
 dmypy.json
 .pyright/
 .ruff_cache/
+.pytype/
 pyrightconfig.json
+cython_debug/
 
 # testing
 .pytest_cache/
 .tox/
 .nox/
+.hypothesis/
 .coverage
 .coverage.*
 coverage.xml
@@ -70,12 +73,18 @@ yarn-error.log*
 .eslintcache
 .stylelintcache
 
-# build output (adjust to your framework)
+# build output & tool caches (adjust to your framework)
 .next/
 .nuxt/
 .output/
 .cache/
 out/
+.turbo/
+.parcel-cache/
+.svelte-kit/
+.astro/
+.vite/
+.sass-cache/
 
 # ── Rust ─────────────────────────────────────────────────────────────────────
 target/
@@ -105,6 +114,17 @@ Cargo.lock          # keep for binaries; remove this line for libraries
 .\#*
 .emacs.desktop
 .emacs.desktop.lock
+
+# patch / merge artifacts
+*.orig
+*.rej
+*.bak
+
+# ── AI assistants (shared rules ARE tracked; ignore only personal/local files) ─
+# Keep .claude/settings.json, .cursor/rules/, .windsurf/rules/ committed.
+.claude/settings.local.json
+.claude/*.local.json
+.cursor/mcp.json
 
 # ── OS ───────────────────────────────────────────────────────────────────────
 .DS_Store

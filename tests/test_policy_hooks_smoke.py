@@ -289,6 +289,80 @@ class SensitiveDataHookTests(unittest.TestCase):
             self.assertNotIn("person@example.test", result.stderr)
 
 
+class ScanGateHookTests(unittest.TestCase):
+    def init_repo(self, directory: Path) -> None:
+        subprocess.run(["git", "init", "-q", str(directory)], check=True)
+
+    def stage(self, directory: Path) -> None:
+        subprocess.run(["git", "-C", str(directory), "add", "-A"], check=True)
+
+    def test_gitignore_protected_blocks_removed_rule(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.init_repo(root)
+            (root / ".gitignore-protected").write_text("data/\nexports/\n", encoding="utf-8")
+            (root / ".gitignore").write_text("data/\nexports/\n", encoding="utf-8")
+            self.stage(root)
+            ok = run("check_gitignore_protected.py", "--repo-root", str(root))
+            self.assertEqual(ok.returncode, 0)
+
+            (root / ".gitignore").write_text("data/\n", encoding="utf-8")  # exports/ removed
+            self.stage(root)
+            bad = run("check_gitignore_protected.py", "--repo-root", str(root))
+            self.assertEqual(bad.returncode, 1)
+            self.assertIn("exports/", bad.stderr)
+
+    def test_forbidden_paths_blocks_tracked_match(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.init_repo(root)
+            (root / ".forbidden-paths").write_text("data/\n*.dcm\n", encoding="utf-8")
+            self.stage(root)
+            self.assertEqual(run("check_forbidden_paths.py", "--repo-root", str(root)).returncode, 0)
+
+            data = root / "data"
+            data.mkdir()
+            (data / "records.csv").write_text("x\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "-f", "data/records.csv"], check=True)
+            bad = run("check_forbidden_paths.py", "--repo-root", str(root))
+            self.assertEqual(bad.returncode, 1)
+            self.assertIn("data/records.csv", bad.stderr)
+
+    def test_scan_contract_never_recorded_then_record_then_stale(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.init_repo(root)
+            (root / ".scan-contract.json").write_text(
+                json.dumps({
+                    "version": 1,
+                    "scanners": [{"id": "phi-scan", "paths": ["**/*.py"], "record_command": "record phi-scan"}],
+                }),
+                encoding="utf-8",
+            )
+            (root / "mod.py").write_text("print('hi')\n", encoding="utf-8")
+            self.stage(root)
+            never = run("check_scan_contract.py", "--repo-root", str(root))
+            self.assertEqual(never.returncode, 1)
+            self.assertIn("never been recorded", never.stderr)
+
+            recorded = run("check_scan_contract.py", "--repo-root", str(root), "record", "phi-scan")
+            self.assertEqual(recorded.returncode, 0)
+            self.stage(root)
+            self.assertEqual(run("check_scan_contract.py", "--repo-root", str(root)).returncode, 0)
+
+            (root / "mod.py").write_text("print('changed')\n", encoding="utf-8")
+            self.stage(root)
+            stale = run("check_scan_contract.py", "--repo-root", str(root))
+            self.assertEqual(stale.returncode, 1)
+            self.assertIn("stale", stale.stderr)
+
+    def test_scan_contract_inert_without_config(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.init_repo(root)
+            self.assertEqual(run("check_scan_contract.py", "--repo-root", str(root)).returncode, 0)
+
+
 class CommitMessageSensitiveDataTests(unittest.TestCase):
     def run_message(self, content: str) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as temp:

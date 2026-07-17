@@ -1,0 +1,20 @@
+# Copy to .gitignore-protected in the repo root.
+# Every non-comment line here MUST appear verbatim as a line in .gitignore.
+# check_gitignore_protected.py fails closed if any is missing, so a protective
+# ignore rule cannot be quietly removed. Match lines exactly as written in .gitignore.
+# Protect this file and .gitignore with CODEOWNERS.
+
+# Runtime / data / export directories that must stay out of Git:
+data/
+exports/
+phi/
+scratch/
+
+# Sensitive artifact sinks (see policies/sensitive-data-runtime-leaks.md):
+*.log
+logs/
+.cache/
+tmp/
+
+# Local scan reports must never be committed:
+scan-reports/

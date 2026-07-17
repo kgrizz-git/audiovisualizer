@@ -4,6 +4,9 @@ You are an AI coding agent working inside a newly cloned project seed repository
 
 Do not assume the project type. Start by interviewing the user, then propose a plan before creating a large scaffold.
 
+Work the phase-by-phase [`bootstrap-checklist.md`](bootstrap-checklist.md) alongside this prompt —
+it is the tick-list version of these steps, including the conditional sensitive-data branch (Phase S).
+
 ## 1. Start With Discovery
 
 Ask concise questions before choosing a stack or writing many files:
@@ -45,7 +48,14 @@ ship a one-command way to clear local logs/caches/temp artifacts — see
 [`prompts/sensitive-data-leak-prevention.md`](sensitive-data-leak-prevention.md) for the
 how, and wire the tiered checks in
 [`policies/sensitive-data-runtime-leaks.md`](../policies/sensitive-data-runtime-leaks.md)
-(gitignore artifact dirs, `make clean-sensitive`, log-scanning tests, HoundDog data-flow scan). If the project ingests,
+(gitignore artifact dirs, `make clean-sensitive`, log-scanning tests, HoundDog data-flow scan).
+Also wire the structural gates in
+[`policies/sensitive-data-scan-gates.md`](../policies/sensitive-data-scan-gates.md): protect the
+required `.gitignore` rules (`check_gitignore_protected.py`), forbid tracking data/export dirs
+(`check_forbidden_paths.py`), and — when heavy scanners like Presidio (text/image), local OCR,
+dicom-phi-scan, phi-scan, HoundDog local, or a local SonarQube CE scan apply — add a scan
+contract/ledger (`check_scan_contract.py`) that blocks commits until each chosen scanner has been
+re-run against the current tree. If the project ingests,
 processes, or exports scanned documents, PDFs, images, or DICOM files, inventory options for
 local OCR or local multimodal vision models to detect burned-in text/PII before data ingestion.
 A full-history PII/PHI audit is not meaningful on a freshly bootstrapped repo—instead, record it

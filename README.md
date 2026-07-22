@@ -4,6 +4,9 @@ This repository was bootstrapped and cloned from the [template-repo-v1](https://
 
 AudioVisualizer parses MIDI music files into deterministic, reproducible geometric artwork and animations driven by explicit pitch, duration, interval, velocity, and voice mappings.
 
+The visual language and rule semantics live in [DESIGN.md](DESIGN.md); the stack, data flow,
+offline boundary, CLI, and planned desktop packaging live in [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ---
 
 ## Quick Start
@@ -43,9 +46,21 @@ It shares the studio's MIDI parser, mapping rules, fitting, and SVG renderer. Ru
 origin rules, plotter SVG, custom dimensions, and tonal time-line density. The optional
 manifest records the normalized score and exact rule configuration for reproducibility.
 
+## Third-party licenses
+
+Direct and transitive npm dependency licenses are cataloged in
+[`inventory/third-party-licenses.md`](inventory/third-party-licenses.md) (policy:
+[`policies/third-party-licenses.md`](policies/third-party-licenses.md)). Regenerate after
+dependency changes with:
+
+```bash
+python hooks/scripts/check_license_inventory.py --update
+python hooks/scripts/check_license_inventory.py --human-review
+```
+
 ---
 
-# Core Concept & Vision
+## Core Concept & Vision
 
 *The following vision is copied from `music-to-visual-score-art.md`:*
 

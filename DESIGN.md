@@ -1,115 +1,85 @@
-# AudioVisualizer Design
+# AudioVisualizer Visual Design
 
-Last reviewed: 2026-07-21
+Last reviewed: 2026-07-22
 
-## Purpose and boundary
+## Intent
 
-AudioVisualizer is a browser application that turns a MIDI file into deterministic
-geometric artwork. Version 1 accepts MIDI only; it does not transcribe audio, use a
-server, persist uploads, or include a desktop wrapper. A given normalized score,
-mapping configuration, and canvas size must always yield the same geometry and SVG.
+AudioVisualizer makes a musical score readable as a deliberate visual system rather than
+an opaque decorative effect. Its visual language is dark, restrained, and high-contrast:
+black is the default field; saturated pitch color carries the musical signal; spacing,
+weight, direction, and opacity expose timing, dynamics, and voice.
 
-The browser can also audition a score through a local Web Audio preview synth. This is
-timing-synchronized with the visual scrubber, but is not General MIDI playback: it uses
-simple oscillator timbres and does not yet reproduce program changes or sustain. Each
-voice exposes a local timbre, volume, mute, and solo control; parsed MIDI program names
-are retained as metadata for future soundfont routing.
+Every shipped image must be reproducible from a normalized score, a rule configuration,
+and canvas dimensions. The UI should explain the active rule set plainly enough that a
+viewer can understand why the visual changes. Technical ownership, data contracts, and
+libraries are documented in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Architecture
+## Visual grammar
 
-```text
-MIDI ArrayBuffer
-  -> parseMidiData() -> Score
-  -> mapScoreToGeometry() -> RenderedGeometry
-  -> CanvasRenderer (preview) | buildSvg() (download)
-```
+| Musical input | Visual treatment |
+|---|---|
+| Pitch class | Hue around a continuous rainbow loop |
+| Register | Optional alternate hue spiral |
+| Duration | Line distance, circle size, or time-band placement |
+| Velocity | Stroke weight and aggregate-time weighting |
+| Voice | Independent path plus configurable hue offset |
+| Interval | Optional directional turn |
+| Rest | Lifted pen, faint connector, or ghost trace |
 
-`src/core/` is pure domain logic except for `@tonejs/midi` parsing. Renderers consume
-already calculated geometry. `src/ui/app.ts` owns browser events, selected score and
-configuration; it must not duplicate mapping rules.
+Pitch-class colors are emitted as `hsl(hue, 85%, 60%)`. Voice color offsets retain the
+rainbow family while making independent parts easier to distinguish. The optional
+average-color background is deliberately dark so it supports rather than competes with
+the score.
 
-## Domain contracts
+## Variations and composition
 
-`Score` contains its title, total duration in seconds, first tempo in BPM, and ordered
-tracks. Each `TrackScore` contains the display name, MIDI channel (or track index when
-the channel is absent), and onset-sorted `NoteEvent`s.
+- `lines`: one directional segment per note. It is the primary, calligraphic mode.
+- `circles`: note halos whose radius and center-to-center path advance reflect duration,
+  for a more punctate composition. Specifically, the center advances by the note's mapped
+  length and radius is 40% of that length, with a 5px minimum; mapped length is
+  `max(minSegmentLength, duration × lengthScale)`. Standard circles have a pitch-colored
+  fill at 75% opacity and a white outline. Fill versus outline currently carries no
+  musical distinction: unfilled circles occur only in plotter SVG, where fills are
+  removed deliberately for pen compatibility.
+- `vertical_tone`: onset maps left-to-right and pitch maps vertically, making register and
+  timing immediately legible.
+- `tonal_time_lines`: time runs from top to bottom as full-width bands. Each band is the
+  circular, velocity- and overlap-weighted average of active pitch colors; it is not a
+  detected key or chord. Silent time is a low-contrast neutral band.
 
-Each `NoteEvent` has a stable parser-local id, MIDI pitch `0..127`, onset and duration
-in seconds, velocity `0..127`, voice, and pitch class `pitch % 12`. MIDI tracks with no
-notes are omitted. Missing/zero durations are clamped to `0.01` seconds by the parser.
+Origins for path-based modes are left-to-right, center-outward, and outside-inward.
+Line paths can turn by melodic interval and receive a constant spiral bias. Quantization
+snaps onsets to a sixteenth-note grid for a deliberately more regular visual rhythm.
 
-`RuleConfig` is the complete rule set recorded in `RenderedGeometry`. Current shipping
-controls are variation, origin, hue mode, length scale, angle scale, base stroke width,
-voice hue offset, spiral bias, interval-angle enablement, voice filtering, quantization,
-and gap treatment. Quantization snaps onsets to a sixteenth-note grid derived from the
-score tempo. A null voice filter includes every voice.
+## Canvas and export aesthetic
 
-## Mapping rules
+The live canvas is a square framed composition with a black background, subtle atmosphere
+for path/circle modes, and an optional live legend. Geometry is uniformly fitted into a
+safe inset before preview and export so artwork uses the available canvas without being
+cropped. Tonal time-lines deliberately fill every canvas row instead of receiving this
+art padding.
 
-For every nonempty track, map notes in onset order independently. The mapper creates a
-separate `GeometryVoicePath` for that track; path order matches `Score.tracks` order.
+SVG and PNG exports use the same calculated geometry as the preview. Standard SVG can
+include the explanatory legend; plotter SVG removes background and legend and uses
+single-color strokes. Legends must describe the current rule set, not imply harmonic or
+musicological conclusions that the renderer does not calculate. They are mode-aware:
+line paths explain distance/weight/rests, note halos explain radius plus path advance and
+the non-semantic fill/outline treatment, pitch timelines explain axes, and tonal time-lines
+explain aggregate active-pitch color and silence.
 
-| Musical input | Rule | Result |
-|---|---|---|
-| Pitch class | `(pitchClass / 12) * 360` | Hue in `pitch_class` mode |
-| Register | `(pitch * 7) % 360` | Hue in `register_spiral` mode |
-| Voice | `voice * hueOffsetPerVoice` | Added to hue, modulo 360 |
-| Duration | `max(minSegmentLength, duration * lengthScale)` | Segment length; circle radius is 40% of this, minimum 5 |
-| Velocity | `strokeWidthBase + velocity / 127 * strokeWidthScale` | Line width |
-| Melodic interval | `(pitch - previousPitch) * angleScale` | Heading change for line paths |
-| Spiral bias | Constant degrees per mapped note | Additional curvature |
-| Rest gap | Lift, faint connector, or dashed ghost | Cursor advance with optional visual trace |
+## Design guardrails
 
-When quantization is enabled, onset is rounded to `60 / bpm / 4` seconds before mapping.
-For `lines` and `circles`, a rest advances the cursor by `restSeconds * lengthScale`.
+- Keep controls modern and compact; expose meaningful musical choices before cosmetic ones.
+- Preserve contrast on black and make color an aid, not the sole explanation—legends and
+  visual structure must remain useful without hue discrimination.
+- Do not introduce randomness unless it is an explicit recorded configuration value.
+- Treat audio-derived notes as estimated in the interface and exports; never visually
+  imply they are authoritative source notation.
+- Avoid a visual style that depends on a remote image, font, model, or service to function.
 
-Colors are emitted as `hsl(hue, 85%, 60%)`; line opacity is `0.9`, circle opacity is
-`0.75`, and vertical-tone opacity is `0.85`.
+## Future visual directions
 
-### Variations and origins
-
-- `lines`: starts at the origin cursor, turns for each interval after the first note,
-  then emits one segment per note.
-- `circles`: emits one circle per note at the current heading, advances the heading by
-  `spiralBias + 15` degrees, then moves the cursor to that circle.
-- `vertical_tone`: maps onset to x and pitch to y inside a 50px inset. Its segment runs
-  horizontally by mapped length; origin mode does not affect this variation.
-- `tonal_time_lines`: maps time from top to bottom as full-width bands. A band uses the
-  circular, velocity- and overlap-weighted mean of active mapped pitch hues; it is an
-  average active pitch color, not a detected key or chord. Silent bands are a subtle
-  neutral tint so rests remain visible. Density controls samples per output pixel row.
-- `left_to_right`: starts at x=50 with a channel-dependent y offset and a rightward heading.
-- `center_outward`: starts at canvas center with a channel-dependent radial heading.
-- `outside_inward`: starts at 45% of the minimum canvas dimension from center and faces inward.
-
-## Rendering and export
-
-Canvas is the live preview. It scales its backing buffer for device pixel ratio and uses
-score seconds—not segment count—for playback and scrubbing. A note segment reveals over
-its actual duration; a circle appears at its onset. PNG export captures the completed
-canvas with its legend.
-
-The default preview and SVG background is black. The optional average-color background
-computes the circular mean of mapped pitch hues for the visible voices, then renders that
-hue at a deliberately dark saturation/lightness so the score remains readable.
-
-SVG export uses the same `RenderedGeometry` at 1000×1000 by default. Standard SVG has a
-background rectangle and can include the rule legend. Pen-plotter SVG omits both the
-background and legend, uses black 1px strokes, and leaves circles unfilled. SVG is built
-as data only; it must not serialize untrusted MIDI text into markup.
-
-Before preview or export, geometry receives one uniform, deterministic fit transform.
-The transform measures all segment and circle bounds, applies a 56px safe padding, and
-centers the result without changing the mapped note data or rule configuration.
-
-## Verification contract
-
-Run `npm run validate` after any change. The command runs Vitest plus strict TypeScript
-and the Vite production build. Tests should assert deterministic geometry, variation
-selection, and SVG export modes; add parser fixtures when changing MIDI normalization.
-
-## Deferred work
-
-- Add configuration presets and a machine-readable export manifest.
-- Add video or frame-sequence export.
-- Consider audio input only as a separately designed transcription feature.
+- Preset families and a machine-readable rule manifest.
+- Accessibility patterns for pitch classes and voice paths.
+- Mirror/kaleidoscope, chord-fan, bead, and staff-guide treatments as documented modes.
+- A comparison view for alternate rule configurations of one score.

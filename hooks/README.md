@@ -1,6 +1,6 @@
 # Hooks
 
-Last reviewed: 2026-07-14
+Last reviewed: 2026-07-22
 
 Pre-commit hooks and policy-check scripts. The `.pre-commit-config.yaml` in this
 directory is an **example** — copy it to your project root to activate it.
@@ -22,6 +22,7 @@ pre-commit run --all-files  # first-run check
 | `scripts/check_file_size.py` | Enforces [`policies/file-size-and-counts.md`](../policies/file-size-and-counts.md) (soft **600** / hard **1000** lines) |
 | `scripts/check_doc_freshness.py` | Enforces [`policies/doc-freshness.md`](../policies/doc-freshness.md) |
 | `scripts/check_todo_limits.py` | Enforces living backlog size ([`policies/plans-and-todos.md`](../policies/plans-and-todos.md); soft **150** / hard **300**) |
+| `scripts/check_license_inventory.py` | Enforces [`policies/third-party-licenses.md`](../policies/third-party-licenses.md); generates/gates [`inventory/third-party-licenses.md`](../inventory/third-party-licenses.md) (`--check` / `--update` / `--human-review`). Uses pinned `license-checker@25.0.1` via npx when available. |
 | `scripts/check_sensitive_data.py` | Opt-in strict PII/PHI, hardcoded username/path, and opaque-file gate; scans **every tracked file**, including tests and `.xlsx` contents |
 | `scripts/check_commit_message_sensitive_data.py` | Opt-in `commit-msg` hard gate for sensitive details, local identities, paths, and internal endpoints in Git history |
 | `scripts/check_gitignore_protected.py` | Opt-in gate blocking removal of required `.gitignore` rules (config: `.gitignore-protected`) |
@@ -143,6 +144,11 @@ POLICY_TODO_HARD_LINE_CAP=300
 # check_doc_freshness.py
 POLICY_FRESHNESS_WARN_DAYS=180  # warn after this many days
 POLICY_FRESHNESS_HARD_DAYS=365  # block after this many days
+
+# check_license_inventory.py
+POLICY_LICENSE_HUMAN_WARN_DAYS=30   # warn when Last human reviewed older than this
+POLICY_LICENSE_HUMAN_HARD_DAYS=180  # hard-fail when Last human reviewed older than this
+POLICY_LICENSE_SKIP_CHECKER=0       # set 1 to skip npx license-checker (lockfile-only)
 
 # prune_backups.sh
 POLICY_BACKUP_KEEP_COMMITS=5

@@ -11,7 +11,7 @@ several independent, concurrent streams.
 
 ## Session loop
 
-1. Read `AGENTS.md`, `README.md`, `DESIGN.md`, and the relevant source/test files.
+1. Read `AGENTS.md`, `README.md`, `DESIGN.md`, `ARCHITECTURE.md`, and the relevant source/test files.
 2. State the narrow behavior being changed before editing.
 3. Keep mapping behavior in `src/core/`; keep browser APIs in `src/ui/` or renderers.
 4. Update focused Vitest coverage with the behavior.
@@ -33,11 +33,11 @@ future repository-wide controls.
 
 | Change | Read/update |
 |---|---|
-| MIDI normalization or domain types | `DESIGN.md`, `src/core/types.ts`, parser tests |
+| MIDI normalization or domain types | `ARCHITECTURE.md`, `src/core/types.ts`, parser tests |
 | Mapping formula or configuration | `DESIGN.md`, mapper tests |
-| SVG/plotter output | `DESIGN.md`, SVG tests |
+| SVG/plotter output | `DESIGN.md`, `ARCHITECTURE.md`, SVG tests |
 | UI controls | `README.md` if user-visible behavior changes |
-| Build/tooling | `package.json`, this document, and `README.md` if setup changes |
+| Build/tooling | `ARCHITECTURE.md`, `package.json`, this document, and `README.md` if setup changes |
 
 ## Handoff note
 

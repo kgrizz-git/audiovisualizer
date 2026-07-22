@@ -41,6 +41,8 @@ EXEMPT_FRAGMENTS = [
     "vendor/",
     "dist/",
     "build/",
+    # Auto-generated; cadence owned by check_license_inventory.py
+    "inventory/third-party-licenses.md",
 ]
 
 MARKER_RE = re.compile(r"Last reviewed:\s*(\d{4}-\d{2}-\d{2})", re.IGNORECASE)

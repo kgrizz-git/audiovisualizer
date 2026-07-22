@@ -115,3 +115,13 @@ jobs:
           POLICY_WARN_AS_ERROR: "0"   # set to 1 to block on stale docs
         run: |
           git diff --name-only HEAD~1 HEAD | grep '\.md$' | xargs python hooks/scripts/check_doc_freshness.py || true
+      # Node projects: keep the license inventory aligned with package-lock.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - name: Third-party license inventory
+        run: python hooks/scripts/check_license_inventory.py --check
+      # Optional fixture tests for the license gate:
+      # - run: python -m unittest tests.hooks.test_check_license_inventory -v

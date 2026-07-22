@@ -21,7 +21,7 @@ export const DEFAULT_CONFIG: RuleConfig = {
   strokeWidthBase: 2,
   strokeWidthScale: 4,
   hueOffsetPerVoice: 25,
-  spiralBias: 2,
+  spiralBias: 0,
   intervalAngleEnabled: true,
   quantizeOnset: false,
   quantizeSubdivision: 4,

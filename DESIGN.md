@@ -11,7 +11,9 @@ mapping configuration, and canvas size must always yield the same geometry and S
 
 The browser can also audition a score through a local Web Audio preview synth. This is
 timing-synchronized with the visual scrubber, but is not General MIDI playback: it uses
-simple oscillator timbres and does not yet reproduce program changes or sustain.
+simple oscillator timbres and does not yet reproduce program changes or sustain. Each
+voice exposes a local timbre, volume, mute, and solo control; parsed MIDI program names
+are retained as metadata for future soundfont routing.
 
 ## Architecture
 
@@ -87,6 +89,10 @@ SVG export uses the same `RenderedGeometry` at 1000×1000 by default. Standard S
 background rectangle and can include the rule legend. Pen-plotter SVG omits both the
 background and legend, uses black 1px strokes, and leaves circles unfilled. SVG is built
 as data only; it must not serialize untrusted MIDI text into markup.
+
+Before preview or export, geometry receives one uniform, deterministic fit transform.
+The transform measures all segment and circle bounds, applies a 56px safe padding, and
+centers the result without changing the mapped note data or rule configuration.
 
 ## Verification contract
 

@@ -1,4 +1,4 @@
-import { GeometrySegment, RenderedGeometry } from '../../core/types.js';
+import { GeometryBand, GeometrySegment, RenderedGeometry } from '../../core/types.js';
 
 export interface CanvasRenderOptions {
   time?: number;
@@ -28,9 +28,11 @@ export class CanvasRenderer {
 
     this.ctx.save();
     this.ctx.scale(dpr, dpr);
-    this.ctx.fillStyle = options.backgroundColor || '#09111f';
+    this.ctx.fillStyle = options.backgroundColor || '#000000';
     this.ctx.fillRect(0, 0, width, height);
-    this.drawAtmosphere(width, height);
+    if (geometry.bands.length === 0) this.drawAtmosphere(width, height);
+
+    geometry.bands.forEach((band) => this.drawBand(band, width, time));
 
     voicePaths.forEach((voicePath) => {
       voicePath.segments.forEach((segment) => this.drawSegment(segment, time));
@@ -81,6 +83,13 @@ export class CanvasRenderer {
     this.ctx.globalAlpha = segment.opacity;
     this.ctx.stroke();
     this.ctx.setLineDash([]);
+  }
+
+  private drawBand(band: GeometryBand, width: number, time: number): void {
+    if (band.onset > time) return;
+    this.ctx.fillStyle = band.color;
+    this.ctx.globalAlpha = band.opacity;
+    this.ctx.fillRect(0, band.y, width, band.height);
   }
 
   private drawAtmosphere(width: number, height: number): void {

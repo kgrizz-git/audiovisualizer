@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateDemoScore } from '../src/core/midi/parser.js';
-import { mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor } from '../src/core/mapper/scoreMapper.js';
+import { getAverageScoreBackground, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor } from '../src/core/mapper/scoreMapper.js';
 import { NoteEvent } from '../src/core/types.js';
 
 describe('Score Mapper Unit Tests', () => {
@@ -57,5 +57,26 @@ describe('Score Mapper Unit Tests', () => {
     const [first, second] = geometry.voicePaths[0].segments;
     expect(first.end.y).toBeCloseTo(first.start.y);
     expect(second.end.y).toBeCloseTo(second.start.y);
+  });
+
+  it('derives a stable, dark average background from mapped pitch hues', () => {
+    const background = getAverageScoreBackground(generateDemoScore(), DEFAULT_CONFIG);
+    expect(background).toMatch(/^hsl\(\d+, 32%, 9%\)$/);
+  });
+
+  it('maps top-to-bottom tonal bands with circular active-note hue averaging and silence', () => {
+    const score = {
+      title: 'Tonal fixture', duration: 4, bpm: 120, tracks: [{ name: 'Voice', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+        { id: 'c', pitch: 60, onset: 0, duration: 2, velocity: 100, voice: 0, pitchClass: 0 },
+        { id: 'b', pitch: 71, onset: 0, duration: 2, velocity: 100, voice: 0, pitchClass: 11 },
+        { id: 'c-octave', pitch: 72, onset: 2, duration: 1, velocity: 100, voice: 0, pitchClass: 0 },
+      ] }],
+    };
+    const geometry = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'tonal_time_lines' }, 300, 4);
+    expect(geometry.voicePaths).toEqual([]);
+    expect(geometry.bands).toHaveLength(4);
+    expect(geometry.bands[0]).toMatchObject({ y: 0, height: 1, color: 'hsl(345, 85%, 60%)', silent: false });
+    expect(geometry.bands[2]).toMatchObject({ color: 'hsl(0, 85%, 60%)', silent: false });
+    expect(geometry.bands[3]).toMatchObject({ color: 'rgb(226, 232, 240)', silent: true });
   });
 });

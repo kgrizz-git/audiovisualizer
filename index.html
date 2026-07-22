@@ -16,9 +16,9 @@
       <section class="control-group input-group"><h2><span>01</span> Choose a score</h2>
         <div class="control-item"><label for="demo-midi-select">Included studies</label><select id="demo-midi-select">
           <option value="synthetic" selected>Generative study · C major</option>
-          <option value="./demo-midi/bach_prelude_c.mid">Classical · Bach Prelude in C</option>
-          <option value="./demo-midi/beethoven_fur_elise.mid">Classical · Für Elise</option>
-          <option value="./demo-midi/mozart_nachtmusik.mid">Classical · Eine kleine Nachtmusik</option>
+          <option value="./demo-midi/bach_prelude_c_full.mid">Classical · Bach Prelude in C · full score (2:20)</option>
+          <option value="./demo-midi/mozart_nachtmusik_mvt1_full.mid">Classical · Mozart Eine kleine Nachtmusik I · full movement (5:20)</option>
+          <option value="./demo-midi/beethoven_fur_elise.mid">Classical · Beethoven Für Elise · theme study</option>
         </select></div>
         <div class="file-dropzone" id="dropzone" tabindex="0"><label for="midi-file-input" id="file-label">Drop a MIDI here or browse</label><input type="file" id="midi-file-input" accept=".mid,.midi,audio/midi" /></div>
         <div class="control-item"><label for="source-midi-select">Free online MIDI pointers</label><select id="source-midi-select">
@@ -32,9 +32,10 @@
       </section>
 
       <section class="control-group"><h2><span>02</span> Compose the rule set</h2>
-        <div class="control-item"><label for="variation-select">Geometry</label><select id="variation-select"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option></select></div>
+        <div class="control-item"><label for="variation-select">Geometry</label><select id="variation-select"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option><option value="tonal_time_lines">Average active pitch color</option></select></div>
         <div class="control-item"><label for="origin-select">Growth direction</label><select id="origin-select"><option value="left_to_right">Left to right</option><option value="center_outward">Center outward</option><option value="outside_inward">Outside inward</option></select></div>
         <div class="control-item"><label for="hue-mode-select">Pitch color</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option></select></div>
+        <div class="control-item"><label for="background-select">Canvas background</label><select id="background-select"><option value="black">Black</option><option value="average">Average pitch color</option></select></div>
         <div class="control-grid"><label class="toggle"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label></div>
         <div class="control-item"><label for="gap-policy-select">Rest treatment</label><select id="gap-policy-select"><option value="lift_pen">Lift pen</option><option value="faint_line">Faint connection</option><option value="ghost">Ghost trace</option></select></div>
       </section>
@@ -43,6 +44,7 @@
         <div class="control-item"><label for="length-scale">Duration scale <output id="val-length">40</output></label><input id="length-scale" type="range" min="10" max="150" value="40" /></div>
         <div class="control-item"><label for="angle-scale">Turn scale <output id="val-angle">15°</output></label><input id="angle-scale" type="range" min="0" max="45" value="15" /></div>
         <div class="control-item"><label for="stroke-base">Base weight <output id="val-stroke">2px</output></label><input id="stroke-base" type="range" min="1" max="10" value="2" /></div>
+        <div class="control-item"><label for="time-line-density">Time-line density <output id="val-density">1×</output></label><input id="time-line-density" type="range" min="0.5" max="2" step="0.25" value="1" /></div>
         <fieldset class="voice-filter"><legend>Visible voices</legend><div id="voice-filter-options" class="voice-filter-options"></div></fieldset>
         <fieldset class="voice-filter"><legend>Local synth voices</legend><div id="audio-voice-options" class="audio-voice-options"></div></fieldset>
       </section>

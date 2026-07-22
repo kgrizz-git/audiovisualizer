@@ -33,4 +33,11 @@ describe('SVG Builder Unit Tests', () => {
     expect(svg).toContain('Lead —&gt; &lt;unsafe&gt;');
     expect(svg).not.toContain('Lead --> <unsafe>');
   });
+
+  it('serializes tonal time bands as full-width SVG lines', () => {
+    const score = generateDemoScore();
+    const svg = buildSvg(mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'tonal_time_lines' }, 100, 8));
+    expect(svg.match(/x1="0"/g)).toHaveLength(8);
+    expect(svg).toContain('x2="100"');
+  });
 });

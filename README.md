@@ -23,6 +23,26 @@ The studio includes local classical MIDI studies and links to freely licensed/pu
 folk, ancient, and traditional MIDI sources. Source links open their license page before
 you download and load a file locally; uploaded MIDI never leaves the browser.
 
+## Programmatic SVG generation
+
+Use the CLI to generate deterministic SVG or PNG without starting the studio:
+
+```bash
+npm run render -- --input ./song.mid --output ./song.svg --mode tonal_time_lines --height 2400 --legend --manifest ./song.json
+```
+
+Use a `.png` output filename to rasterize the same SVG composition at the requested
+dimensions:
+
+```bash
+npm run render -- --input ./song.mid --output ./song.png --width 2400 --height 2400
+```
+
+It shares the studio's MIDI parser, mapping rules, fitting, and SVG renderer. Run
+`npm run render -- --help` for all options, including voice filtering, pitch-color and
+origin rules, plotter SVG, custom dimensions, and tonal time-line density. The optional
+manifest records the normalized score and exact rule configuration for reproducibility.
+
 ---
 
 # Core Concept & Vision

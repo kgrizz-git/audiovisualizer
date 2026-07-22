@@ -1,5 +1,5 @@
 import { generateDemoScore, parseMidiData } from '../core/midi/parser.js';
-import { DEFAULT_CONFIG, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
+import { DEFAULT_CONFIG, getAverageScoreBackground, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
@@ -17,6 +17,7 @@ class AudioVisualizerApp {
   private isPlaying = false;
   private midiPreview = new MidiPreviewPlayer();
   private voicePlayback = new Map<number, VoicePlaybackSettings>();
+  private backgroundMode: 'black' | 'average' = 'black';
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
@@ -47,12 +48,14 @@ class AudioVisualizerApp {
     this.select<Variation>('variation-select', (value) => { this.currentConfig.variation = value; });
     this.select<OriginMode>('origin-select', (value) => { this.currentConfig.originMode = value; });
     this.select<PitchHueMode>('hue-mode-select', (value) => { this.currentConfig.pitchHueMode = value; });
+    this.select<'black' | 'average'>('background-select', (value) => { this.backgroundMode = value; });
     this.select<GapPolicy>('gap-policy-select', (value) => { this.currentConfig.gapPolicy = value; });
     this.element<HTMLInputElement>('interval-angle-toggle').addEventListener('change', (event) => { this.currentConfig.intervalAngleEnabled = (event.target as HTMLInputElement).checked; this.render(); });
     this.element<HTMLInputElement>('quantize-toggle').addEventListener('change', (event) => { this.currentConfig.quantizeOnset = (event.target as HTMLInputElement).checked; this.render(); });
     this.range('length-scale', 'val-length', (value) => { this.currentConfig.lengthScale = value; }, '');
     this.range('angle-scale', 'val-angle', (value) => { this.currentConfig.angleScale = value; }, '°');
     this.range('stroke-base', 'val-stroke', (value) => { this.currentConfig.strokeWidthBase = value; }, 'px');
+    this.range('time-line-density', 'val-density', (value) => { this.currentConfig.timeLineDensity = value; }, '×');
 
     const scrubber = this.element<HTMLInputElement>('progress-scrubber');
     scrubber.addEventListener('input', () => { this.pause(); this.currentTime = this.currentScore.duration * Number(scrubber.value) / 1000; this.render(); });
@@ -125,13 +128,14 @@ class AudioVisualizerApp {
 
   private render(): void {
     const geometry = this.geometryFor(900);
-    this.canvasRenderer.render(geometry, { time: this.currentTime, showLegend: true });
+    this.canvasRenderer.render(geometry, { time: this.currentTime, showLegend: true, backgroundColor: this.backgroundColor() });
     this.element<HTMLInputElement>('progress-scrubber').value = String(Math.round(this.currentTime / Math.max(this.currentScore.duration, 0.01) * 1000));
     this.element<HTMLOutputElement>('time-display').value = `${formatTime(this.currentTime)} / ${formatTime(this.currentScore.duration)}`;
   }
-  private downloadSvg(plotter: boolean): void { const geometry = this.geometryFor(1200); this.download(new Blob([buildSvg(geometry, { includeLegend: !plotter, penPlotterMode: plotter })], { type: 'image/svg+xml' }), `${this.filename()}${plotter ? '-plotter' : ''}.svg`); }
-  private downloadPng(): void { const geometry = this.geometryFor(1200); this.canvasRenderer.render(geometry, { showLegend: true }); this.canvasRenderer.downloadPng(`${this.filename()}.png`); this.render(); }
+  private downloadSvg(plotter: boolean): void { const geometry = this.geometryFor(1200); this.download(new Blob([buildSvg(geometry, { includeLegend: !plotter, penPlotterMode: plotter, backgroundColor: this.backgroundColor() })], { type: 'image/svg+xml' }), `${this.filename()}${plotter ? '-plotter' : ''}.svg`); }
+  private downloadPng(): void { const geometry = this.geometryFor(1200); this.canvasRenderer.render(geometry, { showLegend: true, backgroundColor: this.backgroundColor() }); this.canvasRenderer.downloadPng(`${this.filename()}.png`); this.render(); }
   private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }
+  private backgroundColor(): string { return this.backgroundMode === 'average' ? getAverageScoreBackground(this.currentScore, this.currentConfig) : '#000000'; }
   private download(blob: Blob, name: string): void { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }
   private filename(): string { return `${this.currentScore.title.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase()}-${this.currentConfig.variation}`; }
   private setStatus(message: string, isError = false): void { const status = this.element<HTMLElement>('app-status'); status.textContent = message; status.classList.toggle('is-error', isError); }

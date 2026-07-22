@@ -19,6 +19,10 @@ npm run dev
 npm run validate
 ```
 
+The studio includes local classical MIDI studies and links to freely licensed/public-domain
+folk, ancient, and traditional MIDI sources. Source links open their license page before
+you download and load a file locally; uploaded MIDI never leaves the browser.
+
 ---
 
 # Core Concept & Vision

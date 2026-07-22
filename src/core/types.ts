@@ -38,7 +38,10 @@ export interface RuleConfig {
   strokeWidthScale: number;
   hueOffsetPerVoice: number;
   spiralBias: number;     // curvature constant for spiral submode
-  quantizeOnset: boolean; // snap onsets to 16th grid if true
+  intervalAngleEnabled: boolean;
+  quantizeOnset: boolean; // snap onsets to the configured beat subdivision
+  quantizeSubdivision: number;
+  voiceFilter: number[] | null; // null means include every voice
 }
 
 export interface Point2D {
@@ -53,6 +56,8 @@ export interface GeometrySegment {
   width: number;
   opacity: number;
   note: NoteEvent;
+  role?: 'note' | 'gap';
+  dashArray?: string;
 }
 
 export interface GeometryCircle {

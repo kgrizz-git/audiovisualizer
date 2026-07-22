@@ -25,4 +25,12 @@ describe('SVG Builder Unit Tests', () => {
     expect(svgStr).not.toContain('<rect width="1000" height="1000"');
     expect(svgStr).toContain('stroke="#000000"');
   });
+
+  it('keeps MIDI metadata from breaking SVG comments', () => {
+    const score = generateDemoScore();
+    score.tracks[0].name = 'Lead --> <unsafe>';
+    const svg = buildSvg(mapScoreToGeometry(score, DEFAULT_CONFIG));
+    expect(svg).toContain('Lead —&gt; &lt;unsafe&gt;');
+    expect(svg).not.toContain('Lead --> <unsafe>');
+  });
 });

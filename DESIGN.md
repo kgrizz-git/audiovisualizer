@@ -9,6 +9,10 @@ geometric artwork. Version 1 accepts MIDI only; it does not transcribe audio, us
 server, persist uploads, or include a desktop wrapper. A given normalized score,
 mapping configuration, and canvas size must always yield the same geometry and SVG.
 
+The browser can also audition a score through a local Web Audio preview synth. This is
+timing-synchronized with the visual scrubber, but is not General MIDI playback: it uses
+simple oscillator timbres and does not yet reproduce program changes or sustain.
+
 ## Architecture
 
 ```text
@@ -34,8 +38,9 @@ notes are omitted. Missing/zero durations are clamped to `0.01` seconds by the p
 
 `RuleConfig` is the complete rule set recorded in `RenderedGeometry`. Current shipping
 controls are variation, origin, hue mode, length scale, angle scale, base stroke width,
-voice hue offset, and spiral bias. `gapPolicy` and `quantizeOnset` are reserved contract
-fields: the mapper does not yet apply them, so UI must not claim they affect output.
+voice hue offset, spiral bias, interval-angle enablement, voice filtering, quantization,
+and gap treatment. Quantization snaps onsets to a sixteenth-note grid derived from the
+score tempo. A null voice filter includes every voice.
 
 ## Mapping rules
 
@@ -51,6 +56,10 @@ separate `GeometryVoicePath` for that track; path order matches `Score.tracks` o
 | Velocity | `strokeWidthBase + velocity / 127 * strokeWidthScale` | Line width |
 | Melodic interval | `(pitch - previousPitch) * angleScale` | Heading change for line paths |
 | Spiral bias | Constant degrees per mapped note | Additional curvature |
+| Rest gap | Lift, faint connector, or dashed ghost | Cursor advance with optional visual trace |
+
+When quantization is enabled, onset is rounded to `60 / bpm / 4` seconds before mapping.
+For `lines` and `circles`, a rest advances the cursor by `restSeconds * lengthScale`.
 
 Colors are emitted as `hsl(hue, 85%, 60%)`; line opacity is `0.9`, circle opacity is
 `0.75`, and vertical-tone opacity is `0.85`.
@@ -69,8 +78,10 @@ Colors are emitted as `hsl(hue, 85%, 60%)`; line opacity is `0.9`, circle opacit
 
 ## Rendering and export
 
-Canvas is the live preview. It scales its backing buffer for device pixel ratio, redraws
-a solid dark background, and reveals a fraction of each voice path for the scrubber.
+Canvas is the live preview. It scales its backing buffer for device pixel ratio and uses
+score seconds—not segment count—for playback and scrubbing. A note segment reveals over
+its actual duration; a circle appears at its onset. PNG export captures the completed
+canvas with its legend.
 
 SVG export uses the same `RenderedGeometry` at 1000×1000 by default. Standard SVG has a
 background rectangle and can include the rule legend. Pen-plotter SVG omits both the
@@ -85,7 +96,6 @@ selection, and SVG export modes; add parser fixtures when changing MIDI normaliz
 
 ## Deferred work
 
-- Apply quantization and rest/gap policies.
 - Add configuration presets and a machine-readable export manifest.
-- Add PNG or animation export.
+- Add video or frame-sequence export.
 - Consider audio input only as a separately designed transcription feature.

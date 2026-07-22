@@ -74,6 +74,10 @@ Colors are emitted as `hsl(hue, 85%, 60%)`; line opacity is `0.9`, circle opacit
   `spiralBias + 15` degrees, then moves the cursor to that circle.
 - `vertical_tone`: maps onset to x and pitch to y inside a 50px inset. Its segment runs
   horizontally by mapped length; origin mode does not affect this variation.
+- `tonal_time_lines`: maps time from top to bottom as full-width bands. A band uses the
+  circular, velocity- and overlap-weighted mean of active mapped pitch hues; it is an
+  average active pitch color, not a detected key or chord. Silent bands are a subtle
+  neutral tint so rests remain visible. Density controls samples per output pixel row.
 - `left_to_right`: starts at x=50 with a channel-dependent y offset and a rightward heading.
 - `center_outward`: starts at canvas center with a channel-dependent radial heading.
 - `outside_inward`: starts at 45% of the minimum canvas dimension from center and faces inward.
@@ -84,6 +88,10 @@ Canvas is the live preview. It scales its backing buffer for device pixel ratio 
 score seconds—not segment count—for playback and scrubbing. A note segment reveals over
 its actual duration; a circle appears at its onset. PNG export captures the completed
 canvas with its legend.
+
+The default preview and SVG background is black. The optional average-color background
+computes the circular mean of mapped pitch hues for the visible voices, then renders that
+hue at a deliberately dark saturation/lightness so the score remains readable.
 
 SVG export uses the same `RenderedGeometry` at 1000×1000 by default. Standard SVG has a
 background rectangle and can include the rule legend. Pen-plotter SVG omits both the

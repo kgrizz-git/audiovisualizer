@@ -6,11 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:cli": "esbuild src/cli/renderMidi.ts --bundle --platform=node --target=node18 --format=esm --external:@resvg/resvg-js --outfile=dist-cli/render-midi.mjs",
+    "render": "npm run build:cli --silent && node dist-cli/render-midi.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "validate": "npm run test && npm run build"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@tonejs/midi": "^2.0.28"
   },
   "devDependencies": {

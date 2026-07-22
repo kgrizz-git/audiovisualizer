@@ -11,7 +11,7 @@ export interface SvgOptions {
  */
 export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): string {
   const { width, height, voicePaths, config } = geometry;
-  const bgColor = options.backgroundColor || '#0f172a'; // sleek dark theme default
+  const bgColor = options.backgroundColor || '#000000';
   const isPlotter = options.penPlotterMode || false;
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">\n`;
@@ -52,6 +52,14 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
     });
 
     svg += `  </g>\n`;
+  });
+
+  // Tonal time-lines are full-width vector bands, independent of MIDI voices.
+  geometry.bands.forEach((band) => {
+    const stroke = isPlotter ? '#000000' : band.color;
+    const opacity = isPlotter ? 1 : band.opacity;
+    const y = band.y + band.height / 2;
+    svg += `  <line x1="0" y1="${y.toFixed(2)}" x2="${width}" y2="${y.toFixed(2)}" stroke="${stroke}" stroke-width="${band.height.toFixed(2)}" stroke-opacity="${opacity}" />\n`;
   });
 
   // Legend Group

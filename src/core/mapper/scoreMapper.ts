@@ -5,6 +5,7 @@ import {
   GeometryVoicePath,
   GeometrySegment,
   GeometryCircle,
+  GeometryBand,
   Point2D,
   NoteEvent,
 } from '../types.js';
@@ -25,22 +26,37 @@ export const DEFAULT_CONFIG: RuleConfig = {
   quantizeOnset: false,
   quantizeSubdivision: 4,
   voiceFilter: null,
+  timeLineDensity: 1,
 };
 
 /**
  * Calculates HSL color from note pitch and rule config.
  */
 export function getNoteColor(note: NoteEvent, config: RuleConfig): string {
-  let hue = 0;
-  if (config.pitchHueMode === 'pitch_class') {
-    hue = (note.pitchClass / 12) * 360;
-  } else {
-    hue = (note.pitch * 7) % 360;
-  }
-
-  // Voice offset
-  hue = (hue + note.voice * config.hueOffsetPerVoice) % 360;
+  const hue = getMappedHue(note, config);
   return `hsl(${Math.round(hue)}, 85%, 60%)`;
+}
+
+/** Returns the hue used consistently by note and aggregate-time visualizations. */
+export function getMappedHue(note: NoteEvent, config: RuleConfig): number {
+  const sourceHue = config.pitchHueMode === 'pitch_class'
+    ? (note.pitchClass / 12) * 360
+    : (note.pitch * 7) % 360;
+  return (sourceHue + note.voice * config.hueOffsetPerVoice + 360) % 360;
+}
+
+/** Returns a dark, readable background based on the circular average of mapped note hues. */
+export function getAverageScoreBackground(score: Score, config: RuleConfig): string {
+  const notes = score.tracks
+    .filter((track) => config.voiceFilter === null || config.voiceFilter.includes(track.channel))
+    .flatMap((track) => track.notes);
+  if (notes.length === 0) return '#000000';
+  const average = notes.reduce((sum, note) => {
+    const radians = getMappedHue(note, config) * Math.PI / 180;
+    return { x: sum.x + Math.cos(radians), y: sum.y + Math.sin(radians) };
+  }, { x: 0, y: 0 });
+  const hue = (Math.atan2(average.y, average.x) * 180 / Math.PI + 360) % 360;
+  return `hsl(${Math.round(hue)}, 32%, 9%)`;
 }
 
 /**
@@ -52,6 +68,16 @@ export function mapScoreToGeometry(
   targetWidth: number = 1000,
   targetHeight: number = 1000
 ): RenderedGeometry {
+  if (config.variation === 'tonal_time_lines') {
+    return {
+      width: targetWidth,
+      height: targetHeight,
+      voicePaths: [],
+      bands: mapTonalTimeBands(score, config, targetHeight),
+      config,
+    };
+  }
+
   const voicePaths: GeometryVoicePath[] = [];
 
   score.tracks.forEach((track) => {
@@ -162,8 +188,52 @@ export function mapScoreToGeometry(
     width: targetWidth,
     height: targetHeight,
     voicePaths,
+    bands: [],
     config,
   };
+}
+
+/**
+ * Samples the score from top to bottom. Each band is a time bin, colored by the
+ * circular, velocity- and overlap-weighted mean of the active note hues.
+ */
+function mapTonalTimeBands(score: Score, config: RuleConfig, targetHeight: number): GeometryBand[] {
+  const bandCount = Math.max(1, Math.round(targetHeight * config.timeLineDensity));
+  const scoreDuration = Math.max(score.duration, 0.01);
+  const binDuration = scoreDuration / bandCount;
+  const notes = score.tracks
+    .filter((track) => config.voiceFilter === null || config.voiceFilter.includes(track.channel))
+    .flatMap((track) => track.notes.map((note) => quantizeNote(note, score.bpm, config)));
+
+  return Array.from({ length: bandCount }, (_, index) => {
+    const onset = index * binDuration;
+    const end = onset + binDuration;
+    let x = 0;
+    let y = 0;
+    let totalWeight = 0;
+
+    notes.forEach((note) => {
+      const overlap = Math.max(0, Math.min(end, note.onset + note.duration) - Math.max(onset, note.onset));
+      if (overlap === 0) return;
+      const weight = overlap * Math.max(1, note.velocity);
+      const radians = getMappedHue(note, config) * Math.PI / 180;
+      x += Math.cos(radians) * weight;
+      y += Math.sin(radians) * weight;
+      totalWeight += weight;
+    });
+
+    const silent = totalWeight === 0;
+    const hue = silent ? 0 : (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    return {
+      y: index * targetHeight / bandCount,
+      height: targetHeight / bandCount,
+      color: silent ? 'rgb(226, 232, 240)' : `hsl(${Math.round(hue)}, 85%, 60%)`,
+      opacity: silent ? 0.10 : 0.92,
+      onset,
+      duration: binDuration,
+      silent,
+    };
+  });
 }
 
 function quantizeNote(note: NoteEvent, bpm: number, config: RuleConfig): NoteEvent {

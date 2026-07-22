@@ -1,4 +1,4 @@
-export type Variation = 'lines' | 'circles' | 'vertical_tone';
+export type Variation = 'lines' | 'circles' | 'vertical_tone' | 'tonal_time_lines';
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
 export type PitchHueMode = 'pitch_class' | 'register_spiral';
 export type GapPolicy = 'lift_pen' | 'faint_line' | 'ghost';
@@ -44,6 +44,7 @@ export interface RuleConfig {
   quantizeOnset: boolean; // snap onsets to the configured beat subdivision
   quantizeSubdivision: number;
   voiceFilter: number[] | null; // null means include every voice
+  timeLineDensity: number; // sampled bands per output pixel row
 }
 
 export interface Point2D {
@@ -72,6 +73,17 @@ export interface GeometryCircle {
   note: NoteEvent;
 }
 
+/** A full-width time slice used by the tonal time-lines variation. */
+export interface GeometryBand {
+  y: number;
+  height: number;
+  color: string;
+  opacity: number;
+  onset: number;
+  duration: number;
+  silent: boolean;
+}
+
 export interface GeometryVoicePath {
   voice: number;
   voiceName: string;
@@ -83,6 +95,7 @@ export interface RenderedGeometry {
   width: number;
   height: number;
   voicePaths: GeometryVoicePath[];
+  bands: GeometryBand[];
   config: RuleConfig;
 }
 

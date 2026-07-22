@@ -2,6 +2,11 @@ import { GeometryCircle, GeometrySegment, RenderedGeometry } from '../types.js';
 
 /** Uniformly frames mapped geometry inside a target canvas without changing its rule data. */
 export function fitGeometryToCanvas(geometry: RenderedGeometry, width: number, height: number, padding = 56): RenderedGeometry {
+  // Bands intentionally occupy every output row and must not receive art padding.
+  if (geometry.bands.length > 0) {
+    const scaleY = height / geometry.height;
+    return { ...geometry, width, height, bands: geometry.bands.map((band) => ({ ...band, y: band.y * scaleY, height: band.height * scaleY })) };
+  }
   const segments = geometry.voicePaths.flatMap((path) => path.segments);
   const circles = geometry.voicePaths.flatMap((path) => path.circles);
   if (segments.length === 0 && circles.length === 0) return { ...geometry, width, height };

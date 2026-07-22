@@ -8,7 +8,9 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
-// 1. Bach - Prelude in C Major (BWV 846)
+// Historical short study generator. Full Bach and Mozart demos are bundled from
+// public-domain Mutopia sources; do not overwrite them with these excerpts.
+// 1. Bach - Prelude in C Major (BWV 846) excerpt
 function generateBachPrelude() {
   const midi = new Midi();
   midi.header.name = 'Bach - Prelude in C Major (BWV 846)';
@@ -92,7 +94,7 @@ function generateFurElise() {
   return Buffer.from(midi.toArray());
 }
 
-// 3. Mozart - Eine kleine Nachtmusik
+// 3. Mozart - Eine kleine Nachtmusik excerpt
 function generateNachtmusik() {
   const midi = new Midi();
   midi.header.name = 'Mozart - Eine kleine Nachtmusik';

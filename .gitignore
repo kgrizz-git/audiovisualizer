@@ -80,6 +80,7 @@ yarn-error.log*
 .stylelintcache
 
 # build output & tool caches (adjust to your framework)
+dist-cli/
 .next/
 .nuxt/
 .output/

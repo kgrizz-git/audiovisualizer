@@ -7,6 +7,11 @@ Developer-only detail (hooks internals, inventory menus, tests/CI) lives in
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project
 uses [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+- README pointer to the third-party license inventory and regeneration commands.
+
 ## [0.4.4] - 2026-07-09
 
 ### Added

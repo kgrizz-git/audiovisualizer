@@ -1,0 +1,11 @@
+{
+  "name": "fixture-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "prod-direct": "^1.0.0",
+    "dual-license-prod": "^1.0.0"
+  },
+  "devDependencies": {
+    "dev-direct": "^1.0.0"
+  }
+}

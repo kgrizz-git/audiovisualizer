@@ -40,4 +40,14 @@ describe('SVG Builder Unit Tests', () => {
     expect(svg.match(/x1="0"/g)).toHaveLength(8);
     expect(svg).toContain('x2="100"');
   });
+
+  it('uses a mode-specific explanatory legend', () => {
+    const score = generateDemoScore();
+    const circles = buildSvg(mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'circles' }, 400, 400), { includeLegend: true });
+    const tonal = buildSvg(mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'tonal_time_lines' }, 400, 400), { includeLegend: true });
+    expect(circles).toContain('NOTE HALOS');
+    expect(circles).toContain('Duration → radius + path advance');
+    expect(tonal).toContain('AVERAGE ACTIVE PITCH');
+    expect(tonal).toContain('Neutral band → silence (not a key/chord)');
+  });
 });

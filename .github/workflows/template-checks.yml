@@ -11,9 +11,13 @@ on:
       - "ci/**"
       - "hooks/**"
       - "inventory/**"
+      - "package.json"
+      - "package-lock.json"
       - "policies/**"
       - "prompts/**"
       - "templates/**"
+      - "tests/hooks/**"
+      - "tests/fixtures/license-inventory/**"
   pull_request:
     paths:
       - ".github/workflows/**"
@@ -23,9 +27,13 @@ on:
       - "ci/**"
       - "hooks/**"
       - "inventory/**"
+      - "package.json"
+      - "package-lock.json"
       - "policies/**"
       - "prompts/**"
       - "templates/**"
+      - "tests/hooks/**"
+      - "tests/fixtures/license-inventory/**"
 
 permissions:
   contents: read
@@ -56,6 +64,19 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m compileall -q hooks/scripts ci/scripts
+
+      - name: Setup Node for license inventory
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+
+      - name: License inventory gate
+        run: python hooks/scripts/check_license_inventory.py --check
+
+      - name: License inventory unit tests
+        run: python -m unittest tests.hooks.test_check_license_inventory -v
 
       - name: Lint maintained Markdown
         run: >-

@@ -1,6 +1,6 @@
 # Policy: Documentation Freshness
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-07-22
 Enforced by: [`hooks/scripts/check_doc_freshness.py`](../hooks/scripts/check_doc_freshness.py)
 
 ## Why
@@ -16,7 +16,7 @@ review marker plus a staleness window keeps durable docs trustworthy.
 | Staleness window before review is due | 180 days | advisory (warn), CI soft gate |
 | Hard-stale threshold | 365 days | hard gate in CI |
 | Marker required in these paths | `policies/`, `templates/`, `inventory/`, root `*.md` | soft gate |
-| Exempt paths | `.context/`, `CHANGELOG.md`, auto-generated indexes, `notes_and_ideas/` | n/a |
+| Exempt paths | `.context/`, `CHANGELOG.md`, auto-generated indexes, `notes_and_ideas/`, `inventory/third-party-licenses.md` | n/a |
 
 ### Marker format
 
@@ -41,3 +41,15 @@ The checker parses the date, compares to today, and reports docs past the window
 
 Auto-generated lists (e.g. directory indexes) should be regenerated, not hand-dated. Track
 their generator and last-run instead of a manual marker.
+
+### License inventory (dual markers)
+
+[`inventory/third-party-licenses.md`](../inventory/third-party-licenses.md) is auto-generated
+by [`check_license_inventory.py`](../hooks/scripts/check_license_inventory.py). It is
+**exempt** from this policy's ordinary `Last reviewed` staleness rules:
+
+- `Last reviewed:` is an auto generation stamp from `--update` (not a human attestation).
+- `Last human reviewed:` is stamped only via `--human-review` and is enforced by the
+  license-inventory script / [`third-party-licenses.md`](third-party-licenses.md) policy.
+
+Do not “bump” either date through the generic doc-freshness workflow.

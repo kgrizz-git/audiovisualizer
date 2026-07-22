@@ -1,4 +1,5 @@
 import { RenderedGeometry } from '../../core/types.js';
+import { getLegendContent } from '../../core/legend/legendContent.js';
 
 export interface SvgOptions {
   includeLegend?: boolean;
@@ -64,7 +65,7 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
 
   // Legend Group
   if (options.includeLegend && !isPlotter) {
-    svg += buildLegendSvg(width, height, config.variation, config.originMode, config.pitchHueMode);
+    svg += buildLegendSvg(width, height, config);
   }
 
   svg += `</svg>`;
@@ -75,9 +76,10 @@ function escapeComment(value: string): string {
   return value.replaceAll('--', '—').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
-function buildLegendSvg(w: number, h: number, variation: string, origin: string, hueMode: string): string {
-  const legendW = 260;
-  const legendH = 110;
+function buildLegendSvg(w: number, h: number, config: RenderedGeometry['config']): string {
+  const content = getLegendContent(config);
+  const legendW = 340;
+  const legendH = 130;
   const x = w - legendW - 20;
   const y = h - legendH - 20;
 
@@ -85,11 +87,12 @@ function buildLegendSvg(w: number, h: number, variation: string, origin: string,
   <!-- Legend Group -->
   <g id="legend-overlay" transform="translate(${x}, ${y})">
     <rect width="${legendW}" height="${legendH}" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
-    <text x="15" y="24" fill="#f8fafc" font-family="sans-serif" font-size="12" font-weight="bold">AudioVisualizer Legend</text>
-    <text x="15" y="46" fill="#94a3b8" font-family="sans-serif" font-size="10">Variation: ${variation.toUpperCase()}</text>
-    <text x="15" y="62" fill="#94a3b8" font-family="sans-serif" font-size="10">Origin: ${origin.replace('_', ' ')}</text>
-    <text x="15" y="78" fill="#94a3b8" font-family="sans-serif" font-size="10">Color Mode: ${hueMode}</text>
-    <text x="15" y="96" fill="#38bdf8" font-family="sans-serif" font-size="9">Pitch → Rainbow Hue | Duration → Length</text>
+    <text x="15" y="24" fill="#f8fafc" font-family="sans-serif" font-size="12" font-weight="bold">Visual Score · ${content.title}</text>
+    ${content.lines.map((line, index) => `<text x="15" y="${48 + index * 17}" fill="#a5b4fc" font-family="sans-serif" font-size="10">${escapeText(line)}</text>`).join('\n    ')}
   </g>
   `;
+}
+
+function escapeText(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }

@@ -1,6 +1,6 @@
 # Policies
 
-Last reviewed: 2026-07-13
+Last reviewed: 2026-07-22
 
 Durable, opt-in repo rules a project can adopt and enforce. Each policy states the rule,
 the rationale, sensible defaults, and how it is enforced (hook, CI, or convention).
@@ -16,6 +16,7 @@ in one place and let [`hooks/`](../hooks/) and [`ci/`](../ci/) enforce them.
 | [plans-and-todos.md](plans-and-todos.md) — plans lifecycle, archiving, living `to_do` caps | `hooks/scripts/check_todo_limits.py` + convention |
 | [changelog-conventions.md](changelog-conventions.md) — public vs developer changelogs + SemVer | convention / release hygiene |
 | [doc-freshness.md](doc-freshness.md) — `Last reviewed` markers & staleness windows | `hooks/scripts/check_doc_freshness.py` |
+| [third-party-licenses.md](third-party-licenses.md) — npm license inventory, copyleft/unknown gates, human-review cadence | `hooks/scripts/check_license_inventory.py` |
 | [commits-and-branches.md](commits-and-branches.md) — commit messages, branch naming, PR hygiene, advisory open-PR check | convention + `ci/scripts/check_open_prs.py` (+ optional daily workflow) |
 | [security-baseline.md](security-baseline.md) — secrets, deps, SAST expectations | hooks + CI (see `inventory/security-quality.md`) |
 | [sensitive-data-runtime-leaks.md](sensitive-data-runtime-leaks.md) — runtime/dev leaks into logs, temp files, caches, telemetry | convention + hooks + CI (guidance: `prompts/sensitive-data-leak-prevention.md`) |

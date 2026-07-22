@@ -1,4 +1,5 @@
 import { GeometryBand, GeometrySegment, RenderedGeometry } from '../../core/types.js';
+import { getLegendContent } from '../../core/legend/legendContent.js';
 
 export interface CanvasRenderOptions {
   time?: number;
@@ -101,22 +102,22 @@ export class CanvasRenderer {
   }
 
   private drawCanvasLegend(_w: number, h: number, geometry: RenderedGeometry): void {
+    const content = getLegendContent(geometry.config);
     const x = 24;
-    const y = h - 106;
+    const legendH = 120;
+    const y = h - legendH - 24;
     this.ctx.fillStyle = 'rgba(9, 17, 31, 0.78)';
     this.ctx.strokeStyle = 'rgba(226, 232, 240, 0.18)';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
-    this.ctx.roundRect(x, y, 296, 82, 12);
+    this.ctx.roundRect(x, y, 350, legendH, 12);
     this.ctx.fill();
     this.ctx.stroke();
     this.ctx.fillStyle = '#f8fafc';
     this.ctx.font = '600 12px system-ui';
-    this.ctx.fillText('VISUAL SCORE · LIVE LEGEND', x + 16, y + 23);
+    this.ctx.fillText(`VISUAL SCORE · ${content.title}`, x + 16, y + 23);
     this.ctx.fillStyle = '#a5b4fc';
     this.ctx.font = '11px system-ui';
-    this.ctx.fillText('Pitch → hue   Duration → distance   Velocity → weight', x + 16, y + 45);
-    this.ctx.fillStyle = '#94a3b8';
-    this.ctx.fillText(`Mode: ${geometry.config.variation.replace('_', ' ')} · Gap: ${geometry.config.gapPolicy.replace('_', ' ')}`, x + 16, y + 65);
+    content.lines.forEach((line, index) => this.ctx.fillText(line, x + 16, y + 45 + index * 16));
   }
 }

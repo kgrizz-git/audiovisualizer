@@ -1,9 +1,10 @@
 import { generateDemoScore, parseMidiData } from '../core/midi/parser.js';
 import { DEFAULT_CONFIG, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
+import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
 import { GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation } from '../core/types.js';
-import { MidiPreviewPlayer } from '../audio/midiPreviewPlayer.js';
+import { defaultVoiceSettings, MidiPreviewPlayer, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
 
 class AudioVisualizerApp {
   private currentScore: Score = generateDemoScore();
@@ -15,6 +16,7 @@ class AudioVisualizerApp {
   private playbackOffset = 0;
   private isPlaying = false;
   private midiPreview = new MidiPreviewPlayer();
+  private voicePlayback = new Map<number, VoicePlaybackSettings>();
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
@@ -76,7 +78,7 @@ class AudioVisualizerApp {
     try { this.setScore(parseMidiData(await file.arrayBuffer(), file.name), `Loaded ${file.name}`); this.element<HTMLLabelElement>('file-label').textContent = `Loaded · ${file.name}`; }
     catch { this.setStatus('That file could not be read as MIDI.', true); }
   }
-  private setScore(score: Score, message: string): void { this.pause(); this.currentScore = score; this.currentTime = score.duration; this.currentConfig.voiceFilter = null; this.updateScoreUi(); this.render(); this.setStatus(message); }
+  private setScore(score: Score, message: string): void { this.pause(); this.currentScore = score; this.currentTime = score.duration; this.currentConfig.voiceFilter = null; this.voicePlayback = new Map(score.tracks.map((track) => [track.channel, defaultVoiceSettings(track.program)])); this.updateScoreUi(); this.render(); this.setStatus(message); }
 
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
@@ -88,13 +90,32 @@ class AudioVisualizerApp {
       input.addEventListener('change', () => { const checked = [...options.querySelectorAll<HTMLInputElement>('input:checked')].map((node) => Number(node.value)); this.currentConfig.voiceFilter = checked.length === this.currentScore.tracks.length ? null : checked; this.render(); });
       label.append(input, document.createTextNode(track.name)); options.append(label);
     });
+    const audioOptions = this.element<HTMLElement>('audio-voice-options'); audioOptions.replaceChildren();
+    this.currentScore.tracks.forEach((track) => {
+      const settings = this.voicePlayback.get(track.channel) ?? defaultVoiceSettings(track.program);
+      this.voicePlayback.set(track.channel, settings);
+      const row = document.createElement('div'); row.className = 'audio-voice-row';
+      const name = document.createElement('span'); name.textContent = `${track.name} · ${track.instrumentName}`;
+      const timbre = document.createElement('select');
+      ['sine', 'triangle', 'sawtooth', 'square'].forEach((value) => { const option = new Option(value, value, false, settings.timbre === value); timbre.add(option); });
+      timbre.addEventListener('change', () => { settings.timbre = timbre.value as VoicePlaybackSettings['timbre']; });
+      const gain = document.createElement('input'); gain.type = 'range'; gain.min = '0'; gain.max = '1.5'; gain.step = '0.05'; gain.value = String(settings.gain); gain.setAttribute('aria-label', `${track.name} volume`); gain.addEventListener('input', () => { settings.gain = Number(gain.value); });
+      const mute = this.createAudioToggle('M', settings.muted, `${track.name} mute`, (checked) => { settings.muted = checked; });
+      const solo = this.createAudioToggle('S', settings.solo, `${track.name} solo`, (checked) => { settings.solo = checked; });
+      row.append(name, timbre, gain, mute, solo); audioOptions.append(row);
+    });
+  }
+
+  private createAudioToggle(label: string, checked: boolean, ariaLabel: string, apply: (checked: boolean) => void): HTMLLabelElement {
+    const wrapper = document.createElement('label'); wrapper.className = 'audio-toggle'; wrapper.textContent = label;
+    const input = document.createElement('input'); input.type = 'checkbox'; input.checked = checked; input.setAttribute('aria-label', ariaLabel); input.addEventListener('change', () => apply(input.checked)); wrapper.prepend(input); return wrapper;
   }
 
   private async togglePlay(): Promise<void> {
     if (this.isPlaying) { this.pause(); return; }
     if (this.currentTime >= this.currentScore.duration) this.currentTime = 0;
     try {
-      await this.midiPreview.start(this.currentScore, this.currentTime);
+      await this.midiPreview.start(this.currentScore, this.currentTime, this.voicePlayback);
       this.isPlaying = true; this.playbackOffset = this.currentTime; this.playbackStart = performance.now();
       this.element<HTMLButtonElement>('play-btn').textContent = '❚❚'; this.setStatus('Playing local synth preview'); this.tick();
     } catch { this.setStatus('Audio preview could not start in this browser.', true); }
@@ -103,13 +124,14 @@ class AudioVisualizerApp {
   private tick = (): void => { if (!this.isPlaying) return; this.currentTime = Math.min(this.currentScore.duration, this.playbackOffset + (performance.now() - this.playbackStart) / 1000); this.render(); if (this.currentTime >= this.currentScore.duration) this.pause(); else this.animationFrameId = requestAnimationFrame(this.tick); };
 
   private render(): void {
-    const geometry = mapScoreToGeometry(this.currentScore, this.currentConfig, 900, 900);
+    const geometry = this.geometryFor(900);
     this.canvasRenderer.render(geometry, { time: this.currentTime, showLegend: true });
     this.element<HTMLInputElement>('progress-scrubber').value = String(Math.round(this.currentTime / Math.max(this.currentScore.duration, 0.01) * 1000));
     this.element<HTMLOutputElement>('time-display').value = `${formatTime(this.currentTime)} / ${formatTime(this.currentScore.duration)}`;
   }
-  private downloadSvg(plotter: boolean): void { const geometry = mapScoreToGeometry(this.currentScore, this.currentConfig, 1200, 1200); this.download(new Blob([buildSvg(geometry, { includeLegend: !plotter, penPlotterMode: plotter })], { type: 'image/svg+xml' }), `${this.filename()}${plotter ? '-plotter' : ''}.svg`); }
-  private downloadPng(): void { const geometry = mapScoreToGeometry(this.currentScore, this.currentConfig, 1200, 1200); this.canvasRenderer.render(geometry, { showLegend: true }); this.canvasRenderer.downloadPng(`${this.filename()}.png`); this.render(); }
+  private downloadSvg(plotter: boolean): void { const geometry = this.geometryFor(1200); this.download(new Blob([buildSvg(geometry, { includeLegend: !plotter, penPlotterMode: plotter })], { type: 'image/svg+xml' }), `${this.filename()}${plotter ? '-plotter' : ''}.svg`); }
+  private downloadPng(): void { const geometry = this.geometryFor(1200); this.canvasRenderer.render(geometry, { showLegend: true }); this.canvasRenderer.downloadPng(`${this.filename()}.png`); this.render(); }
+  private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }
   private download(blob: Blob, name: string): void { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }
   private filename(): string { return `${this.currentScore.title.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase()}-${this.currentConfig.variation}`; }
   private setStatus(message: string, isError = false): void { const status = this.element<HTMLElement>('app-status'); status.textContent = message; status.classList.toggle('is-error', isError); }

@@ -16,6 +16,8 @@ export interface NoteEvent {
 export interface TrackScore {
   name: string;
   channel: number;
+  program: number;
+  instrumentName: string;
   notes: NoteEvent[];
 }
 

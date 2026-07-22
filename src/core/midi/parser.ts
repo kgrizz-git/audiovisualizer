@@ -37,6 +37,8 @@ export function parseMidiData(arrayBuffer: ArrayBuffer, fileName: string = 'Unti
     tracks.push({
       name: track.name || `Track ${trackIdx + 1}`,
       channel: track.channel ?? trackIdx,
+      program: track.instrument.number,
+      instrumentName: track.instrument.name || 'Unknown instrument',
       notes,
     });
   });
@@ -97,8 +99,8 @@ export function generateDemoScore(): Score {
     duration: Math.max(currentTime, bassTime),
     bpm: 120,
     tracks: [
-      { name: 'Melody (Channel 1)', channel: 0, notes: leadNotes },
-      { name: 'Bass (Channel 2)', channel: 1, notes: bassNotes },
+      { name: 'Melody (Channel 1)', channel: 0, program: 0, instrumentName: 'Acoustic Grand Piano', notes: leadNotes },
+      { name: 'Bass (Channel 2)', channel: 1, program: 32, instrumentName: 'Acoustic Bass', notes: bassNotes },
     ],
   };
 }

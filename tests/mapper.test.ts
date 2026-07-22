@@ -38,11 +38,11 @@ describe('Score Mapper Unit Tests', () => {
     const score = {
       title: 'Fixture', duration: 2, bpm: 120,
       tracks: [
-        { name: 'Lead', channel: 0, notes: [
+        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
           { id: 'a', pitch: 60, onset: 0.02, duration: 0.2, velocity: 100, voice: 0, pitchClass: 0 },
           { id: 'b', pitch: 64, onset: 0.63, duration: 0.2, velocity: 100, voice: 0, pitchClass: 4 },
         ] },
-        { name: 'Bass', channel: 1, notes: [{ id: 'c', pitch: 36, onset: 0, duration: 1, velocity: 100, voice: 1, pitchClass: 0 }] },
+        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', notes: [{ id: 'c', pitch: 36, onset: 0, duration: 1, velocity: 100, voice: 1, pitchClass: 0 }] },
       ],
     };
     const geometry = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, quantizeOnset: true, gapPolicy: 'ghost', voiceFilter: [0] });

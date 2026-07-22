@@ -12,5 +12,5 @@ Last updated: 2026-07-21
 
 ## Next product milestones
 
-- [ ] **Build robust MIDI playback and voice routing**: Replace the local preview synth with selectable General MIDI soundfonts/instruments, per-track volume/mute/solo controls, channel/program-change handling, sustain support, and deterministic audio-export policy.
-- [ ] **Create a dynamic composition layout engine**: Fit and center every mode to the available canvas while retaining its mapping semantics; add bounds analysis, scale-to-fit, safe padding, overflow handling, and optional pan/zoom rather than letting long scores drift off-canvas.
+- [ ] **Finalize robust MIDI playback and voice routing**: Current local synth supports per-track timbre, volume, mute, solo, and program metadata. Add selectable General MIDI soundfonts, program-change handling, sustain support, and deterministic audio-export policy.
+- [ ] **Extend the dynamic composition layout engine**: Current uniform bounds-fit, centering, safe padding, and overflow prevention apply to preview and exports. Add optional pan/zoom and composition-aware placement controls.

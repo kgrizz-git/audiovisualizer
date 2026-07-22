@@ -54,6 +54,7 @@ class AudioVisualizerApp {
     this.element<HTMLInputElement>('quantize-toggle').addEventListener('change', (event) => { this.currentConfig.quantizeOnset = (event.target as HTMLInputElement).checked; this.render(); });
     this.range('length-scale', 'val-length', (value) => { this.currentConfig.lengthScale = value; }, '');
     this.range('angle-scale', 'val-angle', (value) => { this.currentConfig.angleScale = value; }, '°');
+    this.range('spiral-bias', 'val-spiral', (value) => { this.currentConfig.spiralBias = value; }, '°');
     this.range('stroke-base', 'val-stroke', (value) => { this.currentConfig.strokeWidthBase = value; }, 'px');
     this.range('time-line-density', 'val-density', (value) => { this.currentConfig.timeLineDensity = value; }, '×');
 

@@ -10,11 +10,17 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Spiral bias slider (−20°…+20°) so line/circle paths can take optional constant
+  curvature without changing the default mapping.
 - Included-studies dropdown: public-domain Joplin *Maple Leaf Rag* and Bowman
   *12th Street Rag*, plus original blues / jazz / funk / electronic / hip-hop /
   rock / house style-study MIDIs (commercial songs stay out of the bundle for
   copyright).
 - README pointer to the third-party license inventory and regeneration commands.
+
+### Changed
+- Default `spiralBias` is `0` (was `2`) so interval turns map ascending/descending
+  pitch to opposite heading directions without a constant skew. SemVer: **MINOR**.
 
 ## [0.4.4] - 2026-07-09
 

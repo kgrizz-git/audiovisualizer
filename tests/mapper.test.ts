@@ -53,10 +53,28 @@ describe('Score Mapper Unit Tests', () => {
 
   it('can disable interval turns for a straight line mapping', () => {
     const score = generateDemoScore();
-    const geometry = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, intervalAngleEnabled: false, spiralBias: 0 });
+    const geometry = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, intervalAngleEnabled: false });
     const [first, second] = geometry.voicePaths[0].segments;
     expect(first.end.y).toBeCloseTo(first.start.y);
     expect(second.end.y).toBeCloseTo(second.start.y);
+  });
+
+  it('maps ascending and descending intervals to opposite heading turns by default', () => {
+    const score = {
+      title: 'Interval fixture', duration: 3, bpm: 120,
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+        { id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
+        { id: 'n2', pitch: 64, onset: 0.5, duration: 0.5, velocity: 100, voice: 0, pitchClass: 4 },
+        { id: 'n3', pitch: 60, onset: 1, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
+      ] }],
+    };
+    expect(DEFAULT_CONFIG.spiralBias).toBe(0);
+    const geometry = mapScoreToGeometry(score, DEFAULT_CONFIG, 800, 800);
+    const [first, second, third] = geometry.voicePaths[0].segments;
+    // Left-to-right starts heading 0° (right). +4 semitones → +60°; −4 → −60° from that heading.
+    expect(first.end.y).toBeCloseTo(first.start.y);
+    expect(second.end.y).toBeGreaterThan(second.start.y);
+    expect(third.end.y).toBeCloseTo(third.start.y);
   });
 
   it('derives a stable, dark average background from mapped pitch hues', () => {

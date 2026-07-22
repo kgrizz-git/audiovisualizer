@@ -48,8 +48,11 @@ the score.
   detected key or chord. Silent time is a low-contrast neutral band.
 
 Origins for path-based modes are left-to-right, center-outward, and outside-inward.
-Line paths can turn by melodic interval and receive a constant spiral bias. Quantization
-snaps onsets to a sixteenth-note grid for a deliberately more regular visual rhythm.
+Line paths can turn by melodic interval. Ascending intervals always turn one way and
+descending the opposite (positive `angleScale`); optional spiral bias adds a constant
+curvature each turn and defaults to `0` so turn direction matches interval sign unless
+the viewer opts into ornament. Quantization snaps onsets to a sixteenth-note grid for a
+deliberately more regular visual rhythm.
 
 ## Canvas and export aesthetic
 

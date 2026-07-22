@@ -10,7 +10,10 @@ Inputs:
   - package.json (direct dependency names)
   - package-lock.json (lockfile v3 `packages` map for the full tree)
   - optional: `npx license-checker@<pinned>` for richer license metadata
+    (skipped for lockfile `"optional": true` platform packages so inventories
+    stay identical across OS runners)
   - optional: node_modules LICENSE files as a last-resort fallback
+    (also skipped for optional platform packages)
 
 Outputs:
   - Markdown inventory (on `--update` / `--human-review` only)
@@ -321,6 +324,11 @@ def collect_deps_from_lockfile() -> list[DepRecord]:
 
     Prefer license fields from lock entries, then license-checker, then LICENSE files.
     Deduplicates by name@version.
+
+    Optional/platform packages (`"optional": true` in the lockfile) use lockfile
+    license fields only. Host-local license-checker repository URLs and
+    node_modules LICENSE fallbacks are skipped for them so `--check` stays
+    identical on macOS, Linux, and Windows runners.
     """
     lock = _read_json(PACKAGE_LOCK)
     packages = lock.get("packages")
@@ -351,16 +359,19 @@ def collect_deps_from_lockfile() -> list[DepRecord]:
         # Lockfile marks pure-dev packages with "dev": true. Production (and optional
         # platform binaries of prod deps) omit the flag or set it false.
         is_dev = bool(info.get("dev")) or (name in dev_direct and name not in prod_direct)
+        is_optional = bool(info.get("optional"))
 
         license_raw = info.get("license")
         repository = ""
-        checker_info = checker.get(name)
+        checker_info = None if is_optional else checker.get(name)
         if checker_info:
             if not license_raw or str(license_raw).upper() in {"", "UNKNOWN"}:
                 license_raw = checker_info.get("licenses")
             repository = str(checker_info.get("repository") or "")
 
-        if not license_raw:
+        # Optional packages are only present under node_modules on matching hosts;
+        # never fall back to host-local files for them.
+        if not license_raw and not is_optional:
             license_raw = get_license_from_node_modules(name)
 
         display, category = categorize_license(license_raw)

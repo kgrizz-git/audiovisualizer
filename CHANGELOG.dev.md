@@ -5,6 +5,16 @@ Internal / developer-facing changes that do not belong in the public
 
 ## Unreleased
 
+### Fixed
+- License inventory `--check` no longer fails on Linux CI when the inventory was
+  generated on macOS: optional/platform packages ignore host-local
+  `license-checker` repository URLs and `node_modules` LICENSE fallbacks.
+
+### Added
+- Expanded bundled demo MIDI set: Mutopia/Wikimedia public-domain rags plus
+  generator-built modern genre style studies (including rock and house);
+  documented provenance in `public/demo-midi/README.md`.
+
 ### Changed
 - Replaced seed-template `template-checks.yml` with app-focused `.github/workflows/ci.yml`
   (`npm run validate`, license inventory `--check` + unit tests, gitleaks). `ci/examples/`

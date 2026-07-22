@@ -37,7 +37,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 - `@resvg/resvg-js-android-arm-eabi` (v2.6.2) — MPL-2.0 — see `node_modules/@resvg/resvg-js-android-arm-eabi/`
 - `@resvg/resvg-js-android-arm64` (v2.6.2) — MPL-2.0 — see `node_modules/@resvg/resvg-js-android-arm64/`
-- `@resvg/resvg-js-darwin-arm64` (v2.6.2) — MPL-2.0 ([source](https://github.com/yisibl/resvg-js)) — see `node_modules/@resvg/resvg-js-darwin-arm64/`
+- `@resvg/resvg-js-darwin-arm64` (v2.6.2) — MPL-2.0 — see `node_modules/@resvg/resvg-js-darwin-arm64/`
 - `@resvg/resvg-js-darwin-x64` (v2.6.2) — MPL-2.0 — see `node_modules/@resvg/resvg-js-darwin-x64/`
 - `@resvg/resvg-js-linux-arm-gnueabihf` (v2.6.2) — MPL-2.0 — see `node_modules/@resvg/resvg-js-linux-arm-gnueabihf/`
 - `@resvg/resvg-js-linux-arm64-gnu` (v2.6.2) — MPL-2.0 — see `node_modules/@resvg/resvg-js-linux-arm64-gnu/`
@@ -56,7 +56,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@esbuild/android-arm` (v0.21.5) — MIT — see `node_modules/@esbuild/android-arm/`
 - `@esbuild/android-arm64` (v0.21.5) — MIT — see `node_modules/@esbuild/android-arm64/`
 - `@esbuild/android-x64` (v0.21.5) — MIT — see `node_modules/@esbuild/android-x64/`
-- `@esbuild/darwin-arm64` (v0.21.5) — MIT ([source](https://github.com/evanw/esbuild)) — see `node_modules/@esbuild/darwin-arm64/`
+- `@esbuild/darwin-arm64` (v0.21.5) — MIT — see `node_modules/@esbuild/darwin-arm64/`
 - `@esbuild/darwin-x64` (v0.21.5) — MIT — see `node_modules/@esbuild/darwin-x64/`
 - `@esbuild/freebsd-arm64` (v0.21.5) — MIT — see `node_modules/@esbuild/freebsd-arm64/`
 - `@esbuild/freebsd-x64` (v0.21.5) — MIT — see `node_modules/@esbuild/freebsd-x64/`
@@ -79,7 +79,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@jridgewell/sourcemap-codec` (v1.5.5) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/sourcemap-codec/`
 - `@rollup/rollup-android-arm-eabi` (v4.62.2) — MIT — see `node_modules/@rollup/rollup-android-arm-eabi/`
 - `@rollup/rollup-android-arm64` (v4.62.2) — MIT — see `node_modules/@rollup/rollup-android-arm64/`
-- `@rollup/rollup-darwin-arm64` (v4.62.2) — MIT ([source](https://github.com/rollup/rollup)) — see `node_modules/@rollup/rollup-darwin-arm64/`
+- `@rollup/rollup-darwin-arm64` (v4.62.2) — MIT — see `node_modules/@rollup/rollup-darwin-arm64/`
 - `@rollup/rollup-darwin-x64` (v4.62.2) — MIT — see `node_modules/@rollup/rollup-darwin-x64/`
 - `@rollup/rollup-freebsd-arm64` (v4.62.2) — MIT — see `node_modules/@rollup/rollup-freebsd-arm64/`
 - `@rollup/rollup-freebsd-x64` (v4.62.2) — MIT — see `node_modules/@rollup/rollup-freebsd-x64/`
@@ -124,7 +124,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `esbuild` (v0.21.5) — MIT ([source](https://github.com/evanw/esbuild)) — see `node_modules/esbuild/`
 - `estree-walker` (v3.0.3) — MIT ([source](https://github.com/Rich-Harris/estree-walker)) — see `node_modules/estree-walker/`
 - `execa` (v8.0.1) — MIT ([source](https://github.com/sindresorhus/execa)) — see `node_modules/execa/`
-- `fsevents` (v2.3.3) — MIT ([source](https://github.com/fsevents/fsevents)) — see `node_modules/fsevents/`
+- `fsevents` (v2.3.3) — MIT — see `node_modules/fsevents/`
 - `get-func-name` (v2.0.2) — MIT ([source](https://github.com/chaijs/get-func-name)) — see `node_modules/get-func-name/`
 - `get-stream` (v8.0.1) — MIT ([source](https://github.com/sindresorhus/get-stream)) — see `node_modules/get-stream/`
 - `human-signals` (v5.0.0) — Apache-2.0 ([source](https://github.com/ehmicky/human-signals)) — see `node_modules/human-signals/`

@@ -14,6 +14,7 @@ Last updated: 2026-07-22
 
 - [x] **Add tonal time-lines display mode**: Map score time from top to bottom as full-width horizontal bands, colored by the circular, velocity-weighted average hue of active notes. See [`plans/2026-07-22-tonal-time-lines.md`](../plans/2026-07-22-tonal-time-lines.md).
 - [ ] **Explore 3D time-slice modes**: Map each time bin to an XY-plane slice and advance musical time along the positive Z axis; define projection, navigation, export, and readable pitch/voice encodings before implementation.
+- [ ] **Add MIDI filename as export title with manual override**: Display the MIDI filename as a title on exports, with an editable text field to customize the title before export. See [`plans/2026-07-22-export-title.md`](../plans/2026-07-22-export-title.md).
 - [ ] **Add transposition with color-aware remapping**: Let users shift pitch by semitones before mapping, and shift pitch-derived hues by the same interval so the visual remains musically consistent; record the transpose setting in exports/manifests.
 - [x] **Add a reproducible MIDI-to-SVG CLI**: `npm run render -- --input song.mid` uses the shared parser, mapper, fitter, and SVG renderer; it supports rule options and an optional JSON manifest.
 - [ ] **Add local audio-file input and estimated transcription**: Support browser-decodable MP3, WAV, and typical AAC-in-M4A through a worker-backed audio-to-note pipeline while preserving the MIDI path. See [`plans/2026-07-22-audio-file-input.md`](../plans/2026-07-22-audio-file-input.md).

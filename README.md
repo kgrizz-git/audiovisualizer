@@ -22,9 +22,11 @@ npm run dev
 npm run validate
 ```
 
-The studio includes local classical MIDI studies and links to freely licensed/public-domain
-folk, ancient, and traditional MIDI sources. Source links open their license page before
-you download and load a file locally; uploaded MIDI never leaves the browser.
+The studio includes local classical and ragtime MIDI scores, original modern-genre
+style studies (blues, jazz, funk, electronic, hip-hop, rock, house), and links to freely
+licensed/public-domain folk, ancient, and traditional MIDI sources. Commercial pop
+songs are not redistributed. Source links open their license page before you download
+and load a file locally; uploaded MIDI never leaves the browser.
 
 ## Programmatic SVG generation
 

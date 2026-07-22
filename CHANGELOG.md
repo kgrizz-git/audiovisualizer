@@ -10,6 +10,10 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Included-studies dropdown: public-domain Joplin *Maple Leaf Rag* and Bowman
+  *12th Street Rag*, plus original blues / jazz / funk / electronic / hip-hop /
+  rock / house style-study MIDIs (commercial songs stay out of the bundle for
+  copyright).
 - README pointer to the third-party license inventory and regeneration commands.
 
 ## [0.4.4] - 2026-07-09

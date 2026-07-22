@@ -5,14 +5,19 @@ Internal / developer-facing changes that do not belong in the public
 
 ## Unreleased
 
+### Changed
+- Replaced seed-template `template-checks.yml` with app-focused `.github/workflows/ci.yml`
+  (`npm run validate`, license inventory `--check` + unit tests, gitleaks). `ci/examples/`
+  remains inactive reference material.
+
 ### Added
 - Third-party license inventory Phase 2: full transitive lockfile v3 catalog with
   versions, content-diff `--check` (read-only), `--human-review` cadence (warn 30 /
   hard 180 days; faster hard when Unknown/strong-copyleft present), production strong
   copyleft + Unknown hard gates, pinned `license-checker@25.0.1` (via npx in the hook
   script), policy `policies/third-party-licenses.md`, fixture tests under `tests/hooks/`,
-  and CI steps in `template-checks.yml` / `ci/examples/ci.yml`. README points at the
-  inventory for attribution.
+  and CI wiring in `.github/workflows/ci.yml` (plus a note in `ci/examples/ci.yml`).
+  README points at the inventory for attribution.
 - Structural sensitive-data gates: `hooks/scripts/check_gitignore_protected.py` (blocks
   removal of required `.gitignore` rules), `check_forbidden_paths.py` (blocks tracking
   files under never-commit paths), and `check_scan_contract.py` (a git-blob-hash ledger

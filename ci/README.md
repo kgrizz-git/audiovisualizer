@@ -1,14 +1,18 @@
 # CI Guidance
 
-Last reviewed: 2026-07-14
+Last reviewed: 2026-07-22
 
 Guidance for selecting, structuring, and gating CI checks. Example workflows live in
 `ci/examples/` — copy the ones you need to `.github/workflows/` to activate them.
 
-This repository also ships a small required-check candidate at
-[`.github/workflows/template-checks.yml`](../.github/workflows/template-checks.yml). It validates
-the template's maintained Markdown, workflow examples, and hook scripts; it is not an
-application test, type-check, coverage, or dependency-audit workflow.
+This repository’s **active** fast lane is
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml): `npm run validate` (Vitest +
+TypeScript + Vite production build), the third-party license inventory gate and its unit
+tests, and gitleaks. It is application CI, not seed-template asset validation.
+
+`ci/examples/` remains inactive reference material from the bootstrap template (generic
+Python/lint lanes, CodeQL, Dependabot samples, etc.). Do not treat those examples as
+required checks unless you deliberately copy one into `.github/workflows/`.
 
 **Minutes & storage:** use Actions deliberately — see
 [`policies/github-actions-usage.md`](../policies/github-actions-usage.md) and

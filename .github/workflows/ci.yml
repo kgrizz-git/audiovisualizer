@@ -1,0 +1,56 @@
+# .github/workflows/ci.yml
+#
+# AudioVisualizer fast-lane CI: app validate, license inventory, secret scan.
+# Target: under ~5 minutes on a cold runner.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test, type-check, and production build
+        run: npm run validate
+
+      - name: License inventory gate
+        run: python hooks/scripts/check_license_inventory.py --check
+
+      - name: License inventory unit tests
+        run: python -m unittest tests.hooks.test_check_license_inventory -v
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

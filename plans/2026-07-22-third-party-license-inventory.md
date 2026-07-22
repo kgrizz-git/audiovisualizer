@@ -100,8 +100,8 @@ hooks/README.md                              — document script, env thresholds
 policies/third-party-licenses.md             — new: policy, categories, MPL note, gate table
 policies/doc-freshness.md                    — clarify auto-generated inventory exempt / dual markers
 policies/README.md                           — link new policy
-.github/workflows/template-checks.yml        — add --check step (Node setup + npm ci as needed)
-ci/examples/ci.yml                           — document the same step for consumers copying examples
+.github/workflows/ci.yml                     — app CI: validate + license --check (+ unit tests) + gitleaks
+ci/examples/ci.yml                           — example only; documents a license step for consumers
 README.md                                    — short "Third-party licenses" pointer to inventory/
 CHANGELOG.dev.md                             — note inventory/policy/hook changes
 AGENTS.md                                    — only if start-here / working rules need a pointer
@@ -159,7 +159,7 @@ AGENTS.md                                    — only if start-here / working ru
 
 - [x] Create `policies/third-party-licenses.md`
 - [x] Update `policies/doc-freshness.md` + `check_doc_freshness.py` exempt path + `policies/README.md`
-- [x] Add CI steps in `.github/workflows/template-checks.yml` and `ci/examples/ci.yml`
+- [x] Add CI steps in `.github/workflows/ci.yml` (and note in `ci/examples/ci.yml`)
 - [x] Add README “Third-party licenses” section
 - [x] Add fixture unit tests under `tests/hooks/`
 - [x] Note changes in `CHANGELOG.dev.md` and `CHANGELOG.md` (README pointer)
@@ -189,7 +189,7 @@ AGENTS.md                                    — only if start-here / working ru
 - [x] Fallback parser enumerates deps from lockfile v3 when `npx` is unavailable
   (`POLICY_LICENSE_SKIP_CHECKER=1` / fixture path)
 - [x] Fixture tests pass; `npm run validate` still passes (15 vitest + build)
-- [x] CI / template-checks job includes `--check` + unittest after `npm ci`
+- [x] CI / `ci.yml` validate job includes `--check` + unittest after `npm ci`
 - [x] Root and `hooks/` pre-commit configs both invoke the same check
 
 ## Open questions
@@ -211,7 +211,7 @@ AGENTS.md                                    — only if start-here / working ru
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Stale inventory merged via push without pre-commit | medium | low | CI `--check` in template-checks + examples |
+| Stale inventory merged via push without pre-commit | medium | low | CI `--check` in `.github/workflows/ci.yml` + examples note |
 | Content drift with date-only check | high (today) | medium | Content-diff `--check`; no auto-write on check |
 | `license-checker` misidentifies a license | low | medium | Normalization + node_modules/lockfile fallback; Unknown hard-fails |
 | Unpinned `npx license-checker` drifts | medium | medium | Pin version |

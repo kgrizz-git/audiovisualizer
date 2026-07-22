@@ -1,0 +1,93 @@
+export type Variation = 'lines' | 'circles' | 'vertical_tone';
+export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
+export type PitchHueMode = 'pitch_class' | 'register_spiral';
+export type GapPolicy = 'lift_pen' | 'faint_line' | 'ghost';
+
+export interface NoteEvent {
+  id: string;
+  pitch: number;      // MIDI note number (0 - 127)
+  onset: number;      // Time in seconds
+  duration: number;   // Duration in seconds
+  velocity: number;   // 0 - 127
+  voice: number;      // MIDI channel or track index
+  pitchClass: number; // midi % 12 (0 = C, 1 = C#, ...)
+}
+
+export interface TrackScore {
+  name: string;
+  channel: number;
+  notes: NoteEvent[];
+}
+
+export interface Score {
+  title: string;
+  duration: number; // Total duration in seconds
+  bpm: number;
+  tracks: TrackScore[];
+}
+
+export interface RuleConfig {
+  variation: Variation;
+  originMode: OriginMode;
+  pitchHueMode: PitchHueMode;
+  gapPolicy: GapPolicy;
+  lengthScale: number;    // pixels per second
+  angleScale: number;     // degrees per semitone interval
+  minSegmentLength: number;
+  strokeWidthBase: number;
+  strokeWidthScale: number;
+  hueOffsetPerVoice: number;
+  spiralBias: number;     // curvature constant for spiral submode
+  quantizeOnset: boolean; // snap onsets to 16th grid if true
+}
+
+export interface Point2D {
+  x: number;
+  y: number;
+}
+
+export interface GeometrySegment {
+  start: Point2D;
+  end: Point2D;
+  color: string;
+  width: number;
+  opacity: number;
+  note: NoteEvent;
+}
+
+export interface GeometryCircle {
+  center: Point2D;
+  radius: number;
+  fillColor: string;
+  strokeColor: string;
+  strokeWidth: number;
+  opacity: number;
+  note: NoteEvent;
+}
+
+export interface GeometryVoicePath {
+  voice: number;
+  voiceName: string;
+  segments: GeometrySegment[];
+  circles: GeometryCircle[];
+}
+
+export interface RenderedGeometry {
+  width: number;
+  height: number;
+  voicePaths: GeometryVoicePath[];
+  config: RuleConfig;
+}
+
+export interface LegendItem {
+  label: string;
+  color?: string;
+  samplePath?: Point2D[];
+  description: string;
+}
+
+export interface LegendSpec {
+  title: string;
+  pitchColors: { pitchName: string; hue: number; hex: string }[];
+  rulesSummary: string[];
+}

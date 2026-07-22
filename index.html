@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AudioVisualizer — Music → Visual Score Art</title>
+  <meta name="description" content="Generate deterministic, reproducible visual score art and vector graphics from MIDI music.">
+  <link rel="stylesheet" href="./src/ui/styles/main.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Sidebar Control Panel -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">🎵</div>
+        <h1>AudioVisualizer</h1>
+      </div>
+
+      <!-- File Input Group -->
+      <div class="control-group">
+        <h3>1. Input MIDI File</h3>
+        
+        <div class="control-item">
+          <label for="demo-midi-select">Preset Demo Pieces</label>
+          <select id="demo-midi-select">
+            <option value="synthetic" selected>Synthesized Demo Pattern</option>
+            <option value="./demo-midi/bach_prelude_c.mid">Bach — Prelude in C Major (BWV 846)</option>
+            <option value="./demo-midi/beethoven_fur_elise.mid">Beethoven — Für Elise (Theme)</option>
+            <option value="./demo-midi/mozart_nachtmusik.mid">Mozart — Eine kleine Nachtmusik</option>
+          </select>
+        </div>
+
+        <div class="file-dropzone" id="dropzone">
+          <label for="midi-file-input" id="file-label">📁 Click or Drag custom MIDI file</label>
+          <input type="file" id="midi-file-input" accept=".mid,.midi" />
+        </div>
+      </div>
+
+      <!-- Rule & Variation Presets -->
+      <div class="control-group">
+        <h3>2. Mapping Presets</h3>
+        
+        <div class="control-item">
+          <label for="variation-select">Visual Geometry</label>
+          <select id="variation-select">
+            <option value="lines" selected>Variation A — Polylines & Angles</option>
+            <option value="circles">Variation B — Concentric Disks</option>
+            <option value="vertical_tone">Variation C — Vertical Tone Graph</option>
+          </select>
+        </div>
+
+        <div class="control-item">
+          <label for="origin-select">Origin Mode</label>
+          <select id="origin-select">
+            <option value="left_to_right" selected>Left-to-Right (Progressive)</option>
+            <option value="center_outward">Center-Outward (Radial)</option>
+            <option value="outside_inward">Outside-Inward (Frame)</option>
+          </select>
+        </div>
+
+        <div class="control-item">
+          <label for="hue-mode-select">Color Mapping</label>
+          <select id="hue-mode-select">
+            <option value="pitch_class" selected>Pitch-Class Loop (12 Tone)</option>
+            <option value="register_spiral">Register Spiral (Continuous)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Fine-tuning Knobs -->
+      <div class="control-group">
+        <h3>3. Aesthetic Parameters</h3>
+
+        <div class="control-item">
+          <label for="length-scale">Length Scale <span id="val-length">40</span></label>
+          <input type="range" id="length-scale" min="10" max="150" value="40" />
+        </div>
+
+        <div class="control-item">
+          <label for="angle-scale">Turn Angle Scale <span id="val-angle">15</span>°</label>
+          <input type="range" id="angle-scale" min="0" max="45" value="15" />
+        </div>
+
+        <div class="control-item">
+          <label for="stroke-base">Stroke Width <span id="val-stroke">2</span>px</label>
+          <input type="range" id="stroke-base" min="1" max="10" value="2" />
+        </div>
+      </div>
+
+      <!-- Export Actions -->
+      <div class="control-group">
+        <h3>4. Export Artwork</h3>
+        <div class="button-row">
+          <button class="btn btn-primary" id="btn-export-svg">Export SVG</button>
+          <button class="btn btn-secondary" id="btn-export-plotter">Plotter SVG</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <main class="viewport-container">
+      <div class="canvas-wrapper">
+        <canvas id="visualizer-canvas" width="800" height="800"></canvas>
+      </div>
+
+      <!-- Animation Scrubbing Controls -->
+      <div class="playback-bar">
+        <button class="play-pause-btn" id="play-btn">▶</button>
+        <div class="control-item" style="flex: 1;">
+          <input type="range" id="progress-scrubber" min="0" max="100" value="100" />
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./src/ui/app.ts"></script>
+</body>
+</html>

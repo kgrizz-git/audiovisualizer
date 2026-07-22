@@ -84,6 +84,32 @@ class LicenseInventoryUnitTests(unittest.TestCase):
         self.assertIn("prod-direct-darwin-arm64", by_name)
         self.assertFalse(by_name["prod-direct-darwin-arm64"].is_dev)
 
+    def test_optional_packages_ignore_host_local_checker_metadata(self) -> None:
+        """Optional packages must not pick up OS-specific repository/license enrichment."""
+        self.mod.fetch_license_checker_map = lambda: {
+            "prod-direct": {
+                "licenses": "MIT",
+                "repository": "https://example.com/prod-direct",
+            },
+            "prod-direct-darwin-arm64": {
+                "licenses": "Apache-2.0",
+                "repository": "https://example.com/should-not-appear",
+            },
+        }
+        # Force the lockfile-only optional package to look like it needs enrichment.
+        original_collect = self.mod.collect_deps_from_lockfile
+
+        def collect_with_checker() -> list:
+            # Bypass SKIP_CHECKER path by calling collect after monkeypatch.
+            return original_collect()
+
+        deps = {d.name: d for d in collect_with_checker()}
+        optional = deps["prod-direct-darwin-arm64"]
+        required = deps["prod-direct"]
+        self.assertEqual(optional.repository, "")
+        self.assertEqual(optional.license_display, "MIT")  # lockfile wins; checker ignored
+        self.assertEqual(required.repository, "https://example.com/prod-direct")
+
     def test_spdx_or_expression_is_strong_copyleft(self) -> None:
         display, category = self.mod.categorize_license("MIT OR GPL-3.0")
         self.assertEqual(display, "MIT OR GPL-3.0")

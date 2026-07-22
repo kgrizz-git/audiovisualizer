@@ -16,9 +16,24 @@
       <section class="control-group input-group"><h2><span>01</span> Choose a score</h2>
         <div class="control-item"><label for="demo-midi-select">Included studies</label><select id="demo-midi-select">
           <option value="synthetic" selected>Generative study · C major</option>
-          <option value="./demo-midi/bach_prelude_c_full.mid">Classical · Bach Prelude in C · full score (2:20)</option>
-          <option value="./demo-midi/mozart_nachtmusik_mvt1_full.mid">Classical · Mozart Eine kleine Nachtmusik I · full movement (5:20)</option>
-          <option value="./demo-midi/beethoven_fur_elise.mid">Classical · Beethoven Für Elise · theme study</option>
+          <optgroup label="Classical">
+            <option value="./demo-midi/bach_prelude_c_full.mid">Bach Prelude in C · full score (2:20)</option>
+            <option value="./demo-midi/mozart_nachtmusik_mvt1_full.mid">Mozart Eine kleine Nachtmusik I · full movement (5:20)</option>
+            <option value="./demo-midi/beethoven_fur_elise.mid">Beethoven Für Elise · theme study</option>
+          </optgroup>
+          <optgroup label="Early modern / ragtime">
+            <option value="./demo-midi/joplin_maple_leaf_rag_full.mid">Joplin Maple Leaf Rag · full score (2:24)</option>
+            <option value="./demo-midi/bowman_12th_street_rag_full.mid">Bowman 12th Street Rag · full score (2:36)</option>
+          </optgroup>
+          <optgroup label="Modern style studies (original)">
+            <option value="./demo-midi/blues_12bar_style.mid">Blues · 12-bar in C</option>
+            <option value="./demo-midi/jazz_swing_style.mid">Jazz · swing ii-V-I</option>
+            <option value="./demo-midi/funk_groove_style.mid">Funk · syncopated groove</option>
+            <option value="./demo-midi/electronic_arp_style.mid">Electronic · arpeggio sequence</option>
+            <option value="./demo-midi/hiphop_keys_style.mid">Hip-hop · keys &amp; sub-bass loop</option>
+            <option value="./demo-midi/rock_riff_style.mid">Rock · power-chord riff</option>
+            <option value="./demo-midi/house_four_on_floor_style.mid">House · four-on-the-floor</option>
+          </optgroup>
         </select></div>
         <div class="file-dropzone" id="dropzone" tabindex="0"><label for="midi-file-input" id="file-label">Drop a MIDI here or browse</label><input type="file" id="midi-file-input" accept=".mid,.midi,audio/midi" /></div>
         <div class="control-item"><label for="source-midi-select">Free online MIDI pointers</label><select id="source-midi-select">
@@ -26,7 +41,9 @@
           <option value="https://commons.wikimedia.org/wiki/File:What_shall_we_do_with_the_drunken_sailor.mid">Folk · Drunken Sailor (CC0)</option>
           <option value="https://commons.wikimedia.org/wiki/File:Maturika.mid">Chinese folk · Mo Li Hua (public domain)</option>
           <option value="https://commons.wikimedia.org/wiki/File:Seikilos.mid">Ancient · Seikilos Epitaph (public domain)</option>
-          <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files_of_traditional_music">Traditional · jazz, ragtime, waltz & folk collection</option>
+          <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files_of_traditional_music">Traditional · waltz &amp; folk collection</option>
+          <option value="https://commons.wikimedia.org/wiki/Category:Ragtime">Ragtime · early jazz / rag collection</option>
+          <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files">MIDI library · blues, jazz figures &amp; more</option>
         </select></div>
         <p class="hint">Links open the license/source page in a new tab; download the MIDI there, then drop it here.</p>
       </section>

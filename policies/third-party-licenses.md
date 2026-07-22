@@ -45,6 +45,10 @@ Optional platform binaries (e.g. `@resvg/resvg-js-darwin-arm64`) are **included*
 inventory under the same production/development bucket as their parent. They are not
 dropped.
 
+Their license text comes from the lockfile only. Host-local `license-checker` repository
+URLs and `node_modules` LICENSE fallbacks are ignored for optional packages so
+`--check` produces the same result on macOS and Linux CI runners.
+
 ## Project note: MPL-2.0 (`@resvg/resvg-js`)
 
 Using `@resvg/resvg-js` as a dependency is acceptable for this MIT-licensed app. **Modifying

@@ -23,7 +23,7 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
 
   // Draw Voice Paths
   voicePaths.forEach((vp) => {
-    svg += `  <!-- Voice: ${vp.voiceName} (Channel ${vp.voice}) -->\n`;
+    svg += `  <!-- Voice: ${escapeComment(vp.voiceName)} (Channel ${vp.voice}) -->\n`;
     svg += `  <g id="voice-${vp.voice}" class="voice-group">\n`;
 
     // Segments (Polylines or lines)
@@ -35,6 +35,7 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
       svg += `    <line x1="${seg.start.x.toFixed(2)}" y1="${seg.start.y.toFixed(2)}" ` +
         `x2="${seg.end.x.toFixed(2)}" y2="${seg.end.y.toFixed(2)}" ` +
         `stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" ` +
+        `${seg.dashArray && !isPlotter ? `stroke-dasharray="${seg.dashArray}" ` : ''}` +
         `stroke-opacity="${opacity}" />\n`;
     });
 
@@ -60,6 +61,10 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
 
   svg += `</svg>`;
   return svg;
+}
+
+function escapeComment(value: string): string {
+  return value.replaceAll('--', '—').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
 function buildLegendSvg(w: number, h: number, variation: string, origin: string, hueMode: string): string {

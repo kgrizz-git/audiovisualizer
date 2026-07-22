@@ -1,7 +1,7 @@
-import { RenderedGeometry } from '../../core/types.js';
+import { GeometrySegment, RenderedGeometry } from '../../core/types.js';
 
 export interface CanvasRenderOptions {
-  progress?: number; // 0.0 to 1.0 (for scrubbed or animated playback)
+  time?: number;
   showLegend?: boolean;
   backgroundColor?: string;
 }
@@ -13,18 +13,13 @@ export class CanvasRenderer {
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error('Failed to acquire 2D context from canvas element.');
-    }
+    if (!context) throw new Error('Failed to acquire 2D context from canvas element.');
     this.ctx = context;
   }
 
   public render(geometry: RenderedGeometry, options: CanvasRenderOptions = {}): void {
     const { width, height, voicePaths } = geometry;
-    const progress = options.progress !== undefined ? options.progress : 1.0;
-    const bgColor = options.backgroundColor || '#0f172a';
-
-    // Handle high DPI crisp rendering
+    const time = options.time ?? Number.POSITIVE_INFINITY;
     const dpr = window.devicePixelRatio || 1;
     if (this.canvas.width !== width * dpr || this.canvas.height !== height * dpr) {
       this.canvas.width = width * dpr;
@@ -33,81 +28,86 @@ export class CanvasRenderer {
 
     this.ctx.save();
     this.ctx.scale(dpr, dpr);
-
-    // Clear background
-    this.ctx.fillStyle = bgColor;
+    this.ctx.fillStyle = options.backgroundColor || '#09111f';
     this.ctx.fillRect(0, 0, width, height);
+    this.drawAtmosphere(width, height);
 
-    // Draw paths
-    voicePaths.forEach((vp) => {
-      // Draw Segments
-      const totalSegs = vp.segments.length;
-      const visibleSegs = Math.floor(totalSegs * progress);
-
-      for (let i = 0; i < visibleSegs; i++) {
-        const seg = vp.segments[i];
+    voicePaths.forEach((voicePath) => {
+      voicePath.segments.forEach((segment) => this.drawSegment(segment, time));
+      voicePath.circles.forEach((circle) => {
+        if (circle.note.onset > time) return;
         this.ctx.beginPath();
-        this.ctx.moveTo(seg.start.x, seg.start.y);
-        this.ctx.lineTo(seg.end.x, seg.end.y);
-        this.ctx.strokeStyle = seg.color;
-        this.ctx.lineWidth = seg.width;
-        this.ctx.lineCap = 'round';
-        this.ctx.globalAlpha = seg.opacity;
-        this.ctx.stroke();
-      }
-
-      // Draw Circles
-      const totalCircles = vp.circles.length;
-      const visibleCircles = Math.floor(totalCircles * progress);
-
-      for (let i = 0; i < visibleCircles; i++) {
-        const c = vp.circles[i];
-        this.ctx.beginPath();
-        this.ctx.arc(c.center.x, c.center.y, c.radius, 0, Math.PI * 2);
-        this.ctx.fillStyle = c.fillColor;
-        this.ctx.globalAlpha = c.opacity;
+        this.ctx.arc(circle.center.x, circle.center.y, circle.radius, 0, Math.PI * 2);
+        this.ctx.fillStyle = circle.fillColor;
+        this.ctx.globalAlpha = circle.opacity;
         this.ctx.fill();
-        this.ctx.strokeStyle = c.strokeColor;
-        this.ctx.lineWidth = c.strokeWidth;
+        this.ctx.strokeStyle = circle.strokeColor;
+        this.ctx.lineWidth = circle.strokeWidth;
         this.ctx.stroke();
-      }
+      });
     });
 
-    this.ctx.globalAlpha = 1.0;
-
-    // Draw Legend on Canvas if requested
-    if (options.showLegend) {
-      this.drawCanvasLegend(width, height, geometry.config.variation, geometry.config.originMode);
-    }
-
+    this.ctx.globalAlpha = 1;
+    if (options.showLegend) this.drawCanvasLegend(width, height, geometry);
     this.ctx.restore();
   }
 
-  private drawCanvasLegend(w: number, h: number, variation: string, origin: string): void {
-    const legendW = 240;
-    const legendH = 95;
-    const x = w - legendW - 20;
-    const y = h - legendH - 20;
+  public downloadPng(filename: string): void {
+    this.canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  }
 
-    this.ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  private drawSegment(segment: GeometrySegment, time: number): void {
+    if (segment.note.onset > time) return;
+    const noteEnd = segment.note.onset + Math.max(segment.note.duration, 0.01);
+    const fraction = Math.min(1, Math.max(0, (time - segment.note.onset) / (noteEnd - segment.note.onset)));
+    if (fraction === 0) return;
+    const x = segment.start.x + (segment.end.x - segment.start.x) * fraction;
+    const y = segment.start.y + (segment.end.y - segment.start.y) * fraction;
+    this.ctx.beginPath();
+    this.ctx.moveTo(segment.start.x, segment.start.y);
+    this.ctx.lineTo(x, y);
+    this.ctx.strokeStyle = segment.color;
+    this.ctx.lineWidth = segment.width;
+    this.ctx.lineCap = 'round';
+    this.ctx.setLineDash(segment.dashArray?.split(' ').map(Number) || []);
+    this.ctx.globalAlpha = segment.opacity;
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);
+  }
+
+  private drawAtmosphere(width: number, height: number): void {
+    const glow = this.ctx.createRadialGradient(width * 0.68, height * 0.2, 0, width * 0.68, height * 0.2, width * 0.8);
+    glow.addColorStop(0, 'rgba(45, 212, 191, 0.12)');
+    glow.addColorStop(1, 'rgba(9, 17, 31, 0)');
+    this.ctx.fillStyle = glow;
+    this.ctx.fillRect(0, 0, width, height);
+  }
+
+  private drawCanvasLegend(_w: number, h: number, geometry: RenderedGeometry): void {
+    const x = 24;
+    const y = h - 106;
+    this.ctx.fillStyle = 'rgba(9, 17, 31, 0.78)';
+    this.ctx.strokeStyle = 'rgba(226, 232, 240, 0.18)';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
-    this.ctx.roundRect(x, y, legendW, legendH, 8);
+    this.ctx.roundRect(x, y, 296, 82, 12);
     this.ctx.fill();
     this.ctx.stroke();
-
     this.ctx.fillStyle = '#f8fafc';
-    this.ctx.font = 'bold 12px sans-serif';
-    this.ctx.fillText('AudioVisualizer Legend', x + 15, y + 24);
-
+    this.ctx.font = '600 12px system-ui';
+    this.ctx.fillText('VISUAL SCORE · LIVE LEGEND', x + 16, y + 23);
+    this.ctx.fillStyle = '#a5b4fc';
+    this.ctx.font = '11px system-ui';
+    this.ctx.fillText('Pitch → hue   Duration → distance   Velocity → weight', x + 16, y + 45);
     this.ctx.fillStyle = '#94a3b8';
-    this.ctx.font = '10px sans-serif';
-    this.ctx.fillText(`Variation: ${variation.toUpperCase()}`, x + 15, y + 44);
-    this.ctx.fillText(`Origin: ${origin.replace('_', ' ')}`, x + 15, y + 60);
-
-    this.ctx.fillStyle = '#38bdf8';
-    this.ctx.font = '9px sans-serif';
-    this.ctx.fillText('Pitch → Rainbow Hue | Duration → Length', x + 15, y + 78);
+    this.ctx.fillText(`Mode: ${geometry.config.variation.replace('_', ' ')} · Gap: ${geometry.config.gapPolicy.replace('_', ' ')}`, x + 16, y + 65);
   }
 }

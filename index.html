@@ -3,116 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AudioVisualizer — Music → Visual Score Art</title>
-  <meta name="description" content="Generate deterministic, reproducible visual score art and vector graphics from MIDI music.">
+  <title>AudioVisualizer — Visual Score Studio</title>
+  <meta name="description" content="Turn MIDI into deterministic, exportable visual score art.">
   <link rel="stylesheet" href="./src/ui/styles/main.css">
 </head>
 <body>
   <div id="app-container">
-    <!-- Sidebar Control Panel -->
     <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-icon">🎵</div>
-        <h1>AudioVisualizer</h1>
-      </div>
+      <div class="brand"><div class="brand-mark">AV</div><div><p class="eyebrow">MIDI → GEOMETRY</p><h1>Visual Score Studio</h1></div></div>
+      <p class="brand-copy">Translate timing, pitch, dynamics, and voice into an exportable composition.</p>
 
-      <!-- File Input Group -->
-      <div class="control-group">
-        <h3>1. Input MIDI File</h3>
-        
-        <div class="control-item">
-          <label for="demo-midi-select">Preset Demo Pieces</label>
-          <select id="demo-midi-select">
-            <option value="synthetic" selected>Synthesized Demo Pattern</option>
-            <option value="./demo-midi/bach_prelude_c.mid">Bach — Prelude in C Major (BWV 846)</option>
-            <option value="./demo-midi/beethoven_fur_elise.mid">Beethoven — Für Elise (Theme)</option>
-            <option value="./demo-midi/mozart_nachtmusik.mid">Mozart — Eine kleine Nachtmusik</option>
-          </select>
-        </div>
+      <section class="control-group input-group"><h2><span>01</span> Choose a score</h2>
+        <div class="control-item"><label for="demo-midi-select">Included studies</label><select id="demo-midi-select">
+          <option value="synthetic" selected>Generative study · C major</option>
+          <option value="./demo-midi/bach_prelude_c.mid">Classical · Bach Prelude in C</option>
+          <option value="./demo-midi/beethoven_fur_elise.mid">Classical · Für Elise</option>
+          <option value="./demo-midi/mozart_nachtmusik.mid">Classical · Eine kleine Nachtmusik</option>
+        </select></div>
+        <div class="file-dropzone" id="dropzone" tabindex="0"><label for="midi-file-input" id="file-label">Drop a MIDI here or browse</label><input type="file" id="midi-file-input" accept=".mid,.midi,audio/midi" /></div>
+        <div class="control-item"><label for="source-midi-select">Free online MIDI pointers</label><select id="source-midi-select">
+          <option value="">Explore a source by genre…</option>
+          <option value="https://commons.wikimedia.org/wiki/File:What_shall_we_do_with_the_drunken_sailor.mid">Folk · Drunken Sailor (CC0)</option>
+          <option value="https://commons.wikimedia.org/wiki/File:Maturika.mid">Chinese folk · Mo Li Hua (public domain)</option>
+          <option value="https://commons.wikimedia.org/wiki/File:Seikilos.mid">Ancient · Seikilos Epitaph (public domain)</option>
+          <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files_of_traditional_music">Traditional · jazz, ragtime, waltz & folk collection</option>
+        </select></div>
+        <p class="hint">Links open the license/source page in a new tab; download the MIDI there, then drop it here.</p>
+      </section>
 
-        <div class="file-dropzone" id="dropzone">
-          <label for="midi-file-input" id="file-label">📁 Click or Drag custom MIDI file</label>
-          <input type="file" id="midi-file-input" accept=".mid,.midi" />
-        </div>
-      </div>
+      <section class="control-group"><h2><span>02</span> Compose the rule set</h2>
+        <div class="control-item"><label for="variation-select">Geometry</label><select id="variation-select"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option></select></div>
+        <div class="control-item"><label for="origin-select">Growth direction</label><select id="origin-select"><option value="left_to_right">Left to right</option><option value="center_outward">Center outward</option><option value="outside_inward">Outside inward</option></select></div>
+        <div class="control-item"><label for="hue-mode-select">Pitch color</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option></select></div>
+        <div class="control-grid"><label class="toggle"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label></div>
+        <div class="control-item"><label for="gap-policy-select">Rest treatment</label><select id="gap-policy-select"><option value="lift_pen">Lift pen</option><option value="faint_line">Faint connection</option><option value="ghost">Ghost trace</option></select></div>
+      </section>
 
-      <!-- Rule & Variation Presets -->
-      <div class="control-group">
-        <h3>2. Mapping Presets</h3>
-        
-        <div class="control-item">
-          <label for="variation-select">Visual Geometry</label>
-          <select id="variation-select">
-            <option value="lines" selected>Variation A — Polylines & Angles</option>
-            <option value="circles">Variation B — Concentric Disks</option>
-            <option value="vertical_tone">Variation C — Vertical Tone Graph</option>
-          </select>
-        </div>
+      <section class="control-group"><h2><span>03</span> Refine</h2>
+        <div class="control-item"><label for="length-scale">Duration scale <output id="val-length">40</output></label><input id="length-scale" type="range" min="10" max="150" value="40" /></div>
+        <div class="control-item"><label for="angle-scale">Turn scale <output id="val-angle">15°</output></label><input id="angle-scale" type="range" min="0" max="45" value="15" /></div>
+        <div class="control-item"><label for="stroke-base">Base weight <output id="val-stroke">2px</output></label><input id="stroke-base" type="range" min="1" max="10" value="2" /></div>
+        <fieldset class="voice-filter"><legend>Visible voices</legend><div id="voice-filter-options" class="voice-filter-options"></div></fieldset>
+      </section>
 
-        <div class="control-item">
-          <label for="origin-select">Origin Mode</label>
-          <select id="origin-select">
-            <option value="left_to_right" selected>Left-to-Right (Progressive)</option>
-            <option value="center_outward">Center-Outward (Radial)</option>
-            <option value="outside_inward">Outside-Inward (Frame)</option>
-          </select>
-        </div>
-
-        <div class="control-item">
-          <label for="hue-mode-select">Color Mapping</label>
-          <select id="hue-mode-select">
-            <option value="pitch_class" selected>Pitch-Class Loop (12 Tone)</option>
-            <option value="register_spiral">Register Spiral (Continuous)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Fine-tuning Knobs -->
-      <div class="control-group">
-        <h3>3. Aesthetic Parameters</h3>
-
-        <div class="control-item">
-          <label for="length-scale">Length Scale <span id="val-length">40</span></label>
-          <input type="range" id="length-scale" min="10" max="150" value="40" />
-        </div>
-
-        <div class="control-item">
-          <label for="angle-scale">Turn Angle Scale <span id="val-angle">15</span>°</label>
-          <input type="range" id="angle-scale" min="0" max="45" value="15" />
-        </div>
-
-        <div class="control-item">
-          <label for="stroke-base">Stroke Width <span id="val-stroke">2</span>px</label>
-          <input type="range" id="stroke-base" min="1" max="10" value="2" />
-        </div>
-      </div>
-
-      <!-- Export Actions -->
-      <div class="control-group">
-        <h3>4. Export Artwork</h3>
-        <div class="button-row">
-          <button class="btn btn-primary" id="btn-export-svg">Export SVG</button>
-          <button class="btn btn-secondary" id="btn-export-plotter">Plotter SVG</button>
-        </div>
-      </div>
+      <section class="control-group export-group"><h2><span>04</span> Export</h2><div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div></section>
+      <p class="status" id="app-status" role="status">Ready · Generative study</p>
     </aside>
 
-    <!-- Main Viewport -->
     <main class="viewport-container">
-      <div class="canvas-wrapper">
-        <canvas id="visualizer-canvas" width="800" height="800"></canvas>
-      </div>
-
-      <!-- Animation Scrubbing Controls -->
-      <div class="playback-bar">
-        <button class="play-pause-btn" id="play-btn">▶</button>
-        <div class="control-item" style="flex: 1;">
-          <input type="range" id="progress-scrubber" min="0" max="100" value="100" />
-        </div>
-      </div>
+      <div class="stage-header"><div><p class="eyebrow">CURRENT SCORE</p><h2 id="score-title">Generative study · C major</h2></div><p id="score-meta">2 voices · 120 BPM</p></div>
+      <div class="canvas-wrapper"><canvas id="visualizer-canvas" width="800" height="800"></canvas><div class="stage-corner">DETERMINISTIC<br>VISUALIZATION</div></div>
+      <div class="playback-bar"><button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button><output id="time-display">00:00 / 00:00</output><input id="progress-scrubber" type="range" min="0" max="1000" value="1000" aria-label="MIDI playback time" /><span class="audio-label">LOCAL SYNTH</span></div>
     </main>
   </div>
-
   <script type="module" src="./src/ui/app.ts"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 # AudioVisualizer — Music → Visual Score Art Design Document
 
 **Date:** 2026-07-21  
-**Status:** Draft / Proposed  
+**Status:** Historical concept draft — implementation contract lives in [`DESIGN.md`](../../../DESIGN.md).
 **Author:** AI Agent + User  
 **Target:** macOS (Phase 1 Desktop App & Web), Windows/Linux (Phase 2), Mobile (Phase 3)
 
@@ -87,8 +87,8 @@ interface NoteEvent {
 
 - **Frontend Core**: TypeScript, HTML5 Canvas 2D, SVG DOM / String rendering, Vite dev server.
 - **MIDI Parsing**: `@tonejs/midi`.
-- **Desktop Shell**: Tauri 2.0 (macOS bundle `.app`/`.dmg`, cross-compiles to Windows `.msi` and Linux `.AppImage`).
-- **Code Quality**: ESLint, Prettier, TypeScript strict mode, Vitest unit tests.
+- **Desktop Shell**: Not implemented; the current product is browser-only.
+- **Code Quality**: TypeScript strict mode and Vitest unit tests. ESLint and Prettier are not currently configured.
 
 ---
 

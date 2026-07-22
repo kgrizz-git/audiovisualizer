@@ -21,7 +21,10 @@ export const DEFAULT_CONFIG: RuleConfig = {
   strokeWidthScale: 4,
   hueOffsetPerVoice: 25,
   spiralBias: 2,
+  intervalAngleEnabled: true,
   quantizeOnset: false,
+  quantizeSubdivision: 4,
+  voiceFilter: null,
 };
 
 /**
@@ -53,6 +56,7 @@ export function mapScoreToGeometry(
 
   score.tracks.forEach((track) => {
     if (track.notes.length === 0) return;
+    if (config.voiceFilter !== null && !config.voiceFilter.includes(track.channel)) return;
 
     const segments: GeometrySegment[] = [];
     const circles: GeometryCircle[] = [];
@@ -63,14 +67,22 @@ export function mapScoreToGeometry(
 
     let prevNote: NoteEvent | null = null;
 
-    track.notes.forEach((note) => {
+    const notes = [...track.notes]
+      .sort((a, b) => a.onset - b.onset || a.id.localeCompare(b.id))
+      .map((note) => quantizeNote(note, score.bpm, config));
+
+    notes.forEach((note) => {
       const color = getNoteColor(note, config);
       const strokeWidth = config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale;
       const segmentLen = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
 
       if (config.variation === 'lines') {
-        // Calculate turn angle from interval
+        addGapSegment(segments, cursor, prevNote, note, headingAngle, config);
         if (prevNote !== null) {
+          cursor = advanceCursorForGap(cursor, prevNote, note, headingAngle, config);
+        }
+        // Calculate turn angle from interval
+        if (prevNote !== null && config.intervalAngleEnabled) {
           const interval = note.pitch - prevNote.pitch;
           headingAngle += interval * config.angleScale + config.spiralBias;
         }
@@ -92,6 +104,10 @@ export function mapScoreToGeometry(
 
         cursor = endPoint;
       } else if (config.variation === 'circles') {
+        addGapSegment(segments, cursor, prevNote, note, headingAngle, config);
+        if (prevNote !== null) {
+          cursor = advanceCursorForGap(cursor, prevNote, note, headingAngle, config);
+        }
         // Position circles along time axis or outward angle
         const radius = Math.max(5, segmentLen * 0.4);
         const rad = (headingAngle * Math.PI) / 180;
@@ -148,6 +164,39 @@ export function mapScoreToGeometry(
     voicePaths,
     config,
   };
+}
+
+function quantizeNote(note: NoteEvent, bpm: number, config: RuleConfig): NoteEvent {
+  if (!config.quantizeOnset || bpm <= 0 || config.quantizeSubdivision <= 0) return note;
+  const gridSeconds = 60 / bpm / config.quantizeSubdivision;
+  return { ...note, onset: Math.round(note.onset / gridSeconds) * gridSeconds };
+}
+
+function getGapDuration(previous: NoteEvent | null, next: NoteEvent): number {
+  if (!previous) return 0;
+  return Math.max(0, next.onset - (previous.onset + previous.duration));
+}
+
+function advanceCursorForGap(cursor: Point2D, previous: NoteEvent, next: NoteEvent, heading: number, config: RuleConfig): Point2D {
+  const gapDuration = getGapDuration(previous, next);
+  if (gapDuration === 0) return cursor;
+  const length = gapDuration * config.lengthScale;
+  const radians = (heading * Math.PI) / 180;
+  return { x: cursor.x + Math.cos(radians) * length, y: cursor.y + Math.sin(radians) * length };
+}
+
+function addGapSegment(segments: GeometrySegment[], cursor: Point2D, previous: NoteEvent | null, next: NoteEvent, heading: number, config: RuleConfig): void {
+  const gapDuration = getGapDuration(previous, next);
+  if (!previous || gapDuration === 0 || config.gapPolicy === 'lift_pen') return;
+  const end = advanceCursorForGap(cursor, previous, next, heading, config);
+  const gapNote: NoteEvent = { ...previous, id: `${previous.id}-gap`, onset: previous.onset + previous.duration, duration: gapDuration };
+  segments.push({
+    start: { ...cursor }, end, note: gapNote, role: 'gap',
+    color: config.gapPolicy === 'ghost' ? '#94a3b8' : getNoteColor(previous, config),
+    width: Math.max(1, config.strokeWidthBase * 0.75),
+    opacity: config.gapPolicy === 'ghost' ? 0.18 : 0.32,
+    dashArray: config.gapPolicy === 'ghost' ? '3 8' : undefined,
+  });
 }
 
 function getInitialCursor(mode: string, width: number, height: number, channel: number): Point2D {

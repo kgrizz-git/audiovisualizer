@@ -1,84 +1,40 @@
 # AGENTS.md
 
-Last reviewed: 2026-07-14
+Last reviewed: 2026-07-21
 
-Single source of truth for AI coding agents working in this repository. Other agent
-entrypoints (`CLAUDE.md`, `GEMINI.md`, `QWEN.md`, `.github/copilot-instructions.md`,
-`.cursor/rules/`, `.windsurf/rules/`) are thin pointers back to this file.
+AudioVisualizer turns MIDI files into deterministic visual score art. This is the
+single source of truth for coding agents; tool-specific entrypoints point here.
 
-> This repo is a **project-seed template**, not an application. Its asset is durable
-> guidance: a bootstrap prompt, policies, hooks, CI guidance, reusable prompt/doc
-> templates, and curated inventories. Keep additions small, durable, and discoverable.
+## Start here
 
-## Read this first (thin entry → deep docs)
+Read these in order for implementation work:
 
-Do not load everything. Start here, then open only what the task needs.
+1. [`README.md`](README.md) for local setup and user-facing behavior.
+2. [`DESIGN.md`](DESIGN.md) for domain contracts, mapping rules, and export behavior.
+3. [`dev-docs/agent-workflow.md`](dev-docs/agent-workflow.md) for the validation and handoff loop.
+4. The files directly involved in the requested change and their tests.
 
-| If you are… | Read |
-|---|---|
-| Starting a new project from this template | [`prompts/bootstrap-project.md`](prompts/bootstrap-project.md) (+ tick-list [`prompts/bootstrap-checklist.md`](prompts/bootstrap-checklist.md)) |
-| Starting a work session on an existing project | [`prompts/new-agent-session.md`](prompts/new-agent-session.md) |
-| Capturing what kind of project this is | [`prompts/project-init-profile.md`](prompts/project-init-profile.md) |
-| Running periodic repo health checks | [`prompts/maintenance-loop.md`](prompts/maintenance-loop.md) |
-| Looking for a tool / library / service | [`inventory/README.md`](inventory/README.md) (a menu, not a checklist) |
-| Adding/enforcing repo rules | [`policies/README.md`](policies/README.md) |
-| Wiring local checks | [`hooks/README.md`](hooks/README.md) |
-| Setting up CI | [`ci/README.md`](ci/README.md) |
-| Working with PII, PHI, medical/FHIR/HL7/DICOM, or regulated data | [`prompts/strict-phi-agent-guidance.md`](prompts/strict-phi-agent-guidance.md) **before editing or configuring tools** |
-| Making sure code doesn't leak sensitive data at runtime (logs, temp files, caches, test/CI output, telemetry) | [`prompts/sensitive-data-leak-prevention.md`](prompts/sensitive-data-leak-prevention.md) |
-| Checking Actions minutes / storage | [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py), [`policies/github-actions-usage.md`](policies/github-actions-usage.md) |
-| Checking open PRs after push / daily | [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py), [`policies/commits-and-branches.md`](policies/commits-and-branches.md) |
-| Writing a plan / design / review | [`templates/`](templates/) and [`prompts/`](prompts/) |
-| Installing skills or subagents | [`inventory/catalog-skills-agents.md`](inventory/catalog-skills-agents.md) |
-| Choosing an orchestration approach | [`inventory/harness-engineering.md`](inventory/harness-engineering.md) |
+## Working rules
 
-## Operating principles
+1. Keep the MIDI parser and score-to-geometry mapper deterministic and side-effect free.
+2. Update `DESIGN.md` when changing a public domain contract, mapping formula, or SVG export semantics.
+3. Add or update Vitest coverage with mapper, parser, and SVG behavior changes.
+4. Run `npm run validate` before handing off a change. It type-checks, tests, and production-builds the app.
+5. Do not upload user MIDI files or add telemetry without explicit approval. Browser file handling stays local.
+6. Preserve the existing template policy and hook material unless the task explicitly changes it.
 
-1. **Menu, not mandate.** Inventories list options; choose the minimal useful set per project.
-2. **Thin entry, deep docs.** Keep this file short; push detail into linked docs.
-3. **Interview before scaffolding.** Ask the user goals/constraints before writing many files.
-4. **Verify, don't guess.** Prefer running tools and reading files over assuming.
-5. **Policy as code where it pays.** Encode durable rules as checks with clear remediation.
-6. **Temporary stays temporary.** Put scratch plans/research in `.context/` (gitignored).
-7. **Protect the template remote.** Before a new project's first push, repoint `origin`
-   away from this template (see the bootstrap prompt, step 2).
+## Project map
 
-## Repo map
+- `src/core/` — MIDI normalization, domain types, and score-to-geometry mapping.
+- `src/renderers/` — Canvas preview and SVG/plotter export.
+- `src/ui/` — browser-only control wiring and styling.
+- `tests/` — deterministic unit tests.
+- `public/demo-midi/` — small, redistributable MIDI demo fixtures.
+- `dev-docs/` — project decisions and the active backlog.
 
-- `prompts/` — reusable prompts (bootstrap, refactor, docs audit, subagent workflow, reviews).
-- `templates/` — fill-in artifacts (briefs, plans, designs, ADRs, runbooks, releases, reviews, assessments).
-- `policies/` — durable repo rules (file size/counts, plans/todos, changelogs, doc freshness, commits, security).
-- `hooks/` — pre-commit config + policy-check scripts (file size, TODO limits, secrets, lint).
-- `ci/` — CI selection guidance and example workflows.
-- `inventory/` — curated indexes of tools, skills, MCP servers, references (install-on-demand).
-- `plans/` — (when adopted) active implementation plans; archive completed ones under `plans/archive/`.
-- `hooks/scripts/check_sensitive_data.py` — opt-in strict medical-data gate; scans every tracked file and requires exact human approval for opaque files.
-- `hooks/scripts/check_gitignore_protected.py`, `check_forbidden_paths.py`, `check_scan_contract.py` — opt-in structural sensitive-data gates (see `policies/sensitive-data-scan-gates.md`).
-- `inventory/medical-data-security.md` — strict guard setup and medical-data scanner menu.
-- `.cursor/`, `.windsurf/` — editor rule sets (CodeGuard security rules).
-- `.context/` — scratch only; never required reading, never committed.
+## Safety and repository hygiene
 
-## Conventions (changelog, plans, sizes)
-
-| Topic | Where documented |
-|---|---|
-| Public vs developer changelogs + SemVer | [`policies/changelog-conventions.md`](policies/changelog-conventions.md) |
-| Plans lifecycle, marking done, archiving, `to_do` caps | [`policies/plans-and-todos.md`](policies/plans-and-todos.md) |
-| Source/doc line caps (soft **600** / hard **1000**) | [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md) |
-| Secret scanning + lint hooks | [`hooks/README.md`](hooks/README.md), [`policies/security-baseline.md`](policies/security-baseline.md) |
-| GitHub Actions minutes/storage (estimate before expanding CI) | [`policies/github-actions-usage.md`](policies/github-actions-usage.md), [`ci/scripts/check_gha_usage.py`](ci/scripts/check_gha_usage.py) |
-| Open PRs after push (advisory, not a hook) | [`policies/commits-and-branches.md`](policies/commits-and-branches.md), [`ci/scripts/check_open_prs.py`](ci/scripts/check_open_prs.py) |
-| Strict PII/PHI controls, approval inventory, and agent behavior | [`prompts/strict-phi-agent-guidance.md`](prompts/strict-phi-agent-guidance.md), [`inventory/medical-data-security.md`](inventory/medical-data-security.md) |
-| Runtime/dev leak prevention (redaction, temp files, caches, telemetry, easy clearance) | [`prompts/sensitive-data-leak-prevention.md`](prompts/sensitive-data-leak-prevention.md) (how), [`policies/sensitive-data-runtime-leaks.md`](policies/sensitive-data-runtime-leaks.md) (rule + tiers) |
-| Structural sensitive-data gates (protected `.gitignore`, forbidden tracked paths, heavy-scanner contract/ledger) | [`policies/sensitive-data-scan-gates.md`](policies/sensitive-data-scan-gates.md) |
-
-**Notes_and_Ideas vs this template:** personal research dumps, private key dashboards, and
-exploratory idea notes belong in a Notes_and_Ideas (or similar) repo. Index only durable,
-reusable menus and conventions here.
-
-## Agent compatibility
-
-This file follows the [AGENTS.md](https://agents.md) convention and is read (directly or via
-a thin pointer) by Claude Code, OpenAI Codex/GPT, Cursor, Gemini/Antigravity, Qwen, DeepSeek,
-MiniMax, opencode, Windsurf, and GitHub Copilot. When adding tool-specific behavior, keep the
-durable rule here and let the per-tool file point to it.
+- `.context/`, `dist/`, and `.dirac-cache/` are local artifacts; do not commit them.
+- Keep source and documentation files below the repository's size limits; see [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md).
+- `notes_and_ideas/` is unrelated material inherited from the template. Do not use it as project documentation. Its removal requires a deliberate Git-history decision.
+- For policy, CI, and reusable-template changes, use the linked material in `policies/`, `hooks/`, and `ci/` rather than duplicating it here.

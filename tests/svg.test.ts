@@ -1,0 +1,28 @@
+import { describe, it, expect } from 'vitest';
+import { generateDemoScore } from '../src/core/midi/parser.js';
+import { mapScoreToGeometry, DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
+import { buildSvg } from '../src/renderers/svg/svgBuilder.js';
+
+describe('SVG Builder Unit Tests', () => {
+  it('generates valid SVG string containing elements and legend overlay', () => {
+    const score = generateDemoScore();
+    const geometry = mapScoreToGeometry(score, DEFAULT_CONFIG, 1000, 1000);
+    const svgStr = buildSvg(geometry, { includeLegend: true });
+
+    expect(svgStr).toContain('<svg');
+    expect(svgStr).toContain('viewBox="0 0 1000 1000"');
+    expect(svgStr).toContain('id="legend-overlay"');
+    expect(svgStr).toContain('</svg>');
+  });
+
+  it('generates stroke-only pen-plotter SVG without legend or filled rectangles', () => {
+    const score = generateDemoScore();
+    const geometry = mapScoreToGeometry(score, DEFAULT_CONFIG, 1000, 1000);
+    const svgStr = buildSvg(geometry, { penPlotterMode: true });
+
+    expect(svgStr).toContain('<svg');
+    expect(svgStr).not.toContain('id="legend-overlay"');
+    expect(svgStr).not.toContain('<rect width="1000" height="1000"');
+    expect(svgStr).toContain('stroke="#000000"');
+  });
+});

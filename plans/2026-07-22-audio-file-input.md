@@ -20,16 +20,25 @@ Let a user load a local audio recording—initially MP3, WAV, and browser-decoda
 turn its estimated note events into the same visual scores, playback timeline, and exports that
 MIDI uses today. The app remains local-only: neither the audio file nor its analysis is uploaded.
 
-The first shipping implementation will use `@spotify/basic-pitch` (the maintained TypeScript
-implementation of Basic Pitch) for polyphonic audio-to-note estimation. It is a better fit than
-building a custom pitch detector because it produces multi-pitch note events and runs in a
-browser. The analysis model must be loaded lazily and run in a Worker. Browser-native
-`AudioContext.decodeAudioData()` will decode complete local files before transcription.
+**Pipeline (v1):** local audio file → decode → **stem separation (Demucs)** → **Basic Pitch per
+pitched stem** → adapter → **one estimated `TrackScore` per stem** → the existing multi-voice
+geometry / render / export. Separating first is what yields distinct colored instrument voices
+(Basic Pitch alone emits one flat stream) and also improves transcription accuracy by reducing
+polyphony per stem. `@spotify/basic-pitch` remains the transcriber (only browser-viable
+polyphonic engine); Demucs (htdemucs) is the separator.
 
-This is explicitly **offline-first and desktop-bundle-ready**. The browser app remains a useful
-delivery target, but the same Vite frontend must be able to ship inside a Tauri desktop bundle.
-All analysis code, WebAssembly, and model data must be included in the installed artifact; the
-app must not require a cloud API, a hosted inference backend, a CDN import, or an account.
+**Desktop is the primary target; browser is a graceful fallback (decided 2026-07-23).** The same
+Vite frontend ships inside a **Tauri desktop bundle** as the primary artifact, where analysis runs
+natively (GPU-capable Demucs + Basic Pitch) for best quality/speed. The **browser fallback** runs
+the same pipeline with WASM Demucs + Basic Pitch; if separation is too heavy/unavailable in a
+given browser, it degrades to a single flat Basic Pitch track. All analysis code, WebAssembly, and
+model data are bundled in the installed artifact; no cloud API, hosted backend, CDN import, or
+account — on either target. The analysis model(s) load lazily and run off the main thread
+(Worker in browser; native sidecar/thread on desktop). Local decoding uses
+`AudioContext.decodeAudioData()` (browser) or a native decoder (desktop).
+
+Higher-fidelity single-model multi-instrument transformers (MuScriptor, YourMT3+) are a **deferred
+desktop-only high-fidelity engine** — tracked in `dev-docs/TO_DO.md`, not v1.
 
 ## Scope and user-facing contract
 
@@ -40,13 +49,14 @@ app must not require a cloud API, a hosted inference backend, a CDN import, or a
 - Show an explicit **“estimated from audio”** badge, analysis progress/cancel state, duration,
   and a confidence control. Do not present inferred notes as source-of-truth MIDI.
 - Convert accepted Basic Pitch note events through a single adapter to the existing `Score` /
-  `TrackScore` / `NoteEvent` contract, then reuse every existing mapper and exporter. Because
-  `TrackScore` requires `channel`, `program`, and `instrumentName`, and `Score` requires `bpm`
-  (all MIDI-shaped, non-optional in `src/core/types.ts`), the adapter fabricates deterministic
-  placeholders (e.g. `channel: 0`, `program: 0`, `instrumentName: "Estimated"`, a nominal `bpm`)
-  and records the real analysis facts in the separate `AudioAnalysisMetadata`, never in the
-  rendering contract. `confidence`-derived velocity stays internal to the adapter (no
-  `confidence` field is added to `NoteEvent`).
+  `TrackScore` / `NoteEvent` contract, then reuse every existing mapper and exporter. The adapter
+  emits **one `TrackScore` per stem** (e.g. `instrumentName: "Vocals"/"Bass"/"Other"`), with the
+  stem name driving `instrumentName` and a distinct `channel` per stem so the existing multi-voice
+  color/legend flow applies. Because `TrackScore.program` and `Score.bpm` are MIDI-shaped and
+  non-optional (`src/core/types.ts`), the adapter fabricates deterministic placeholders (e.g.
+  `program: 0`, nominal `bpm`) and records real analysis facts in the separate
+  `AudioAnalysisMetadata`, never in the rendering contract. `confidence`-derived velocity stays
+  internal to the adapter (no `confidence` field is added to `NoteEvent`).
 - Introduce a single typed `sourceKind` (`'midi' | 'audio'`) contract used everywhere source
   provenance matters — app state, legend/export labeling, and the export manifest — rather than
   scattering ad-hoc booleans/strings.
@@ -56,9 +66,10 @@ app must not require a cloud API, a hosted inference backend, a CDN import, or a
 ## Out of scope
 
 - Perfect transcription, key/chord naming, lyrics, or copyrighted-source acquisition.
-- **Per-instrument / per-voice separation in v1.** Basic Pitch emits a single flat polyphonic
-  note stream with no instrument/voice/channel field, so v1 renders one estimated track. Voice
-  separation is a scoped future phase (Phase 6 below), not part of the first ship.
+- **Arbitrary-instrument granularity.** Stem separation yields fixed categories (vocals / drums /
+  bass / other), not an arbitrary N instruments — "other" stays a mix, and drums is unpitched
+  (skipped or handled as percussion). True per-instrument transcription (piano vs guitar within
+  "other") needs the deferred multi-instrument transformer, not v1.
 - Server-side processing, storage, telemetry, or upload.
 - A required cloud service or live internet connection after the application/assets have been
   installed. Optional update checks must not block any creative workflow.
@@ -101,24 +112,28 @@ melody-estimated.
 | Cloud transcription API | Rejected: conflicts with offline-first use, privacy, cost, and reliable desktop packaging. |
 | Electron desktop shell | Viable, but defer unless a Tauri feasibility spike fails; Tauri retains the existing web frontend while offering narrow native file/dialog capabilities. |
 
-### Transcription-engine alternatives (to Basic Pitch specifically)
+### Transcription-engine alternatives (polyphonic focus)
 
-The spike (2026-07-22) confirmed Basic Pitch works offline but surfaced one real weakness:
-it pins **TensorFlow.js 3.21.0 (2021)**, which carries known npm vulnerabilities and is
-effectively unmaintained. Ranked alternatives for the engine itself:
+Surveyed 2026-07-23. The binding constraint is **browser-first + offline desktop bundle**
+(JS/WASM/ONNX). Under that constraint, Basic Pitch is still the only genuinely browser-viable
+polyphonic engine; every higher-quality option is a large GPU-oriented PyTorch transformer.
+Note: tfjs 3.21.0 is old/unmaintained but has **no** npm advisories (the earlier "vuln" was a
+mis-attribution to vite/vitest devDeps).
 
-| Engine | Polyphonic | Offline/bundled | Notes |
+| Engine | Polyphonic quality | Browser-viable? | Notes |
 |---|---|---|---|
-| `@spotify/basic-pitch` on tfjs 3.x (**chosen**) | yes | yes (0.9 MB model) | Works today; weakness is the stale tfjs runtime + vulns. |
-| **Basic Pitch model on ONNX Runtime Web** (leading alt) | yes | yes | Convert the same model to ONNX, run via `onnxruntime-web` (WASM/WebGPU). Same transcription quality, drops the old-tfjs supply-chain smell, gains WebGPU accel. Cost: model-conversion + a re-implementation of `outputToNotesPoly` post-processing. Worth a spike before committing to tfjs. |
-| **SPICE / CREPE (tfjs)** | no (mono) | yes | Lightweight pitch tracking, solo-melody only; no onsets/chords. Candidate for the honest melody-only fallback. |
-| **Essentia.js (WASM)** | partial | yes | YIN/Melodia + onset detection; you assemble note segmentation. More DIY, lower polyphonic fidelity. Already in the approach-level table. |
-| Custom Web Audio autocorrelation/YIN | no | yes | Zero-dep monophonic fallback tier; lowest fidelity. |
-| Magenta MT3 / Onsets-and-Frames | yes (higher quality) | no (heavy/server) | Rejected: too large / server-oriented; violates local-only. |
+| `@spotify/basic-pitch` on tfjs 3.x (**chosen v1**) | good, instrument-agnostic | **yes** (0.9 MB) | The only browser-runnable polyphonic option. Works offline today. |
+| Basic Pitch via ONNX Runtime Web | = Basic Pitch | yes (needs work) | Escapes old tfjs. Not a naive full-graph swap (Phase 0.5). **NeuralNote's recipe:** convert only the CQT+harmonic-stacking front-end via tf2onnx *with manually fixed batch-norm weights*, run the CNN separately — the front-end is exactly where the naive `nmp.onnx` diverged. Parity achievable; tracked investigation. |
+| **MuScriptor** (2026, open-weight) | SOTA multi-instrument on real mixes | **no** | **1.3B params** (multi-GB, GPU PyTorch). Future desktop-only high-fidelity tier at best. |
+| **YourMT3+ / MIROS** (2025 AMT winners) | very high (MIROS F=0.83 Slakh2100 multi-instrument) | **no** | Large transformers (MusicFM conformer encoder). Server/GPU. Future desktop tier / research. |
+| **MT3** (Google Magenta) | strong multi-instrument baseline | **no** | Heavy transformer; the benchmark reference. Not local-friendly. |
+| Essentia.js (WASM) | partial (DIY segmentation) | yes | YIN/Melodia + onsets; lower polyphonic fidelity, more hand-assembly. Backup only. |
+| NeuralNote | = Basic Pitch | no (native C++ DAW plugin) | Not a new model — a proof that Basic Pitch runs offline via split ONNX+RTNeural; source of the ONNX recipe above. |
 
-Recommendation: keep Basic Pitch as the first shipping engine, but **spike the ONNX Runtime Web
-port in parallel** — it is the cleanest path off the stale-tfjs dependency without sacrificing
-polyphonic quality or the offline-bundle guarantee.
+Recommendation: **ship v1 on Basic Pitch (tfjs)** — it is the only browser-viable polyphonic
+engine. Treat the frontier transformers (MuScriptor / YourMT3+) as a **future desktop-only
+high-fidelity tier** (heavy PyTorch/ONNX, GPU) tracked in `dev-docs/TO_DO.md`, not part of v1.
+ONNX-on-Basic-Pitch stays a tracked investigation with a concrete recipe.
 
 ## Proposed file changes
 
@@ -126,31 +141,27 @@ polyphonic quality or the offline-bundle guarantee.
 package.json / package-lock.json          — add pinned @spotify/basic-pitch + pinned model bundle; no eager load
 vite.config.ts                            — NET-NEW worker.format='es'; bundle model.json + weights as assets (?url or public/model). Runtime is TensorFlow.js (GraphModel), NOT ONNX/WASM — no WASM bundling unless the tfjs-backend-wasm fallback is needed (see spike findings)
 src/core/audio/types.ts                   — analysis result, confidence, source metadata contracts; sourceKind enum ('midi' | 'audio')
-src/core/audio/monophonicPitch.ts         — deterministic YIN/pYIN pitch+onset detection (default tier; pure, no ML/Worker)
-src/core/audio/audioScoreAdapter.ts       — pure note-event → Score normalization, shared by BOTH the deterministic and Basic Pitch tiers
+src/core/audio/audioScoreAdapter.ts       — pure Basic-Pitch-event → Score normalization
 src/audio/audioDecoder.ts                 — File / ArrayBuffer decoding and browser capability errors
+src/audio/stemSeparator.ts                — Demucs separation boundary: native (desktop sidecar) or WASM (browser); returns per-stem PCM; progress/cancel; degrades to no-op passthrough
+src/core/audio/stems.ts                   — stem taxonomy (vocals/drums/bass/other), which stems are pitched, stem→channel/instrumentName mapping (pure)
 src/audio/audioTranscriptionWorker.ts     — lazy model initialization, progress, cancellation, result transfer
 src/audio/audioTranscriber.ts             — Worker client and lifecycle boundary for the UI
 src/audio/audioPlayback.ts                — HTMLAudioElement time, seek, play/pause adapter
 src/ui/app.ts                             — source-kind state, input routing, status, scrubber/playback hand-off; owns transcriber result handling (setScore stays private, called from within app.ts)
 index.html / src/ui/styles/main.css       — audio upload affordance (widen `accept` from MIDI-only), estimated badge, confidence and cancel UI
 src/core/types.ts                         — no mapper duplication; sourceKind lives in src/core/audio/types.ts, referenced here only if the render contract needs it
-tests/monophonicPitch.test.ts             — deterministic YIN pitch/onset on synthetic tones; exact reproducibility
 tests/audioScoreAdapter.test.ts           — normalization, confidence filter, deterministic ids/timing (pure, no DOM env)
 tests/audioTranscriber.test.ts            — Worker protocol, cancellation, typed failures via injected interfaces (no real Worker/AudioContext; see test approach below)
 tests/fixtures/audio-analysis/            — small synthetic analysis JSON in a NEW subdir (tests/fixtures/ already holds license-inventory/); no copyrighted recordings
 ARCHITECTURE.md                           — rule #2: new AudioAnalysisMetadata domain contract + source-kind routing / HTMLAudioElement path (planned → active)
 DESIGN.md / README.md                     — rule #2: estimated marker in exports + source-aware legend behavior; support matrix, local-only/privacy statement, limitations and workflow
 dev-docs/TO_DO.md                         — milestone status
-src-tauri/ (follow-up)                    — Tauri configuration, scoped file/dialog capabilities, local resources
+src-tauri/ (PRIMARY target)               — Tauri config, scoped file/dialog capabilities, bundled Demucs+Basic Pitch models, native inference sidecar/thread
+tests/stems.test.ts                       — stem taxonomy + stem→track mapping; pitched-stem selection
 ```
 
 ## Phases & checklist
-
-Two-tier build order: **Phase 1 delivers the deterministic monophonic tier + shared adapter +
-local decode — fully shippable with no ML, no Worker, no model bundle.** The opt-in Basic Pitch
-polyphonic tier (Worker, lazy tfjs/model) layers on in Phase 2. This lets a reproducible, no-ML
-audio path ship first, with polyphony added behind an explicit toggle.
 
 ### Decisions locked before implementation
 
@@ -189,19 +200,20 @@ Product decisions locked 2026-07-22:
     showed the official `nmp.onnx` is not a drop-in *as driven by a hand-rolled harness* (outputs
     didn't match; thresholds don't transfer) — parity is likely achievable but needs real
     preprocessing/threshold work. Deferred as a future-proofing investigation, not a blocker.
-  - **Two-tier engine (locked 2026-07-22).** v1 ships **two** transcription engines behind one
-    adapter contract:
-    1. **Deterministic monophonic tier (default):** YIN/pYIN (or autocorrelation) — no ML, no
-       model bundle, no Worker required, fully deterministic and reproducible. Handles single-line
-       / solo-melody input. This is the app's reproducible-by-default path and aligns with the
-       existing deterministic-rendering contract.
-    2. **Polyphonic tier (opt-in):** Basic Pitch + tfjs, lazily loaded only when the user opts into
-       polyphony. Handles chords / multiple simultaneous notes.
-    Both tiers feed the same `audioScoreAdapter` → `Score`. The `estimated` badge distinguishes
-    "estimated (deterministic pitch)" vs "estimated (ML, polyphonic)" so provenance stays honest.
-    Note the reproducibility asymmetry in `AudioAnalysisMetadata`: the deterministic tier is
-    bit-reproducible; the ML tier can drift across model versions.
-- **CLI scope:** v1 is **browser-only**; Node CLI audio input stays a separate later plan.
+  - **Polyphonic-only, Basic Pitch (revised 2026-07-23).** A deterministic monophonic (YIN) tier
+    was considered and dropped — monophonic-only input is not useful enough. Basic Pitch is the
+    only browser-viable polyphonic transcriber.
+- **Pipeline = stems → Basic Pitch (decided 2026-07-23).** Separate with Demucs first, transcribe
+  each pitched stem with Basic Pitch, emit one `TrackScore` per stem. Chosen over a single-model
+  multi-instrument transformer because the two-stage route uses proven parts and degrades to the
+  browser fallback (WASM Demucs + Basic Pitch). Ceiling: fixed vocals/drums/bass/other categories.
+  The high-fidelity transformer route (MuScriptor / YourMT3+) is **deferred and tracked in
+  `dev-docs/TO_DO.md`**, not v1.
+- **Desktop-primary, browser-fallback (decided 2026-07-23).** The Tauri desktop bundle is the
+  primary artifact (native, GPU-capable Demucs + Basic Pitch). The browser runs the same pipeline
+  via WASM Demucs + Basic Pitch, degrading to a single flat Basic Pitch track if separation is
+  unavailable. Desktop packaging moves from a late stretch to a primary concern (see phases).
+- **CLI scope:** Node CLI audio input stays a separate later plan (out of scope here).
 - **Confidence-slider behavior:** cache the raw model output (frames/onsets/contours) from one
   pass; moving the confidence control re-runs only `outputToNotesPoly` post-processing, **never**
   the model. Fast, and it makes threshold tuning interactive.
@@ -234,6 +246,13 @@ browser (checkbox below).
   **no built-in cancel** — cancellation = terminate the Worker.
 - [x] Prove a cold-start run using packaged/local model assets only (no network). Done in Node;
   re-confirm in-browser as part of the Worker-path checkbox above.
+- [ ] **Stem-separation feasibility (Demucs):** prove htdemucs runs offline both (a) natively on
+  desktop (Rust `ort`/onnxruntime or bundled sidecar, GPU-capable) and (b) as WASM in the browser
+  fallback. Record model size, per-minute separation time, memory, and stem quality on an owned
+  clip. Decide the desktop inference host (sidecar process vs in-proc).
+- [ ] **Desktop feasibility (Tauri, primary target):** spike a Tauri 2 shell around the Vite build
+  that invokes native Demucs + Basic Pitch with the network disabled — de-risk the primary
+  artifact early, before full packaging (Phase 6).
 
 (Acceptance-example definition and clip inventory moved to the Definition of Done section near
 Verification — they are DoD, not spike work.)
@@ -254,11 +273,13 @@ Executed. Full results in `tmp/2026-07-22-phase0-spike-findings.md`; scripts in 
 
 - [ ] Add `AudioAnalysisMetadata` outside the visual mapper contract: source name/type, decoded
   duration/sample rate, model/version, thresholds, and analysis state.
-- [ ] Implement a pure adapter from Basic Pitch events to a single estimated track with MIDI
-  pitch `0..127`, clamped positive duration (`Math.max(0.01, duration)`, matching the MIDI
-  parser convention), deterministic `(onset, pitch)`-ordered stable ids, velocity derived from
-  confidence, and synthetic `channel`/`program`/`instrumentName`/`bpm` placeholders (real
-  analysis facts go in `AudioAnalysisMetadata`, not the render contract).
+- [ ] Implement a pure adapter from Basic Pitch events to **one estimated `TrackScore` per stem**
+  (stem name → `instrumentName`, distinct `channel` per stem) with MIDI pitch `0..127`, clamped
+  positive duration (`Math.max(0.01, duration)`, matching the MIDI parser convention),
+  deterministic `(onset, pitch)`-ordered stable ids (namespaced per stem), velocity derived from
+  confidence, and synthetic `program`/`bpm` placeholders (real analysis facts go in
+  `AudioAnalysisMetadata`, not the render contract). Adapter must also accept a single-track input
+  (browser degrade path where separation is unavailable).
 - [ ] Update ARCHITECTURE.md (rule #2): document `AudioAnalysisMetadata` under "Domain contracts"
   and the source-kind routing rule under "Playback and source boundaries."
 - [ ] Apply a user-adjustable confidence threshold before adaptation; retain the raw event count
@@ -268,7 +289,25 @@ Executed. Full results in `tmp/2026-07-22-phase0-spike-findings.md`; scripts in 
 - [ ] Unit test empty results, overlapping notes, invalid model events, confidence filtering,
   deterministic ordering, and duration derivation.
 
-### Phase 2: Background transcription and UI integration
+### Phase 2: Stem separation pipeline (core)
+
+Separate the mix into stems *before* transcription — the route to distinct colored voices and to
+better per-stem accuracy.
+
+- [ ] Implement `stemSeparator.ts` as a backend-agnostic boundary: **native Demucs on desktop**
+  (primary; GPU-capable via sidecar/`ort`) and **WASM Demucs in the browser** (fallback), behind
+  one interface with progress/cancel. Reject any cloud-backed option.
+- [ ] Implement `stems.ts` taxonomy (pure): vocals/drums/bass/other, which stems are pitched
+  (skip/flag drums as percussion), and stem → `channel`/`instrumentName` mapping. Unit-tested.
+- [ ] Feed each pitched stem through the Basic Pitch → adapter path → one `TrackScore` per stem,
+  so the existing multi-voice geometry/legend/color flow applies unchanged.
+- [ ] **Degrade path:** if separation is unavailable/too heavy in a given browser, skip it and
+  transcribe the whole mix as a single flat track (explicitly labeled "not separated").
+- [ ] Label honestly. **Known ceiling:** fixed stem categories, not arbitrary N instruments;
+  "other" stays a mix; realistic output ~2–3 pitched tracks. Surface this in UI + exports.
+- [ ] Record separator name + version per stem in `AudioAnalysisMetadata` / the manifest.
+
+### Phase 3: Background transcription and UI integration
 
 - [ ] Implement a typed Worker request protocol: `initialize`, `analyze`, `cancel`, `progress`,
   `result`, and `error`; terminate/revoke resources on replacement, navigation, or cancellation.
@@ -288,7 +327,7 @@ Executed. Full results in `tmp/2026-07-22-phase0-spike-findings.md`; scripts in 
   via the existing geometry flow without a parallel renderer, and label legends/exports as
   estimated when the active `sourceKind` is `audio`.
 
-### Phase 3: Audio audition and reproducibility
+### Phase 4: Audio audition and reproducibility
 
 - [ ] Add original-audio playback, seek, and ended events that drive the existing render time and
   scrubber. Preserve local-synth playback for MIDI and clearly switch controls by source kind.
@@ -305,7 +344,7 @@ Executed. Full results in `tmp/2026-07-22-phase0-spike-findings.md`; scripts in 
 - [ ] Document that re-running a neural model/version can change inferred notes, whereas
   rendering is deterministic once the adapted score and configuration are fixed.
 
-### Phase 4: Quality gate and follow-up decision
+### Phase 5: Quality gate and follow-up decision
 
 - [ ] Add a browser smoke test/manual test matrix for MP3, WAV, Safari AAC-M4A, cancellation,
   unsupported/invalid files, long-file limit, scrub sync, and no-network analysis.
@@ -316,17 +355,20 @@ Executed. Full results in `tmp/2026-07-22-phase0-spike-findings.md`; scripts in 
 - [ ] Decide whether a second plan should add Node CLI audio conversion using an explicit pinned
   decoder plus the same Basic Pitch runtime, or deliberately keep audio input browser-only.
 
-### Phase 5: Offline desktop packaging follow-up
+### Phase 6: Offline desktop packaging (PRIMARY target — release gate)
 
-- [ ] Run a Tauri 2 feasibility spike around the existing Vite build; bundle the frontend,
-  transcription Worker/WASM/model, and demo assets into a macOS application with no localhost or
-  cloud backend dependency.
-- [ ] Use the native dialog plugin for open/save only if the existing browser file picker cannot
-  meet desktop UX needs. Scope file access to user-selected paths and app-owned export folders;
-  do not grant broad home-directory access.
-- [ ] Confirm export, local audio playback, MIDI parsing, and model initialization work with
-  network disabled after installation. Add Windows/Linux packaging only after the macOS path is
-  validated, including each platform's bundled webview/media-runtime requirements.
+Desktop is the primary artifact, not a follow-up: this phase is a first-class release gate, and
+the desktop path must ship the native (GPU-capable) Demucs + Basic Pitch pipeline. (Feasibility
+was de-risked in Phase 0; this phase productionizes it.)
+
+- [ ] Package the Vite frontend + native Demucs + Basic Pitch (models, WASM/ONNX, inference
+  sidecar/thread) into a macOS Tauri 2 app with no localhost or cloud backend dependency.
+- [ ] Use the native dialog plugin for open/save. Scope file access to user-selected paths and
+  app-owned export folders; do not grant broad home-directory access.
+- [ ] Confirm the full pipeline (decode → separate → transcribe → render → export → audition)
+  runs with the **network disabled** after installation. Verify the browser fallback still works
+  as the secondary target. Add Windows/Linux only after macOS is validated, including each
+  platform's webview/media-runtime and native-inference requirements.
 - [ ] Write a separate release/distribution plan covering code signing, installers, update policy,
   and offline install assets; packaging must not introduce a hosted backend.
 
@@ -339,34 +381,10 @@ Defined here (not Phase 0) so spec work does not front-load the feasibility spik
 - [ ] Each acceptance clip has an expected outcome (renders / graceful specific error) that the
   Verification matrix below checks.
 
-### Phase 6: Voice separation via optional stem-separation pre-pass (stretch)
-
-Motivation: Basic Pitch produces one undifferentiated polyphonic note stream (no instrument or
-voice field — confirmed in the Phase 0 spike), so audio sources render as a single track, unlike
-the multi-voice colored output MIDI gives. To recover separate voices, split the mix into stems
-*before* transcription and run the existing adapter per stem.
-
-- [ ] Spike an **in-browser, offline** stem separator (e.g. a WASM/ONNX-Runtime-Web Demucs build,
-  as used by client-side demixers) that runs with no server and can be bundled into the desktop
-  artifact. Reject any option that requires a cloud backend.
-- [ ] Run the separator as an optional pre-pass, then feed each pitched stem through the existing
-  Basic Pitch → adapter path, emitting one `TrackScore` per stem so the existing multi-voice
-  geometry/legend/color flow applies unchanged.
-- [ ] Label the result honestly. **Known ceiling:** these models yield fixed stem *categories*
-  (typically vocals / drums / bass / other), not arbitrary N instruments. Drums is unpitched
-  (skip transcription); "other" remains a mix of the remaining instruments. Realistic output is
-  ~2–3 pitched estimated tracks, not true per-instrument transcription — surface this in the UI
-  and exports so it is not oversold.
-- [ ] Gate on cost: stem separation is heavy (model size, memory, time). Make it explicitly
-  opt-in with progress/cancel, and evaluate whether it is desktop-bundle-only rather than a
-  default browser feature.
-- [ ] Record which separator + version produced each stem in `AudioAnalysisMetadata` / the export
-  manifest, alongside the transcription model, for reproducibility.
-
-> Higher-fidelity multi-instrument alternatives (e.g. single-model multi-instrument transcription
-> like MT3) are intentionally **not** in this phase: they are large, server/Python-oriented, and
-> collide with the offline-bundle boundary. Revisit only if the desktop bundle can carry them —
-> tracked in `dev-docs/TO_DO.md`.
+> **Deferred (tracked in `dev-docs/TO_DO.md`):** a single-model multi-instrument transcription
+> engine (MuScriptor / YourMT3+) as a desktop-only high-fidelity upgrade. It would replace the
+> stems → Basic Pitch route with finer instrument granularity, but is a large GPU PyTorch model
+> and a significant packaging lift — out of scope for v1.
 
 ## Verification
 
@@ -393,15 +411,13 @@ Resolved 2026-07-22 (see "Product decisions locked" above):
 
 Resolved:
 
-- [x] **Engine architecture** → **two tiers**: deterministic monophonic (YIN/pYIN, no ML) as the
-  default + Basic Pitch as an opt-in polyphonic tier (loads tfjs + model lazily only when the user
-  opts into polyphony). Locked 2026-07-22.
+- [x] **Engine architecture** → **polyphonic-only, Basic Pitch** for v1. A deterministic
+  monophonic (YIN) tier was considered and dropped (2026-07-23) — monophonic-only isn't useful
+  enough. Higher-quality polyphonic models are all heavy PyTorch transformers → future
+  desktop-only tier, not v1.
 
 Still open:
 
-- [ ] **Tier selection UX:** explicit user toggle (default = deterministic mono; "detect chords /
-  polyphonic" opt-in loads Basic Pitch) vs. auto-detection of polyphony. Leaning explicit toggle
-  for v1 (simpler, keeps ML lazy, honest labeling). Owner: implementation review.
 - [ ] What confidence default best balances clean melody coverage against dense-song noise?
   Owner: implementation review after acceptance clips.
 - [ ] Should macOS be the first bundled target, with Tauri 2 as the default shell unless its

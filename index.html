@@ -83,12 +83,41 @@
       </section>
 
       <section class="control-group export-group"><h2><span>04</span> Export</h2><div class="export-title-field"><label for="export-title-input">Export title</label><input type="text" id="export-title-input" placeholder="Auto-filled from MIDI filename" maxlength="40" /></div><div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div></section>
+      <section class="control-group">
+        <h2><span>05</span> Viewport &amp; Framing</h2>
+        <div class="control-grid">
+          <label>
+            Zoom level
+            <input id="viewport-zoom-range" type="range" min="0.25" max="10.0" step="0.05" value="1.0" />
+            <output id="val-viewport-zoom">100%</output>
+          </label>
+          <label class="toggle">
+            <input id="viewport-autozoom-toggle" type="checkbox" checked />
+            <span>Auto-zoom active region</span>
+          </label>
+          <div class="button-grid">
+            <button type="button" class="btn" id="btn-reset-viewport">Reset framing</button>
+          </div>
+        </div>
+      </section>
       <p class="status" id="app-status" role="status">Ready · Generative study</p>
     </aside>
 
     <main class="viewport-container">
       <div class="stage-header"><div><p class="eyebrow">CURRENT SCORE</p><h2 id="score-title">Generative study · C major</h2></div><p id="score-meta">2 voices · 120 BPM</p></div>
-      <div class="canvas-wrapper"><canvas id="visualizer-canvas" width="800" height="800" role="img" aria-label="Visual score rendering"></canvas><div class="stage-corner">DETERMINISTIC<br>VISUALIZATION</div></div>
+      <div class="canvas-wrapper">
+        <canvas id="visualizer-canvas" width="800" height="800" role="img" aria-label="Visual score rendering"></canvas>
+        <div class="stage-corner">DETERMINISTIC<br>VISUALIZATION</div>
+        <div id="viewport-hud" class="viewport-hud" aria-label="Viewport Controls">
+          <button type="button" id="hud-zoom-in" class="hud-btn" title="Zoom In (+)">+</button>
+          <button type="button" id="hud-zoom-out" class="hud-btn" title="Zoom Out (-)">-</button>
+          <button type="button" id="hud-reset" class="hud-btn" title="Reset View (R)">Reset</button>
+          <label class="hud-badge" title="Auto-zoom active region">
+            <input type="checkbox" id="hud-autozoom-toggle" checked />
+            <span>Auto</span>
+          </label>
+        </div>
+      </div>
       <div class="playback-bar"><button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button><output id="time-display">00:00 / 00:00</output><input id="progress-scrubber" type="range" min="0" max="1000" value="1000" aria-label="MIDI playback time" /><label class="audio-engine"><span class="audio-label">Engine</span><select id="playback-engine-select" aria-label="Playback engine"><option value="sample" selected>Sample SoundFont</option><option value="oscillator">Oscillator synth</option></select></label><label class="audio-engine"><span class="audio-label">Bank</span><select id="playback-bank-select" aria-label="SoundFont bank"><option value="FluidR3_GM" selected>FluidR3 GM (local+CDN)</option><option value="MusyngKite">MusyngKite (network)</option><option value="FatBoy">FatBoy (network)</option></select></label></div>
     </main>
   </div>

@@ -17,7 +17,7 @@ describe('Viewport Renderer Extensions', () => {
       viewport: { zoom: 2.0, panX: 50, panY: -20, autoZoom: false },
       title: 'Viewport Test'
     });
-    expect(svg).toMatch(/<g [^>]*transform="translate\(\s*\d+(\.\d+)?\s+\d+(\.\d+)?\)\s*scale\(2\)/);
+    expect(svg).toMatch(/<g [^>]*transform="translate\(\s*\d+(\.\d+)?[\s,]+\d+(\.\d+)?\)\s*scale\(2\)/);
     // Title / legend stay outside the viewport group (screen-fixed)
     expect(svg.indexOf('id="title-overlay"')).toBeLessThan(svg.indexOf('scale(2)'));
   });

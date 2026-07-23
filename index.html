@@ -79,7 +79,7 @@
         <div class="control-item"><label for="stroke-base">Base weight <output id="val-stroke">2px</output></label><input id="stroke-base" type="range" min="1" max="10" value="2" /></div>
         <div class="control-item"><label for="time-line-density">Time-line density <output id="val-density">1×</output></label><input id="time-line-density" type="range" min="0.5" max="2" step="0.25" value="1" /></div>
         <fieldset class="voice-filter"><legend>Visible voices</legend><div id="voice-filter-options" class="voice-filter-options"></div></fieldset>
-        <fieldset class="voice-filter"><legend>Local synth voices</legend><div id="audio-voice-options" class="audio-voice-options"></div></fieldset>
+        <fieldset class="voice-filter"><legend>Mix / timbre</legend><div id="audio-voice-options" class="audio-voice-options"></div></fieldset>
       </section>
 
       <section class="control-group export-group"><h2><span>04</span> Export</h2><div class="export-title-field"><label for="export-title-input">Export title</label><input type="text" id="export-title-input" placeholder="Auto-filled from MIDI filename" maxlength="40" /></div><div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div></section>
@@ -89,7 +89,7 @@
     <main class="viewport-container">
       <div class="stage-header"><div><p class="eyebrow">CURRENT SCORE</p><h2 id="score-title">Generative study · C major</h2></div><p id="score-meta">2 voices · 120 BPM</p></div>
       <div class="canvas-wrapper"><canvas id="visualizer-canvas" width="800" height="800" role="img" aria-label="Visual score rendering"></canvas><div class="stage-corner">DETERMINISTIC<br>VISUALIZATION</div></div>
-      <div class="playback-bar"><button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button><output id="time-display">00:00 / 00:00</output><input id="progress-scrubber" type="range" min="0" max="1000" value="1000" aria-label="MIDI playback time" /><span class="audio-label">LOCAL SYNTH</span></div>
+      <div class="playback-bar"><button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button><output id="time-display">00:00 / 00:00</output><input id="progress-scrubber" type="range" min="0" max="1000" value="1000" aria-label="MIDI playback time" /><label class="audio-engine"><span class="audio-label">Engine</span><select id="playback-engine-select" aria-label="Playback engine"><option value="sample" selected>Sample SoundFont</option><option value="oscillator">Oscillator synth</option></select></label><label class="audio-engine"><span class="audio-label">Bank</span><select id="playback-bank-select" aria-label="SoundFont bank"><option value="FluidR3_GM" selected>FluidR3 GM (local+CDN)</option><option value="MusyngKite">MusyngKite (network)</option><option value="FatBoy">FatBoy (network)</option></select></label></div>
     </main>
   </div>
   <script type="module" src="./src/ui/app.ts"></script>

@@ -22,6 +22,7 @@ remote services and CDN-only runtime dependencies are not part of the architectu
 | Live rendering | Canvas 2D | Device-pixel-ratio-aware preview and PNG capture |
 | Vector export | Internal SVG builder | Deterministic SVG and plotter output |
 | CLI rasterization | `@resvg/resvg-js` | SVG-to-PNG in Node CLI |
+| SoundFont playback | Custom patch loader + Gleitz soundbank audio | Sample-based General MIDI soundbank playback with oscillator fallback |
 | Testing | Vitest | Core mapping, parser, layout, and SVG behavior |
 | Planned audio transcription | `@spotify/basic-pitch` in a Worker | Local, estimated audio-to-note events; not yet installed |
 | Planned desktop shell | Tauri 2 | Offline macOS-first package with scoped native file access; not yet installed |
@@ -62,17 +63,13 @@ the configuration used to create them. Its public semantics are defined in
 
 ## Playback and source boundaries
 
-MIDI playback is a local Web Audio oscillator preview, not General MIDI reproduction.
-It is synchronized with the visual scrubber and offers per-track timbre, volume, mute,
-and solo. Default timbres cycle sine → triangle → sawtooth → square by voice order so
-tracks sound distinct even when they share a MIDI program. Program metadata is retained
-for future soundfont routing. Soundfont playback uses offline sustain helpers (`sustainWindows.ts`)
-to compute active pedal windows and extend note release times without mutating core note events.
+MIDI playback supports dual engines: a sample-based General MIDI SoundFont player and a local Web Audio oscillator preview. The `VoiceRouter` maps score tracks and user mix settings (timbre, volume, mute, solo) to the active playback engine.
 
-Planned audio files enter through a separate local decode/transcription boundary. The
-adapted estimated score will reuse the same mapper/renderers, while original-audio
-playback will use an `HTMLAudioElement`. No raw audio leaves local memory or is included
-in exports.
+Sample SoundFont playback resolves General MIDI program numbers to Gleitz audio JS soundbanks. Patches are loaded from local `public/soundfonts/{bank}/{instrument-mp3.js}` files (bundled offline for standard instruments via `npm run bundle:soundfonts`) with fallback to CDN fetch. If sample loading fails or the oscillator engine is selected, playback seamlessly falls back to per-track web audio synthesis.
+
+Playback is synchronized with the visual scrubber and uses offline sustain helpers (`sustainWindows.ts`) to compute active pedal windows from CC64 events, extending sample release times without mutating visual note geometry.
+
+Planned audio files enter through a separate local decode/transcription boundary. The adapted estimated score will reuse the same mapper/renderers, while original-audio playback will use an `HTMLAudioElement`. No raw audio leaves local memory or is included in exports.
 
 ## Export and offline behavior
 

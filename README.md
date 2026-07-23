@@ -22,6 +22,16 @@ npm run dev
 npm run validate
 ```
 
+### SoundFont audio preview
+
+AudioVisualizer includes a sample-based General MIDI SoundFont engine alongside its oscillator preview. To bundle standard FluidR3 GM soundfont samples for offline use, run:
+
+```bash
+npm run bundle:soundfonts
+```
+
+Other presets (MusyngKite, FatBoy) fetch audio samples on demand from CDN when selected in the studio controls.
+
 The studio includes local classical and ragtime MIDI scores, original modern-genre
 style studies (blues, jazz, funk, electronic, hip-hop, rock, house), and **Find more
 MIDI online** links to FreeMIDI.org, BitMidi, Mutopia, Wikimedia Commons, and similar

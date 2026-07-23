@@ -10,6 +10,9 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Line-path **chord layout** control (`polyphony` | `chain`): polyphonic branching with
+  time-true joins and 40 ms onset clustering; legacy sequential chain available.
+  SemVer: **MINOR**.
 - Export title feature: MIDI filename (or embedded header name) displays as a visible title on canvas previews and SVG/PNG exports, with an editable text field for manual override. SemVer: **MINOR**.
 - CLI `--title` flag to override export title and `--include-plotter-title` flag to force title inclusion in plotter mode (stroke-only styling). SemVer: **MINOR**.
 - Spiral bias slider (−20°…+20°) so line/circle paths can take optional constant
@@ -24,6 +27,8 @@ uses [Semantic Versioning](https://semver.org/).
   SemVer: **PATCH**.
 
 ### Changed
+- Default line mapping uses polyphonic joins/fans instead of sequential chaining when
+  notes overlap. Choose **Chain (legacy)** to restore the previous look. SemVer: **MINOR**.
 - Default `spiralBias` is `0` (was `2`) so interval turns map ascending/descending
   pitch to opposite heading directions without a constant skew. SemVer: **MINOR**.
 - Circle (note halo) paths use the shared Interval turns control: on → turn by melodic

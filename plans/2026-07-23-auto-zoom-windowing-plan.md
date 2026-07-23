@@ -1,12 +1,12 @@
 # Configurable Auto-Zoom Musical & Time Windowing Implementation Plan
 
-Status: ready for implementation
+Status: ready for implementation (revised after auditor subagent technical review)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add configurable musical (bars/notes: 1/16 to 16 bars, default 4 bars) and time-based (0s to 30s, default 3s) windowing options with BPM-aware conversion and symmetric sampling to playback auto-zoom.
 
-**Architecture:** Extend `ViewportTransform` with `autoZoomMode`, `autoZoomWindowBars`, and `autoZoomWindowSeconds`. Add `calculateWindowSeconds` in `src/core/layout/viewportController.ts` to convert musical bars/notes to seconds using score BPM. Update `calculateActiveNotesBoundingBox` to sample active notes within a symmetric time window $[t - W/2, t + W/2]$. Update sidebar Section 05 and canvas HUD in `app.ts` with a mode toggle and synchronized sliders.
+**Architecture:** Extend `ViewportTransform` with `autoZoomMode`, `autoZoomWindowBars`, and `autoZoomWindowSeconds`. Add `bpm?: number;` to `RuleConfig` in `src/core/types.ts` and populate it in `mapScoreToGeometry`. Add `calculateWindowSeconds` in `src/core/layout/viewportController.ts` to convert musical bars/notes to seconds using score BPM. Update `calculateActiveNotesBoundingBox` to sample active notes within a symmetric time window $[t - W/2, t + W/2]$. Update sidebar Section 05 and canvas HUD in `app.ts` with a mode toggle and synchronized sliders.
 
 **Tech Stack:** TypeScript, HTML5 Canvas, Vitest, Vite.
 
@@ -21,15 +21,16 @@ Status: ready for implementation
 
 ---
 
-### Task 1: Domain Types Extension for Windowing Settings
+### Task 1: Domain Types Extension for Windowing Settings & BPM Propagation
 
 **Files:**
 - Modify: `src/core/types.ts`
+- Modify: `src/core/mapper/scoreMapper.ts`
 - Test: `tests/viewportTypes.test.ts`
 
 **Interfaces:**
-- Consumes: Existing `ViewportTransform` and `DEFAULT_VIEWPORT` in `src/core/types.ts`
-- Produces: `AutoZoomWindowMode`, updated `ViewportTransform`, updated `DEFAULT_VIEWPORT`
+- Consumes: Existing `ViewportTransform`, `DEFAULT_VIEWPORT`, `RuleConfig`, and `mapScoreToGeometry`
+- Produces: `AutoZoomWindowMode`, updated `ViewportTransform`, updated `DEFAULT_VIEWPORT`, `RuleConfig.bpm`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -37,6 +38,8 @@ Update `tests/viewportTypes.test.ts`:
 ```typescript
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom } from '../src/core/types.js';
+import { mapScoreToGeometry, DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
+import { generateDemoScore } from '../src/core/midi/parser.js';
 
 describe('Viewport Domain Types Extension', () => {
   it('includes default autoZoomMode, autoZoomWindowBars, and autoZoomWindowSeconds', () => {
@@ -44,6 +47,12 @@ describe('Viewport Domain Types Extension', () => {
     expect(vp.autoZoomMode).toBe('musical');
     expect(vp.autoZoomWindowBars).toBe(4);
     expect(vp.autoZoomWindowSeconds).toBe(3);
+  });
+
+  it('propagates bpm from score onto geometry.config', () => {
+    const score = generateDemoScore();
+    const geometry = mapScoreToGeometry(score, DEFAULT_CONFIG, 900, 900);
+    expect(geometry.config.bpm).toBe(score.bpm);
   });
 });
 ```
@@ -53,7 +62,7 @@ describe('Viewport Domain Types Extension', () => {
 Run: `npx vitest run tests/viewportTypes.test.ts`
 Expected: FAIL with "autoZoomMode / autoZoomWindowBars undefined"
 
-- [ ] **Step 3: Implement domain types in `src/core/types.ts`**
+- [ ] **Step 3: Implement domain types in `src/core/types.ts` and `src/core/mapper/scoreMapper.ts`**
 
 Update `src/core/types.ts`:
 ```typescript
@@ -80,6 +89,9 @@ export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
 });
 ```
 
+Update `RuleConfig` in `src/core/types.ts` to include `bpm?: number;`.
+Update `mapScoreToGeometry` in `src/core/mapper/scoreMapper.ts` to set `config: { ...config, bpm: score.bpm }`.
+
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/viewportTypes.test.ts`
@@ -88,8 +100,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/core/types.ts tests/viewportTypes.test.ts
-git commit -m "feat(core): extend ViewportTransform with musical and time auto-zoom window fields"
+git add src/core/types.ts src/core/mapper/scoreMapper.ts tests/viewportTypes.test.ts
+git commit -m "feat(core): extend ViewportTransform with window fields and propagate score bpm onto geometry"
 ```
 
 ---
@@ -352,7 +364,7 @@ Map discrete slider index to bar values:
 `const BAR_LABELS = ['1/16 note', '1/8 note', '1/4 note', '1/2 note', '1 bar', '2 bars', '4 bars', '8 bars', '16 bars', 'Full Track'];`
 
 Wire event listeners for mode buttons (`btn-mode-musical`, `btn-mode-time`), `#viewport-bars-range`, and `#viewport-seconds-range`.
-Update `updateViewportUi()` to sync HUD badge text (e.g. `Auto (4 bars)` or `Auto (3s)`).
+Update `updateViewportUi()` to sync HUD badge text (e.g. `Auto (4 bars)` or `Auto (3s)`), toggle buttons `.is-active` state, and wrapper `.is-hidden` visibility.
 
 - [ ] **Step 4: Run `npm run validate` to test full application build**
 

@@ -1,7 +1,7 @@
 # Design Spec: Configurable Auto-Zoom Musical & Time Windowing
 
 Date: 2026-07-23
-Status: Approved
+Status: Approved (Revised from Technical Audit)
 
 ## Overview
 
@@ -10,13 +10,13 @@ This specification defines configurable musical (bars/notes) and time-based (sec
 ## Requirements & Goals
 
 1. **Dual Sampling Modes**: Allow users to configure auto-zoom sampling either in **Musical Units** (notes and bars: $1/16$, $1/8$, $1/4$, $1/2$, $1\text{ bar}$, $2\text{ bars}$, $4\text{ bars}$, $8\text{ bars}$, $16\text{ bars}$, $\text{Full Track}$) or **Time Units** ($0\text{s}$ to $30\text{s}$, plus $\text{Full Track}$).
-2. **BPM-Aware Musical Conversion**: Dynamically convert musical bars/notes to seconds using score BPM and time signature so auto-zoom framing remains musically consistent across different tempos.
+2. **BPM-Aware Musical Conversion**: Dynamically convert musical bars/notes to seconds using score BPM (`geometry.config.bpm` or `score.bpm`) and time signature so auto-zoom framing remains musically consistent across different tempos.
 3. **Symmetric Window Sampling**: Sample active notes/bands within a symmetric window $[t - W/2, t + W/2]$ around current playback time $t$ to provide balanced leading (upcoming) and trailing (recent) note context.
 4. **UI Integration**: Provide a mode toggle switch `[ Musical | Time ]`, step sliders, and canvas HUD integration in Section 05 ("Viewport & Framing").
 
 ## Data Model & Domain Types
 
-Extend `ViewportTransform` and `DEFAULT_VIEWPORT` in `src/core/types.ts`:
+Extend `RuleConfig`, `RenderedGeometry`, `ViewportTransform`, and `DEFAULT_VIEWPORT` in `src/core/types.ts`:
 
 ```typescript
 export type AutoZoomWindowMode = 'musical' | 'time';
@@ -41,6 +41,8 @@ export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
   autoZoomWindowSeconds: 3,
 });
 ```
+
+Update `mapScoreToGeometry` in `src/core/mapper/scoreMapper.ts` to copy `bpm: score.bpm` onto `config` or `RenderedGeometry`.
 
 ## Architecture & Components
 
@@ -81,6 +83,8 @@ Update `calculateActiveNotesBoundingBox(geometry: RenderedGeometry, currentTime:
   - Time slider (`#viewport-seconds-range`): 0s to 30s + Full Track (Infinity).
 - **Canvas HUD Badge**:
   - Displays mode readout e.g. `🎯 Auto (4 bars)` or `🎯 Auto (3s)`.
+- **Bidirectional UI Synchronization**:
+  - `updateViewportUi()` in `app.ts` synchronizes mode buttons (`.is-active`), slider wrappers (`.is-hidden`), slider output labels, and HUD badge text on reset or MIDI load.
 
 ## Testing & Verification
 

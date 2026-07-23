@@ -14,6 +14,7 @@ work, and a clear done/archive path so the repo does not accumulate zombie check
 | Path | Purpose |
 |---|---|
 | `plans/` | Implementation plans (`YYYY-MM-DD-slug.md` or stable names). Optional `orchestration-state.md` for multi-agent runs. |
+| `plans/specs/` | Design specs describing visual rules, mapping contracts, and export aesthetics (*what* and *why*). |
 | `plans/archive/` | Completed or abandoned plans moved out of the active set (keep git history). |
 | `to_do.md` or `TODO.md` (repo root) | Short living backlog for the whole project — not a substitute for issues on large teams. |
 | `assessments/` | Timestamped reviews (security, QI, etc.); historical — do not rewrite in place. |

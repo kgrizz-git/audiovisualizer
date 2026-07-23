@@ -8,6 +8,9 @@ Last reviewed: 2026-07-22
 ## Unreleased
 
 ### Added
+- `SustainEvent` domain type added to `TrackScore` in `src/core/types.ts` to represent MIDI CC64 pedal states.
+- MIDI CC64 sustain pedal event parsing in `src/core/midi/parser.ts`.
+- Offline sustain helper functions (`buildSustainWindows`, `getSustainedDuration`, `sustainEventsForChannel`) in `src/audio/soundfont/sustainWindows.ts` to compute active pedal windows and extend note durations for soundfont playback synthesis.
 - Cross-references in `AGENTS.md` to `policies/changelog-conventions.md` and `policies/plans-and-todos.md` for better discoverability of changelog format and plan lifecycle rules.
 
 ### Fixed

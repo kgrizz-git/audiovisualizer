@@ -47,10 +47,10 @@ mapper, fitter, and SVG builder rather than copying browser behavior.
 ## Domain contracts
 
 `Score` contains title, duration, first tempo, and tracks. `TrackScore` contains display
-name, channel, MIDI program metadata, and onset-sorted notes. `NoteEvent` has a stable
-parser-local id, MIDI pitch `0..127`, onset/duration in seconds, velocity `0..127`,
-voice, and pitch class. Empty tracks are omitted and zero durations are clamped to
-`0.01` seconds.
+name, channel, MIDI program metadata, onset-sorted notes, and optional CC64 sustain pedal events (`sustainEvents`).
+`NoteEvent` has a stable parser-local id, MIDI pitch `0..127`, onset/duration in seconds, velocity `0..127`,
+voice, and pitch class. `SustainEvent` records pedal state changes (`time` in seconds, CC64 `value` `0..127`, where values >= 64 indicate pedal down). Empty tracks are omitted and zero durations are clamped to
+`0.01` seconds. Offline sustain helpers (`buildSustainWindows`, `getSustainedDuration`, `sustainEventsForChannel` in `src/audio/soundfont/sustainWindows.ts`) calculate sustained note release times from CC64 events for playback synthesis without altering visual geometry mapping.
 
 `RuleConfig` is the complete reproducible mapping configuration, including
 `chordLayout` (`polyphony` | `chain`) for line-path polyphony. Line-path polyphony
@@ -66,7 +66,8 @@ MIDI playback is a local Web Audio oscillator preview, not General MIDI reproduc
 It is synchronized with the visual scrubber and offers per-track timbre, volume, mute,
 and solo. Default timbres cycle sine → triangle → sawtooth → square by voice order so
 tracks sound distinct even when they share a MIDI program. Program metadata is retained
-for future soundfont routing.
+for future soundfont routing. Soundfont playback uses offline sustain helpers (`sustainWindows.ts`)
+to compute active pedal windows and extend note release times without mutating core note events.
 
 Planned audio files enter through a separate local decode/transcription boundary. The
 adapted estimated score will reuse the same mapper/renderers, while original-audio

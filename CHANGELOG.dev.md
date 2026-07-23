@@ -3,7 +3,12 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
+Last reviewed: 2026-07-22
+
 ## Unreleased
+
+### Added
+- Cross-references in `AGENTS.md` to `policies/changelog-conventions.md` and `policies/plans-and-todos.md` for better discoverability of changelog format and plan lifecycle rules.
 
 ### Fixed
 - License inventory `--check` no longer fails on Linux CI when the inventory was

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Last reviewed: 2026-07-21
+Last reviewed: 2026-07-22
 
 AudioVisualizer turns MIDI files into deterministic visual score art. This is the
 single source of truth for coding agents; tool-specific entrypoints point here.
@@ -27,7 +27,7 @@ Read these in order for implementation work:
 
 ## Plan lifecycle
 
-For multi-session or complex work, create a plan in `plans/` using `templates/plan.md`:
+For multi-session or complex work, create a plan in `plans/` using `templates/plan.md`. See [`policies/plans-and-todos.md`](policies/plans-and-todos.md) for the full lifecycle semantics, line caps for living backlog, and checklist honesty rules.
 
 1. **Create plan**: Write plan in `plans/YYYY-MM-DD-feature-name.md` using the template
 2. **Add to backlog**: Add corresponding item to `dev-docs/TO_DO.md` with link to plan
@@ -40,7 +40,7 @@ For single-session tasks, skip the plan and work directly, updating relevant doc
 
 ## CHANGELOG and versioning
 
-Update `CHANGELOG.md` for user-facing changes following [Keep a Changelog](https://keepachangelog.com/) format:
+Update `CHANGELOG.md` for user-facing changes following [Keep a Changelog](https://keepachangelog.com/) format. See [`policies/changelog-conventions.md`](policies/changelog-conventions.md) for the dual-track model (public vs developer changelog), detailed SemVer impact rules, and agent procedures.
 
 - **Added**: New user-facing features
 - **Changed**: Changes to existing user-facing behavior

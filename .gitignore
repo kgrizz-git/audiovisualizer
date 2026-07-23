@@ -203,3 +203,4 @@ temp/
 # ── Pre-commit ───────────────────────────────────────────────────────────────
 # (pre-commit itself is tracked; ignore its local cache)
 .pre-commit-cache/
+.worktrees/

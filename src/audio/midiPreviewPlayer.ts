@@ -14,21 +14,38 @@ export class MidiPreviewPlayer {
   private context: AudioContext | null = null;
   private activeSources: OscillatorNode[] = [];
 
-  public async start(score: Score, offsetSeconds: number, voices: Map<number, VoicePlaybackSettings>): Promise<void> {
+  constructor(context?: AudioContext) {
+    this.context = context ?? null;
+  }
+
+  public async start(
+    score: Score,
+    offsetSeconds: number,
+    voices: Map<number, VoicePlaybackSettings>,
+    opts?: { channels?: number[] },
+  ): Promise<void> {
     this.stop();
-    this.context ??= new AudioContext();
-    await this.context.resume();
-    const now = this.context.currentTime + 0.03;
-    const hasSolo = [...voices.values()].some((settings) => settings.solo);
-    score.tracks.forEach((track, index) => {
+    if (!this.context && typeof AudioContext !== 'undefined') {
+      this.context = new AudioContext();
+    }
+    await this.context?.resume();
+    const now = (this.context?.currentTime ?? 0) + 0.03;
+    const tracks = selectAudibleTracks(score, voices, opts?.channels);
+    for (const track of tracks) {
+      const index = score.tracks.indexOf(track);
       const settings = voices.get(track.channel) ?? defaultVoiceSettings(index);
-      if (settings.muted || (hasSolo && !settings.solo)) return;
       track.notes.forEach((note) => this.schedule(note, offsetSeconds, now, settings));
-    });
+    }
   }
 
   public stop(): void {
-    this.activeSources.forEach((source) => { try { source.stop(); } catch { /* source already ended */ } });
+    this.activeSources.forEach((source) => {
+      try {
+        source.stop();
+      } catch {
+        /* source already ended */
+      }
+    });
     this.activeSources = [];
   }
 
@@ -49,7 +66,9 @@ export class MidiPreviewPlayer {
     oscillator.connect(gain).connect(this.context.destination);
     oscillator.start(start);
     oscillator.stop(end + 0.02);
-    oscillator.onended = () => { this.activeSources = this.activeSources.filter((source) => source !== oscillator); };
+    oscillator.onended = () => {
+      this.activeSources = this.activeSources.filter((source) => source !== oscillator);
+    };
     this.activeSources.push(oscillator);
   }
 }
@@ -63,4 +82,19 @@ const PREVIEW_TIMBRES: SynthTimbre[] = ['sine', 'triangle', 'sawtooth', 'square'
 export function defaultVoiceSettings(voiceIndex: number): VoicePlaybackSettings {
   const index = ((Math.trunc(voiceIndex) % PREVIEW_TIMBRES.length) + PREVIEW_TIMBRES.length) % PREVIEW_TIMBRES.length;
   return { timbre: PREVIEW_TIMBRES[index], gain: 1, muted: false, solo: false };
+}
+
+export function selectAudibleTracks(
+  score: Score,
+  voices: Map<number, VoicePlaybackSettings>,
+  channels?: number[],
+): Score['tracks'] {
+  const hasSolo = [...voices.values()].some((settings) => settings.solo);
+  const allow = channels ? new Set(channels) : null;
+  return score.tracks.filter((track, index) => {
+    if (allow && !allow.has(track.channel)) return false;
+    const settings = voices.get(track.channel) ?? defaultVoiceSettings(index);
+    if (settings.muted || (hasSolo && !settings.solo)) return false;
+    return true;
+  });
 }

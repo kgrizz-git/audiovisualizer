@@ -21,6 +21,7 @@ class AudioVisualizerApp {
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
+    this.voicePlayback = new Map(this.currentScore.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
     this.bindEvents();
     this.updateScoreUi();
     this.render();
@@ -53,7 +54,11 @@ class AudioVisualizerApp {
     this.element<HTMLInputElement>('interval-angle-toggle').addEventListener('change', (event) => { this.currentConfig.intervalAngleEnabled = (event.target as HTMLInputElement).checked; this.render(); });
     this.element<HTMLInputElement>('quantize-toggle').addEventListener('change', (event) => { this.currentConfig.quantizeOnset = (event.target as HTMLInputElement).checked; this.render(); });
     this.range('length-scale', 'val-length', (value) => { this.currentConfig.lengthScale = value; }, '');
-    this.range('angle-scale', 'val-angle', (value) => { this.currentConfig.angleScale = value; }, '°');
+    this.range('angle-scale', 'val-angle', (value) => { this.currentConfig.angleScale = value; }, '', (value) => {
+      const perSemitone = value / 12;
+      const semitoneLabel = Number.isInteger(perSemitone) ? String(perSemitone) : perSemitone.toFixed(2).replace(/\.?0+$/, '');
+      return `${value}°/oct (${semitoneLabel}°/semitone)`;
+    });
     this.range('spiral-bias', 'val-spiral', (value) => { this.currentConfig.spiralBias = value; }, '°');
     this.range('stroke-base', 'val-stroke', (value) => { this.currentConfig.strokeWidthBase = value; }, 'px');
     this.range('time-line-density', 'val-density', (value) => { this.currentConfig.timeLineDensity = value; }, '×');
@@ -69,8 +74,13 @@ class AudioVisualizerApp {
   private select<T extends string>(id: string, apply: (value: T) => void): void {
     this.element<HTMLSelectElement>(id).addEventListener('change', (event) => { apply((event.target as HTMLSelectElement).value as T); this.render(); });
   }
-  private range(id: string, outputId: string, apply: (value: number) => void, suffix: string): void {
-    this.element<HTMLInputElement>(id).addEventListener('input', (event) => { const value = Number((event.target as HTMLInputElement).value); apply(value); this.element<HTMLOutputElement>(outputId).value = `${value}${suffix}`; this.render(); });
+  private range(id: string, outputId: string, apply: (value: number) => void, suffix: string, format?: (value: number) => string): void {
+    this.element<HTMLInputElement>(id).addEventListener('input', (event) => {
+      const value = Number((event.target as HTMLInputElement).value);
+      apply(value);
+      this.element<HTMLOutputElement>(outputId).value = format ? format(value) : `${value}${suffix}`;
+      this.render();
+    });
   }
 
   private async loadUrl(url: string, title: string): Promise<void> {
@@ -82,7 +92,7 @@ class AudioVisualizerApp {
     try { this.setScore(parseMidiData(await file.arrayBuffer(), file.name), `Loaded ${file.name}`); this.element<HTMLLabelElement>('file-label').textContent = `Loaded · ${file.name}`; }
     catch { this.setStatus('That file could not be read as MIDI.', true); }
   }
-  private setScore(score: Score, message: string): void { this.pause(); this.currentScore = score; this.currentTime = score.duration; this.currentConfig.voiceFilter = null; this.voicePlayback = new Map(score.tracks.map((track) => [track.channel, defaultVoiceSettings(track.program)])); this.updateScoreUi(); this.render(); this.setStatus(message); }
+  private setScore(score: Score, message: string): void { this.pause(); this.currentScore = score; this.currentTime = score.duration; this.currentConfig.voiceFilter = null; this.voicePlayback = new Map(score.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)])); this.updateScoreUi(); this.render(); this.setStatus(message); }
 
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
@@ -95,8 +105,8 @@ class AudioVisualizerApp {
       label.append(input, document.createTextNode(track.name)); options.append(label);
     });
     const audioOptions = this.element<HTMLElement>('audio-voice-options'); audioOptions.replaceChildren();
-    this.currentScore.tracks.forEach((track) => {
-      const settings = this.voicePlayback.get(track.channel) ?? defaultVoiceSettings(track.program);
+    this.currentScore.tracks.forEach((track, index) => {
+      const settings = this.voicePlayback.get(track.channel) ?? defaultVoiceSettings(index);
       this.voicePlayback.set(track.channel, settings);
       const row = document.createElement('div'); row.className = 'audio-voice-row';
       const name = document.createElement('span'); name.textContent = `${track.name} · ${track.instrumentName}`;

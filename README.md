@@ -159,7 +159,7 @@ Quantize option: snap onsets to a grid before drawing (cleaner geometry; documen
 | Knob | Effect |
 |------|--------|
 | Length scale | ms or beats → pixels |
-| Angle scale | semitones → degrees |
+| Angle scale | degrees of path turn per octave (semitone = scale / 12) |
 | Min/max segment | clamps so 64th notes remain visible |
 | Voice filter | include/exclude channels |
 | Background | flat, subtle gradient, or soft key-colored wash (documented) |

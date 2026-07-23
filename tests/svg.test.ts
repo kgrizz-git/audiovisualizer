@@ -47,6 +47,7 @@ describe('SVG Builder Unit Tests', () => {
     const tonal = buildSvg(mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'tonal_time_lines' }, 400, 400), { includeLegend: true });
     expect(circles).toContain('NOTE HALOS');
     expect(circles).toContain('Duration → radius + path advance');
+    expect(circles).toContain('Interval → path turn');
     expect(tonal).toContain('AVERAGE ACTIVE PITCH');
     expect(tonal).toContain('Neutral band → silence (not a key/chord)');
   });

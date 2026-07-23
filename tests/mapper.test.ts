@@ -71,10 +71,32 @@ describe('Score Mapper Unit Tests', () => {
     expect(DEFAULT_CONFIG.spiralBias).toBe(0);
     const geometry = mapScoreToGeometry(score, DEFAULT_CONFIG, 800, 800);
     const [first, second, third] = geometry.voicePaths[0].segments;
-    // Left-to-right starts heading 0° (right). +4 semitones → +60°; −4 → −60° from that heading.
+    // Left-to-right starts heading 0° (right). Default 180°/oct → +4 semitones = +60°.
     expect(first.end.y).toBeCloseTo(first.start.y);
     expect(second.end.y).toBeGreaterThan(second.start.y);
     expect(third.end.y).toBeCloseTo(third.start.y);
+  });
+
+  it('places circle centers with interval turns or straight along the origin heading', () => {
+    const score = {
+      title: 'Circle interval fixture', duration: 3, bpm: 120,
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+        { id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
+        { id: 'n2', pitch: 64, onset: 0.5, duration: 0.5, velocity: 100, voice: 0, pitchClass: 4 },
+        { id: 'n3', pitch: 60, onset: 1, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
+      ] }],
+    };
+    const turning = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'circles' }, 800, 800);
+    const [c1, c2, c3] = turning.voicePaths[0].circles;
+    expect(c2.center.y).toBeGreaterThan(c1.center.y);
+    expect(c3.center.y).toBeCloseTo(c2.center.y);
+
+    const straight = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'circles', intervalAngleEnabled: false }, 800, 800);
+    const [s1, s2, s3] = straight.voicePaths[0].circles;
+    expect(s2.center.y).toBeCloseTo(s1.center.y);
+    expect(s3.center.y).toBeCloseTo(s1.center.y);
+    expect(s2.center.x).toBeGreaterThan(s1.center.x);
+    expect(s3.center.x).toBeGreaterThan(s2.center.x);
   });
 
   it('derives a stable, dark average background from mapped pitch hues', () => {

@@ -16,7 +16,7 @@ export const DEFAULT_CONFIG: RuleConfig = {
   pitchHueMode: 'pitch_class',
   gapPolicy: 'lift_pen',
   lengthScale: 40,
-  angleScale: 15,
+  angleScale: 180,
   minSegmentLength: 10,
   strokeWidthBase: 2,
   strokeWidthScale: 4,
@@ -107,11 +107,7 @@ export function mapScoreToGeometry(
         if (prevNote !== null) {
           cursor = advanceCursorForGap(cursor, prevNote, note, headingAngle, config);
         }
-        // Calculate turn angle from interval
-        if (prevNote !== null && config.intervalAngleEnabled) {
-          const interval = note.pitch - prevNote.pitch;
-          headingAngle += interval * config.angleScale + config.spiralBias;
-        }
+        headingAngle = applyIntervalTurn(headingAngle, prevNote, note, config);
 
         const rad = (headingAngle * Math.PI) / 180;
         const endPoint: Point2D = {
@@ -134,7 +130,8 @@ export function mapScoreToGeometry(
         if (prevNote !== null) {
           cursor = advanceCursorForGap(cursor, prevNote, note, headingAngle, config);
         }
-        // Position circles along time axis or outward angle
+        // Same heading rule as lines: straight on the origin heading, or turn by interval.
+        headingAngle = applyIntervalTurn(headingAngle, prevNote, note, config);
         const radius = Math.max(5, segmentLen * 0.4);
         const rad = (headingAngle * Math.PI) / 180;
 
@@ -153,7 +150,6 @@ export function mapScoreToGeometry(
           note,
         });
 
-        headingAngle += config.spiralBias + 15;
         cursor = centerPoint;
       } else if (config.variation === 'vertical_tone') {
         // X = time onset, Y = pitch height (low pitch at bottom, high at top)
@@ -245,6 +241,17 @@ function quantizeNote(note: NoteEvent, bpm: number, config: RuleConfig): NoteEve
 function getGapDuration(previous: NoteEvent | null, next: NoteEvent): number {
   if (!previous) return 0;
   return Math.max(0, next.onset - (previous.onset + previous.duration));
+}
+
+/**
+ * Turns the path heading from the melodic interval into the arriving note.
+ * `angleScale` is degrees per octave; each semitone contributes angleScale / 12.
+ * When interval turns are off, heading is unchanged (straight along the origin direction).
+ */
+function applyIntervalTurn(heading: number, previous: NoteEvent | null, note: NoteEvent, config: RuleConfig): number {
+  if (previous === null || !config.intervalAngleEnabled) return heading;
+  const interval = note.pitch - previous.pitch;
+  return heading + interval * (config.angleScale / 12) + config.spiralBias;
 }
 
 function advanceCursorForGap(cursor: Point2D, previous: NoteEvent, next: NoteEvent, heading: number, config: RuleConfig): Point2D {

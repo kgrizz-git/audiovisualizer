@@ -20,8 +20,8 @@ export class MidiPreviewPlayer {
     await this.context.resume();
     const now = this.context.currentTime + 0.03;
     const hasSolo = [...voices.values()].some((settings) => settings.solo);
-    score.tracks.forEach((track) => {
-      const settings = voices.get(track.channel) ?? defaultVoiceSettings(track.program);
+    score.tracks.forEach((track, index) => {
+      const settings = voices.get(track.channel) ?? defaultVoiceSettings(index);
       if (settings.muted || (hasSolo && !settings.solo)) return;
       track.notes.forEach((note) => this.schedule(note, offsetSeconds, now, settings));
     });
@@ -54,7 +54,13 @@ export class MidiPreviewPlayer {
   }
 }
 
-export function defaultVoiceSettings(program: number): VoicePlaybackSettings {
-  const timbres: SynthTimbre[] = ['sine', 'triangle', 'sawtooth', 'square'];
-  return { timbre: timbres[Math.floor(program / 32) % timbres.length], gain: 1, muted: false, solo: false };
+const PREVIEW_TIMBRES: SynthTimbre[] = ['sine', 'triangle', 'sawtooth', 'square'];
+
+/**
+ * Default local-synth settings for a score voice.
+ * Timbre cycles by voice order so different tracks sound distinct even when they share a MIDI program.
+ */
+export function defaultVoiceSettings(voiceIndex: number): VoicePlaybackSettings {
+  const index = ((Math.trunc(voiceIndex) % PREVIEW_TIMBRES.length) + PREVIEW_TIMBRES.length) % PREVIEW_TIMBRES.length;
+  return { timbre: PREVIEW_TIMBRES[index], gain: 1, muted: false, solo: false };
 }

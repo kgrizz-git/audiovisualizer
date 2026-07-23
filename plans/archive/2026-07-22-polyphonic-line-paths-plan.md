@@ -1,5 +1,7 @@
 # Polyphonic Line Paths Implementation Plan
 
+Status: complete
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Bake time-true joins and chord fans into `lines` geometry so overlapping notes branch correctly in preview and export, with `chordLayout: 'polyphony'` as the default and `'chain'` as the legacy escape hatch.
@@ -8,7 +10,7 @@
 
 **Tech Stack:** TypeScript, Vitest, existing mapper/UI (`scoreMapper`, `RuleConfig`, `index.html`, `app.ts`).
 
-**Spec:** [`plans/2026-07-22-polyphonic-line-paths.md`](2026-07-22-polyphonic-line-paths.md)
+**Spec:** [`plans/specs/2026-07-22-polyphonic-line-paths.md`](../specs/2026-07-22-polyphonic-line-paths.md)
 
 ## Global Constraints
 
@@ -35,7 +37,7 @@
 - Produces: `RuleConfig.chordLayout: ChordLayout`
 - Produces: `DEFAULT_CONFIG.chordLayout === 'polyphony'`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/mapper.polyphony.test.ts`:
 
@@ -50,12 +52,12 @@ describe('polyphonic line paths', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/mapper.polyphony.test.ts`
 Expected: FAIL (property missing / undefined).
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 In `src/core/types.ts`, add next to other rule unions:
 
@@ -75,12 +77,12 @@ In `DEFAULT_CONFIG` inside `src/core/mapper/scoreMapper.ts`:
 chordLayout: 'polyphony',
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/mapper.polyphony.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit** (only if user requested commits)
+- [x] **Step 5: Commit** (only if user requested commits)
 
 ```bash
 git add src/core/types.ts src/core/mapper/scoreMapper.ts tests/mapper.polyphony.test.ts
@@ -108,7 +110,7 @@ EOF
   - `export function tipPointAt(start: Point2D, end: Point2D, tipOnset: number, tipDuration: number, t: number): Point2D`
   - `export function centroid(points: Point2D[]): Point2D`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `tests/mapper.polyphony.test.ts`:
 
@@ -169,12 +171,12 @@ describe('polyphonic helpers', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/mapper.polyphony.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `src/core/mapper/polyphonicLines.ts`:
 
@@ -240,12 +242,12 @@ export function centroid(points: Point2D[]): Point2D {
 
 (Leave `mapPolyphonicLineSegments` for Task 3.)
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/mapper.polyphony.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit** (only if user requested commits)
+- [x] **Step 5: Commit** (only if user requested commits)
 
 ```bash
 git add src/core/mapper/polyphonicLines.ts tests/mapper.polyphony.test.ts
@@ -333,7 +335,7 @@ return segments
 
 **Gap handling:** Reuse the same gap semantics as chain mode, but only when `activeTips` is empty before a cluster and there is positive silence since the previous note/cluster ended. Prefer importing shared gap helpers; if that forces awkward exports, copy the small `getGapDuration` / gap segment construction currently in `scoreMapper.ts` into `polyphonicLines.ts` and keep behavior identical for `'ghost'` / `'faint_line'` / `'lift_pen'`.
 
-- [ ] **Step 1: Write the failing behavior tests**
+- [x] **Step 1: Write the failing behavior tests**
 
 Append to `tests/mapper.polyphony.test.ts`:
 
@@ -433,12 +435,12 @@ describe('mapScoreToGeometry polyphony', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run tests/mapper.polyphony.test.ts`
 Expected: FAIL on polyphony behavior assertions (helpers may already pass).
 
-- [ ] **Step 3: Implement `mapPolyphonicLineSegments` and wire it**
+- [x] **Step 3: Implement `mapPolyphonicLineSegments` and wire it**
 
 1. Implement full `mapPolyphonicLineSegments` in `polyphonicLines.ts` per algorithm above (include color/width/opacity using the same formulas as `scoreMapper` — import `getNoteColor` from `scoreMapper.js` **only if** that does not create a cycle; if it does, accept color/stroke helpers as parameters or move `getNoteColor` to a tiny shared module. Preferred: pass `getColor: (note) => string` or import `getNoteColor` from `scoreMapper` if `scoreMapper` imports polyphonic only inside the lines branch after function declarations — simplest fix: keep `getNoteColor` in `scoreMapper` and pass color into segment builder from the caller, **or** duplicate the one-line HSL call by importing from a new `noteColor.ts`. YAGNI choice: export `getNoteColor` from `scoreMapper.ts` and have `polyphonicLines` import it; have `scoreMapper` import `mapPolyphonicLineSegments` — if bundler/TS cycle fails, move `getNoteColor` + `getMappedHue` to `src/core/mapper/noteColor.ts` first.
 
@@ -458,14 +460,14 @@ if (config.variation === 'lines') {
 
 3. Update existing tests in `tests/mapper.test.ts` that assume sequential chaining under `DEFAULT_CONFIG` to set `chordLayout: 'chain'` **only** when the assertion requires legacy end-to-start chaining with overlaps. Non-overlapping fixtures should keep working under polyphony; if a test fails only due to default change, prefer fixing the fixture (no overlap) over forcing `chain`, unless the test explicitly documents legacy behavior.
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `npx vitest run tests/mapper.polyphony.test.ts tests/mapper.test.ts`
 Expected: PASS.
 
 If a test fails, stop and report the failure + proposed fix to the user before editing the test (project testing rule).
 
-- [ ] **Step 5: Commit** (only if user requested commits)
+- [x] **Step 5: Commit** (only if user requested commits)
 
 ```bash
 git add src/core/mapper/polyphonicLines.ts src/core/mapper/scoreMapper.ts tests/mapper.polyphony.test.ts tests/mapper.test.ts
@@ -490,7 +492,7 @@ EOF
 - Consumes: `ChordLayout` / `RuleConfig.chordLayout`
 - Produces: UI select `chord-layout-select` with options `polyphony` (default selected) and `chain`
 
-- [ ] **Step 1: Write legend expectation**
+- [x] **Step 1: Write legend expectation**
 
 ```typescript
 import { getLegendContent } from '../src/core/legend/legendContent.js';
@@ -507,12 +509,12 @@ it('mentions sequential chaining when chordLayout is chain', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify fail**
+- [x] **Step 2: Run to verify fail**
 
 Run: `npx vitest run tests/mapper.polyphony.test.ts`
 Expected: FAIL on legend assertions.
 
-- [ ] **Step 3: Implement UI + legend**
+- [x] **Step 3: Implement UI + legend**
 
 In `index.html`, after the gap-policy control:
 
@@ -542,12 +544,12 @@ config.chordLayout === 'polyphony'
   : 'Overlaps → sequential chain (legacy)',
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `npx vitest run tests/mapper.polyphony.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit** (only if user requested commits)
+- [x] **Step 5: Commit** (only if user requested commits)
 
 ```bash
 git add index.html src/ui/app.ts src/core/legend/legendContent.ts tests/mapper.polyphony.test.ts
@@ -568,17 +570,17 @@ EOF
 - Modify: `CHANGELOG.md` (Unreleased — Added/Changed, SemVer **MINOR**)
 - Modify: `package.json` version bump only if the project bumps on release from Unreleased; if version stays until release, document under Unreleased only (follow existing changelog pattern — currently Unreleased without bumping `package.json` yet, so **do not** bump `package.json` unless repo practice requires it; match recent export-title entries which stay under Unreleased)
 
-- [ ] **Step 1: Update DESIGN.md**
+- [x] **Step 1: Update DESIGN.md**
 
 Under variations / lines, add:
 
 - `chordLayout` (`polyphony` default): near-simultaneous onsets (40 ms) fan from one join using the Interval turns / `angleScale` rule relative to the cluster median pitch; staggered overlaps fork from the time-true point on active tips; with multiple active tips the join is their centroid; `'chain'` restores sequential end-to-start layout.
 
-- [ ] **Step 2: Update ARCHITECTURE.md**
+- [x] **Step 2: Update ARCHITECTURE.md**
 
 Note that `RuleConfig` includes `chordLayout` and that line-path polyphony is resolved in the mapper (export-identical geometry), not in the canvas scrubber.
 
-- [ ] **Step 3: Update CHANGELOG.md**
+- [x] **Step 3: Update CHANGELOG.md**
 
 Under Unreleased:
 
@@ -593,14 +595,14 @@ Under Unreleased:
   notes overlap. Choose **Chain (legacy)** to restore the previous look. SemVer: **MINOR**.
 ```
 
-- [ ] **Step 4: Run full validation**
+- [x] **Step 4: Run full validation**
 
 Run: `npm run validate`
 Expected: PASS (Vitest + `tsc` + Vite build).
 
 If validation fails, report the failure and proposed fix; do not weaken tests to force green.
 
-- [ ] **Step 5: Commit** (only if user requested commits)
+- [x] **Step 5: Commit** (only if user requested commits)
 
 ```bash
 git add DESIGN.md ARCHITECTURE.md CHANGELOG.md

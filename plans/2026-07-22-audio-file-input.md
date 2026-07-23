@@ -3,8 +3,16 @@
 Last reviewed: 2026-07-22
 Date: 2026-07-22
 Author: Codex
-Status: draft
+Status: draft (revised 2026-07-22 after codebase-fact-check assessment)
 Linked issue/PR: n/a
+
+> Revision note: incorporates the 2026-07-22 assessment
+> (`tmp/2026-07-22T2350-audio-file-input-plan-assessment.md`). Key corrections:
+> the browser exporters have **no** existing manifest (net-new, not an
+> "extension"); `TrackScore`/`Score.bpm` force synthetic MIDI-shaped values in
+> the adapter; Vite needs explicit worker+WASM config; rule #2 doc updates are
+> now checklist items; `setScore` is private and the ownership of score
+> ingestion is decided below; `sourceKind` is encoded once as a typed contract.
 
 ## Goal
 
@@ -32,7 +40,16 @@ app must not require a cloud API, a hosted inference backend, a CDN import, or a
 - Show an explicit **“estimated from audio”** badge, analysis progress/cancel state, duration,
   and a confidence control. Do not present inferred notes as source-of-truth MIDI.
 - Convert accepted Basic Pitch note events through a single adapter to the existing `Score` /
-  `TrackScore` / `NoteEvent` contract, then reuse every existing mapper and exporter.
+  `TrackScore` / `NoteEvent` contract, then reuse every existing mapper and exporter. Because
+  `TrackScore` requires `channel`, `program`, and `instrumentName`, and `Score` requires `bpm`
+  (all MIDI-shaped, non-optional in `src/core/types.ts`), the adapter fabricates deterministic
+  placeholders (e.g. `channel: 0`, `program: 0`, `instrumentName: "Estimated"`, a nominal `bpm`)
+  and records the real analysis facts in the separate `AudioAnalysisMetadata`, never in the
+  rendering contract. `confidence`-derived velocity stays internal to the adapter (no
+  `confidence` field is added to `NoteEvent`).
+- Introduce a single typed `sourceKind` (`'midi' | 'audio'`) contract used everywhere source
+  provenance matters — app state, legend/export labeling, and the export manifest — rather than
+  scattering ad-hoc booleans/strings.
 - Audition original audio through an `HTMLAudioElement`, synchronized with the visual scrubber.
   Keep the existing oscillator voice controls MIDI-only.
 
@@ -85,47 +102,80 @@ melody-estimated.
 ## Proposed file changes
 
 ```text
-package.json / package-lock.json          — add pinned @spotify/basic-pitch; no eager model load
-vite.config.ts / public or asset manifest  — local model/WASM asset paths; prohibit remote model URLs
-src/core/audio/types.ts                   — analysis result, confidence, source metadata contracts
+package.json / package-lock.json          — add pinned @spotify/basic-pitch + pinned model bundle; no eager load
+vite.config.ts                            — NET-NEW worker+WASM config: worker.format='es', optimizeDeps.exclude / assetsInclude for the ONNX/WASM runtime (distinct from the asset-path/no-remote-URL rule)
+src/core/audio/types.ts                   — analysis result, confidence, source metadata contracts; sourceKind enum ('midi' | 'audio')
 src/core/audio/audioScoreAdapter.ts       — pure Basic-Pitch-event → Score normalization
 src/audio/audioDecoder.ts                 — File / ArrayBuffer decoding and browser capability errors
 src/audio/audioTranscriptionWorker.ts     — lazy model initialization, progress, cancellation, result transfer
 src/audio/audioTranscriber.ts             — Worker client and lifecycle boundary for the UI
 src/audio/audioPlayback.ts                — HTMLAudioElement time, seek, play/pause adapter
-src/ui/app.ts                             — source-kind state, input routing, status, scrubber/playback hand-off
-index.html / src/ui/styles/main.css       — audio upload affordance, estimated badge, confidence and cancel UI
-src/core/types.ts                         — only minimal source metadata additions if needed; no mapper duplication
-tests/audioScoreAdapter.test.ts           — normalization, confidence filter, deterministic ids/timing
-tests/audioTranscriber.test.ts            — Worker protocol, cancellation and typed failures with mocked worker
-tests/fixtures/                           — small synthetic analysis JSON; no copyrighted recordings
-DESIGN.md / README.md                     — support matrix, local-only/privacy statement, limitations and workflow
+src/ui/app.ts                             — source-kind state, input routing, status, scrubber/playback hand-off; owns transcriber result handling (setScore stays private, called from within app.ts)
+index.html / src/ui/styles/main.css       — audio upload affordance (widen `accept` from MIDI-only), estimated badge, confidence and cancel UI
+src/core/types.ts                         — no mapper duplication; sourceKind lives in src/core/audio/types.ts, referenced here only if the render contract needs it
+tests/audioScoreAdapter.test.ts           — normalization, confidence filter, deterministic ids/timing (pure, no DOM env)
+tests/audioTranscriber.test.ts            — Worker protocol, cancellation, typed failures via injected interfaces (no real Worker/AudioContext; see test approach below)
+tests/fixtures/audio-analysis/            — small synthetic analysis JSON in a NEW subdir (tests/fixtures/ already holds license-inventory/); no copyrighted recordings
+ARCHITECTURE.md                           — rule #2: new AudioAnalysisMetadata domain contract + source-kind routing / HTMLAudioElement path (planned → active)
+DESIGN.md / README.md                     — rule #2: estimated marker in exports + source-aware legend behavior; support matrix, local-only/privacy statement, limitations and workflow
 dev-docs/TO_DO.md                         — milestone status
 src-tauri/ (follow-up)                    — Tauri configuration, scoped file/dialog capabilities, local resources
 ```
 
 ## Phases & checklist
 
-### Phase 0: Compatibility spike and acceptance criteria
+### Decisions locked before implementation
+
+- **Score-ingestion ownership:** `setScore` stays `private` (`src/ui/app.ts`). The transcriber
+  boundary (`src/audio/audioTranscriber.ts`) returns an adapted `Score` to a handler *inside*
+  `app.ts`, which calls `setScore`. Nothing outside `app.ts` calls it.
+- **`sourceKind` contract:** a single `'midi' | 'audio'` type in `src/core/audio/types.ts`,
+  referenced by app state, legend/export labeling, and the export manifest.
+- **Test approach for the Worker:** `tests/audioTranscriber.test.ts` stays pure-protocol via
+  injected `Worker`/`AudioContext`-shaped interfaces — no jsdom or real DOM/Worker env is added
+  (there is no `vitest.config.ts` or DOM test env today, and adding one is out of scope). The
+  adapter test is already pure.
+- **Adapter id/ordering scheme:** Basic Pitch events are sorted deterministically by
+  `(onset, pitch)` before id assignment, then given stable ids following the existing MIDI
+  convention shape (e.g. `a-n${index}` where `a` marks audio-source). This makes re-runs of the
+  same fixture reproducible (Verification below depends on it).
+- **Model pinning:** pin `@spotify/basic-pitch` in `package.json` **and** pin the model
+  bundle by fixed identifier + checksum recorded in `AudioAnalysisMetadata`, so a re-run is
+  attributable to an exact model version.
+- **`lint`:** there is no `lint` script in `package.json`; the quality gate is `npm run validate`
+  (= `test` + `build`). Do not add "run lint" steps unless a lint script is created first.
+
+### Phase 0: Compatibility / feasibility spike (spike-only)
+
+Goal: decide whether the approach can ship at all before spec/acceptance work is front-loaded.
 
 - [ ] Pin and inspect `@spotify/basic-pitch` and its browser model/runtime requirements; record
   bundle/model size, license, local asset path, Worker compatibility, and any network request
   before wiring it into UI.
+- [ ] Land the net-new Vite worker+WASM config (`worker.format: 'es'`, `optimizeDeps.exclude` /
+  `assetsInclude` for the ONNX/WASM runtime) and prove Basic Pitch initializes in a Worker in
+  this build.
 - [ ] Build a throwaway local spike that decodes a short owned MP3, WAV, and AAC-in-M4A file in
   current Safari and Chromium using `decodeAudioData()`; record failures by codec/profile, not
   filename alone.
 - [ ] Set practical limits for first release (maximum file duration/size, cancellation behavior,
   expected analysis time) and decide whether chunks are required before full-song demos.
 - [ ] Prove a cold-start run after disabling the network, using packaged/local model assets only.
-- [ ] Define acceptance examples: a clean monophonic melody, a simple piano chord progression,
-  silence, a malformed file, and an unsupported Apple lossless file.
+
+(Acceptance-example definition and clip inventory moved to the Definition of Done section near
+Verification — they are DoD, not spike work.)
 
 ### Phase 1: Domain adapter and local decoding
 
 - [ ] Add `AudioAnalysisMetadata` outside the visual mapper contract: source name/type, decoded
   duration/sample rate, model/version, thresholds, and analysis state.
 - [ ] Implement a pure adapter from Basic Pitch events to a single estimated track with MIDI
-  pitch `0..127`, clamped positive duration, stable ids, and velocity derived from confidence.
+  pitch `0..127`, clamped positive duration (`Math.max(0.01, duration)`, matching the MIDI
+  parser convention), deterministic `(onset, pitch)`-ordered stable ids, velocity derived from
+  confidence, and synthetic `channel`/`program`/`instrumentName`/`bpm` placeholders (real
+  analysis facts go in `AudioAnalysisMetadata`, not the render contract).
+- [ ] Update ARCHITECTURE.md (rule #2): document `AudioAnalysisMetadata` under "Domain contracts"
+  and the source-kind routing rule under "Playback and source boundaries."
 - [ ] Apply a user-adjustable confidence threshold before adaptation; retain the raw event count
   and threshold in metadata/manifest for reproducibility.
 - [ ] Implement browser decode with a closed `AudioContext`, mono mixdown/resampling only at the
@@ -139,12 +189,19 @@ src-tauri/ (follow-up)                    — Tauri configuration, scoped file/d
   `result`, and `error`; terminate/revoke resources on replacement, navigation, or cancellation.
 - [ ] Lazy-load Basic Pitch and its model after user action; keep initial app load and MIDI path
   independent of the new dependency. Resolve the model from the shipped artifact, never a CDN.
-- [ ] Extend the existing file chooser/drop zone to route MIDI versus audio and present supported
-  audio labels; retain the current MIDI error and selection behavior.
+- [ ] Extend the existing file chooser/drop zone to route MIDI versus audio. Concretely: widen
+  the `<input accept>` attribute (`index.html:38`, currently `.mid,.midi,audio/midi`) and replace
+  the MIDI-only hard gate in `loadFile` (`src/ui/app.ts`, currently `/\.(mid|midi)$/i`) with an
+  explicit MIDI-vs-audio routing decision (extension hint + MIME sniff, treating both as hints
+  not trust signals). Retain the current MIDI error and selection behavior.
 - [ ] Add estimated-source badge, progress percentage/stage, cancel control, confidence slider,
   and a summary of inferred notes. Disable exports until analysis yields a `Score`.
-- [ ] Feed the adapted score through `setScore`/the existing geometry flow without a parallel
-  renderer, and label legends/exports as estimated when the active source is audio.
+- [ ] Define the degraded UI state explicitly: when a codec cannot be decoded or the model fails
+  to initialize, fall back to audio-only audition with exports disabled and a clear MP3/WAV
+  recommendation — never an empty/fabricated score and never a silent upload.
+- [ ] Feed the adapted score through `setScore` from *inside* `app.ts` (setScore stays private)
+  via the existing geometry flow without a parallel renderer, and label legends/exports as
+  estimated when the active `sourceKind` is `audio`.
 
 ### Phase 3: Audio audition and reproducibility
 
@@ -152,9 +209,14 @@ src-tauri/ (follow-up)                    — Tauri configuration, scoped file/d
   scrubber. Preserve local-synth playback for MIDI and clearly switch controls by source kind.
 - [ ] Avoid duplicate audio: stop/release the prior `HTMLAudioElement`, Web Audio nodes, Worker,
   and object URLs whenever a new source is loaded.
-- [ ] Extend the SVG/PNG export manifest with `sourceKind: "audio"`, source file name, model
-  version, thresholds, decoding facts, and a clear `estimated: true` marker; never serialize raw
-  audio samples or write them to disk automatically.
+- [ ] **Introduce** an export manifest/metadata concept in the browser exporters — there is no
+  existing manifest today (`SvgOptions` in `src/renderers/svg/svgBuilder.ts` carries no metadata;
+  the browser PNG path is a bare `canvas.toBlob`; the only existing manifest is the unrelated CLI
+  sidecar JSON). The new manifest carries `sourceKind`, source file name, pinned model
+  version/checksum, thresholds, decoding facts, and a clear `estimated: true` marker; never
+  serialize raw audio samples or write them to disk automatically.
+- [ ] Update DESIGN.md (rule #2): document the `estimated` marker/badge in exports under "Canvas
+  and export aesthetic" and the source-aware legend behavior under legend behavior.
 - [ ] Document that re-running a neural model/version can change inferred notes, whereas
   rendering is deterministic once the adapted score and configuration are fixed.
 
@@ -182,6 +244,15 @@ src-tauri/ (follow-up)                    — Tauri configuration, scoped file/d
   validated, including each platform's bundled webview/media-runtime requirements.
 - [ ] Write a separate release/distribution plan covering code signing, installers, update policy,
   and offline install assets; packaging must not introduce a hosted backend.
+
+## Definition of Done (acceptance clips)
+
+Defined here (not Phase 0) so spec work does not front-load the feasibility spike:
+
+- [ ] Curate owned acceptance examples: a clean monophonic melody, a simple piano chord
+  progression, silence, a malformed file, and an unsupported Apple lossless (ALAC) file.
+- [ ] Each acceptance clip has an expected outcome (renders / graceful specific error) that the
+  Verification matrix below checks.
 
 ## Verification
 

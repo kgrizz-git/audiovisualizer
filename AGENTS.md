@@ -25,6 +25,41 @@ Read these in order for implementation work:
 5. Do not upload user MIDI files or add telemetry without explicit approval. Browser file handling stays local.
 6. Preserve the existing template policy and hook material unless the task explicitly changes it.
 
+## Plan lifecycle
+
+For multi-session or complex work, create a plan in `plans/` using `templates/plan.md`:
+
+1. **Create plan**: Write plan in `plans/YYYY-MM-DD-feature-name.md` using the template
+2. **Add to backlog**: Add corresponding item to `dev-docs/TO_DO.md` with link to plan
+3. **Implement**: Follow the plan phases, marking items complete as you go
+4. **Complete plan**: When done, update plan status to "completed" with completion date
+5. **Archive plan**: Move completed plan to `plans/archive/YYYY-MM-DD-feature-name.md`
+6. **Update backlog**: Mark item complete in `dev-docs/TO_DO.md` and remove plan reference
+
+For single-session tasks, skip the plan and work directly, updating relevant documentation and tests.
+
+## CHANGELOG and versioning
+
+Update `CHANGELOG.md` for user-facing changes following [Keep a Changelog](https://keepachangelog.com/) format:
+
+- **Added**: New user-facing features
+- **Changed**: Changes to existing user-facing behavior
+- **Deprecated**: Features to be removed
+- **Removed**: Removed features
+- **Fixed**: Bug fixes
+- **Security**: Security vulnerabilities
+
+Apply [Semantic Versioning](https://semver.org/):
+- **MAJOR**: Breaking changes to user-facing behavior or API
+- **MINOR**: New user-facing features, non-breaking behavior changes
+- **PATCH**: Bug fixes, internal changes, documentation
+
+Process:
+1. Before implementing, determine the SemVer impact
+2. After implementation, add entry to `CHANGELOG.md` "Unreleased" section with SemVer annotation
+3. For developer-only changes, use `CHANGELOG.dev.md` instead
+4. Update `VERSION` file when releasing (manual process, not automated)
+
 ## Project map
 
 - `src/core/` — MIDI normalization, domain types, and score-to-geometry mapping.

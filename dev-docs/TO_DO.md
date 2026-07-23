@@ -1,6 +1,6 @@
 # AudioVisualizer Development TODOs
 
-Last updated: 2026-07-22
+Last updated: 2026-07-23
 
 ## High Priority Backlog
 
@@ -32,6 +32,6 @@ Last updated: 2026-07-22
 - [ ] **Per-track engine and bank selection UI**: Allow override of playback engine and SoundFont bank per individual score track.
 - [ ] **Automatic bank-by-name selection**: Auto-select matching SoundFont bank based on score metadata or track names.
 - [ ] **Deterministic offline WAV audio export**: Render score audio directly to downloadable WAV file offline.
-- [ ] **Extend the dynamic composition layout engine**: Current uniform bounds-fit, centering, safe padding, and overflow prevention apply to preview and exports. Add optional pan/zoom and composition-aware placement controls. Enable dynamic auto-zoom to stay tight on active region throughout track and zoom out as necessary. See [`plans/2026-07-23-zoom-and-pan-plan.md`](../plans/2026-07-23-zoom-and-pan-plan.md).
-- [ ] **Allow zoom and pan on the plot**: Add interactive zoom and pan controls for the SVG plot visualization, enabling users to explore music scores at different scales and positions before export. Enable dynamic auto-zoom to stay tight on active region throughout track and zoom out as necessary. See [`plans/2026-07-23-zoom-and-pan-plan.md`](../plans/2026-07-23-zoom-and-pan-plan.md).
+- [x] **Extend the dynamic composition layout engine**: Current uniform bounds-fit, centering, safe padding, and overflow prevention apply to preview and exports. Added interactive zoom and pan controls with default dynamic auto-zoom that tracks active note regions during playback. Completed 2026-07-23. See [`plans/2026-07-23-zoom-and-pan-plan.md`](../plans/2026-07-23-zoom-and-pan-plan.md).
+- [x] **Allow zoom and pan on the plot**: Added interactive zoom and pan controls for canvas preview and vector/raster exports (SVG/PNG/Plotter) with preset HUD overlay, keyboard shortcuts, and synchronized sidebar section. Completed 2026-07-23. See [`plans/2026-07-23-zoom-and-pan-plan.md`](../plans/2026-07-23-zoom-and-pan-plan.md).
 

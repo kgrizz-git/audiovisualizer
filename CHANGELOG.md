@@ -10,6 +10,9 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Interactive canvas preview zoom and pan controls with mouse wheel, click-drag, touch pinch/pan, HUD overlay (`+`/`-`/`Reset`/`Auto`), keyboard shortcuts (`+`/`-`/`R`/`A`), and sidebar section 05. SemVer: **MINOR**.
+- Dynamic playback auto-zoom tracking active note / band bounding boxes during MIDI preview, with lerp-out during silence. SemVer: **MINOR**.
+- Viewport framing preservation across SVG, PNG, and pen-plotter exports with proportional pan resolution scaling. SemVer: **MINOR**.
 - General MIDI SoundFont audio preview with selectable engines (Sample SoundFont / Oscillator synth) and banks (FluidR3 GM, MusyngKite, FatBoy), supporting CC64 sustain pedal windows and voice-router mixing. SemVer: **MINOR**.
 - Line-path **chord layout** control (`polyphony` | `chain`): polyphonic branching with
   time-true joins and 40 ms onset clustering; legacy sequential chain available.

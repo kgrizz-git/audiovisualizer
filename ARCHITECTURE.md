@@ -1,6 +1,6 @@
 # AudioVisualizer Architecture
 
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-23
 
 ## Purpose and deployment boundary
 
@@ -36,7 +36,7 @@ treated as shipped features until they are added, bundled, and verified.
 Local MIDI ArrayBuffer
   -> parseMidiData() -> Score
   -> mapScoreToGeometry() -> RenderedGeometry
-  -> fitGeometryToCanvas()
+  -> ViewportController (gestures / playback auto-zoom) -> ViewportTransform
   -> CanvasRenderer (preview/PNG) | buildSvg() (SVG/CLI PNG)
 ```
 
@@ -60,6 +60,8 @@ for preview and SVG/PNG; the canvas scrubber does not recalculate joins or fans.
 `RenderedGeometry` contains per-voice segments/circles or full-width tonal bands plus
 the configuration used to create them. Its public semantics are defined in
 [DESIGN.md](DESIGN.md).
+
+`ViewportTransform` defines interactive canvas/export framing (`zoom` clamped to `0.25..10.0`, `panX`, `panY`, `autoZoom`). `ViewportController` (`src/core/layout/viewportController.ts`) manages viewport state, gesture math, and per-frame lerped active-note auto-zoom (`AUTO_ZOOM_LERP = 0.15`). During playback, `stepAutoZoom()` calculates active note/band bounding boxes from `RenderedGeometry` and lerps toward target framing (with 75% canvas padding), easing back to default full-score framing (`DEFAULT_VIEWPORT`) during silence. Manual drag, wheel, or zoom interactions set `autoZoom = false` until reset (`resetView()`) or re-enabled. Both `CanvasRenderer` and `buildSvg` wrap score geometry inside a viewport matrix (`translate(w/2 + panX, h/2 + panY) scale(zoom) translate(-w/2, -h/2)`), leaving title, legend, and background elements screen-fixed. Export paths adjust pan offsets proportionally (`panX * EXPORT_SIZE / PREVIEW_SIZE`) so vector and raster exports reproduce the active preview framing without re-running note mapping. CLI rendering remains identity-framed (unzoomed).
 
 ## Playback and source boundaries
 

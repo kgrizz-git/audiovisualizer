@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { getLegendContent } from '../src/core/legend/legendContent.js';
 import { mapScoreToGeometry, DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 import {
   CHORD_ONSET_WINDOW_SECONDS,
@@ -21,6 +22,16 @@ function note(partial: Partial<NoteEvent> & Pick<NoteEvent, 'id' | 'pitch' | 'on
 describe('polyphonic line paths', () => {
   it('defaults chordLayout to polyphony', () => {
     expect(DEFAULT_CONFIG.chordLayout).toBe('polyphony');
+  });
+
+  it('mentions branching joins in the line-path legend when polyphony is on', () => {
+    const content = getLegendContent({ ...DEFAULT_CONFIG, variation: 'lines', chordLayout: 'polyphony' });
+    expect(content.lines.some((line) => /branch|join|overlap/i.test(line))).toBe(true);
+  });
+
+  it('mentions sequential chaining when chordLayout is chain', () => {
+    const content = getLegendContent({ ...DEFAULT_CONFIG, variation: 'lines', chordLayout: 'chain' });
+    expect(content.lines.some((line) => /chain|sequential/i.test(line))).toBe(true);
   });
 });
 

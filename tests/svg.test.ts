@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateDemoScore } from '../src/core/midi/parser.js';
 import { mapScoreToGeometry, DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
-import { buildSvg } from '../src/renderers/svg/svgBuilder.js';
+import { buildSvg, buildTitleSvg } from '../src/renderers/svg/svgBuilder.js';
 
 describe('SVG Builder Unit Tests', () => {
   it('generates valid SVG string containing elements and legend overlay', () => {
@@ -50,5 +50,62 @@ describe('SVG Builder Unit Tests', () => {
     expect(circles).toContain('Interval → path turn');
     expect(tonal).toContain('AVERAGE ACTIVE PITCH');
     expect(tonal).toContain('Neutral band → silence (not a key/chord)');
+  });
+
+  describe('buildTitleSvg', () => {
+    it('omits title when not provided', () => {
+      const result = buildTitleSvg(1000, '', false, false);
+      expect(result).toBe('');
+    });
+
+    it('renders title pill when title is provided', () => {
+      const result = buildTitleSvg(1000, 'Test Title', false, false);
+      expect(result).toContain('id="title-overlay"');
+      expect(result).toContain('Test Title');
+      expect(result).toContain('fill="rgba(15, 23, 42, 0.85)"');
+    });
+
+    it('truncates title at 40 characters', () => {
+      const longTitle = 'A'.repeat(50);
+      const result = buildTitleSvg(1000, longTitle, false, false);
+      expect(result).toContain('…');
+      expect(result).not.toContain(longTitle);
+    });
+
+    it('handles exactly 40 character title without truncation', () => {
+      const exactTitle = 'A'.repeat(40);
+      const result = buildTitleSvg(1000, exactTitle, false, false);
+      expect(result).toContain(exactTitle);
+      expect(result).not.toContain('…');
+    });
+
+    it('escapes XML special characters in title', () => {
+      const result = buildTitleSvg(1000, 'Test & < > Title', false, false);
+      expect(result).toContain('Test &amp; &lt; &gt; Title');
+      expect(result).not.toContain('Test & < > Title');
+    });
+
+    it('omits title for empty string', () => {
+      const result = buildTitleSvg(1000, '', false, false);
+      expect(result).toBe('');
+    });
+
+    it('omits title for whitespace-only string', () => {
+      const result = buildTitleSvg(1000, '   ', false, false);
+      expect(result).toBe('');
+    });
+
+    it('omits title in plotter mode without flag', () => {
+      const result = buildTitleSvg(1000, 'Test Title', true, false);
+      expect(result).toBe('');
+    });
+
+    it('renders stroke-only title in plotter mode with flag', () => {
+      const result = buildTitleSvg(1000, 'Test Title', true, true);
+      expect(result).toContain('id="title-overlay"');
+      expect(result).toContain('Test Title');
+      expect(result).toContain('fill="none"');
+      expect(result).toContain('stroke="#000000"');
+    });
   });
 });

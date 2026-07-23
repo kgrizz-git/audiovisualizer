@@ -34,3 +34,8 @@ node scripts/generate_demo_midis.js
 ```
 
 That script never overwrites `*_full.mid` public-domain assets.
+
+For more scores (including modern pop/rock catalogs), use the app’s **Find more MIDI
+online** links (FreeMIDI.org, BitMidi, Mutopia, Wikimedia Commons, etc.): download a
+`.mid` locally and drop it into the studio. Those sites are not redistributed here;
+rights vary by file.

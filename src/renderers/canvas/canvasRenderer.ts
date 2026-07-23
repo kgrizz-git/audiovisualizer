@@ -5,6 +5,7 @@ export interface CanvasRenderOptions {
   time?: number;
   showLegend?: boolean;
   backgroundColor?: string;
+  title?: string;
 }
 
 export class CanvasRenderer {
@@ -52,6 +53,7 @@ export class CanvasRenderer {
 
     this.ctx.globalAlpha = 1;
     if (options.showLegend) this.drawCanvasLegend(width, height, geometry);
+    if (options.title) this.drawCanvasTitle(width, options.title);
     this.ctx.restore();
   }
 
@@ -119,5 +121,38 @@ export class CanvasRenderer {
     this.ctx.fillStyle = '#a5b4fc';
     this.ctx.font = '11px system-ui';
     content.lines.forEach((line, index) => this.ctx.fillText(line, x + 16, y + 45 + index * 16));
+  }
+
+  private drawCanvasTitle(_width: number, title: string): void {
+    // Trim and check for empty
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      return;
+    }
+
+    // Truncate at 40 characters
+    const displayTitle = trimmedTitle.length > 40 ? trimmedTitle.slice(0, 37) + '…' : trimmedTitle;
+
+    // Title pill styling
+    const padding = 12;
+    const fontSize = 16;
+    const pillWidth = displayTitle.length * fontSize * 0.6 + padding * 2; // Approximate width
+    const pillHeight = fontSize + padding;
+    const x = 16;
+    const y = 16;
+
+    // Draw semi-transparent dark pill
+    this.ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.roundRect(x, y, pillWidth, pillHeight, 4);
+    this.ctx.fill();
+    this.ctx.stroke();
+
+    // Draw title text
+    this.ctx.fillStyle = '#f8fafc';
+    this.ctx.font = '600 16px system-ui';
+    this.ctx.fillText(displayTitle, x + padding / 2, y + fontSize + padding / 4);
   }
 }

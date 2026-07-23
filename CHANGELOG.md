@@ -17,6 +17,9 @@ uses [Semantic Versioning](https://semver.org/).
   rock / house style-study MIDIs (commercial songs stay out of the bundle for
   copyright).
 - README pointer to the third-party license inventory and regeneration commands.
+- “Find more MIDI online” links to FreeMIDI.org, BitMidi, Mutopia, Wikimedia
+  Commons, and an MIT chord-pack repo (download locally; drop into the studio).
+  SemVer: **PATCH**.
 
 ### Changed
 - Default `spiralBias` is `0` (was `2`) so interval turns map ascending/descending

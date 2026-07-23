@@ -1,12 +1,12 @@
 # Interactive Zoom & Pan with Dynamic Auto-Zoom Implementation Plan
 
-Status: ready for implementation
+Status: ready for implementation (revised after independent subagent technical review)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement interactive mouse, wheel, touch, and HUD/panel zoom and pan controls for the score canvas preview and vector exports (SVG/PNG/Plotter), with default dynamic auto-zoom that tracks active note regions during playback.
 
-**Architecture:** Add `ViewportTransform` to core domain types. Implement a side-effect-free `ViewportController` that computes gesture transforms and lerped active-note bounding box auto-zoom. Extend `CanvasRenderer` to wrap score geometry drawing within matrix transforms while preserving screen-fixed legend/title layers. Update `buildSvg` to wrap exported geometry in transform containers matching preview framing. Integrate canvas gesture handlers, canvas HUD overlay, side-panel controls, and keyboard shortcuts in `app.ts`.
+**Architecture:** Add `ViewportTransform` to core domain types. Implement a side-effect-free `ViewportController` that computes gesture transforms and lerped active-note bounding box auto-zoom using `RenderedGeometry`. Extend `CanvasRenderer` to wrap score geometry drawing within matrix transforms while preserving screen-fixed legend/title layers and background atmosphere. Update `buildSvg` to wrap exported geometry in transform containers with proportional pan scaling matching preview framing. Integrate canvas gesture handlers, canvas HUD overlay, side-panel controls, touch-action scrolling guards, and keyboard shortcuts in `app.ts`.
 
 **Tech Stack:** TypeScript, HTML5 Canvas 2D Context, SVG, Vitest, Vite.
 
@@ -105,7 +105,7 @@ git commit -m "feat(core): add ViewportTransform domain types and zoom clamping"
 - Test: `tests/viewportController.test.ts`
 
 **Interfaces:**
-- Consumes: `ViewportTransform`, `DEFAULT_VIEWPORT`, `clampZoom` from `src/core/types.ts`, `MappedGeometry` from `src/core/mapper/scoreMapper.ts`
+- Consumes: `ViewportTransform`, `DEFAULT_VIEWPORT`, `clampZoom`, `RenderedGeometry` from `src/core/types.ts`
 - Produces: `calculateActiveNotesBoundingBox`, `calculateAutoZoomTransform`, `ViewportController` class
 
 - [ ] **Step 1: Write failing tests for ViewportController & Auto-Zoom**
@@ -114,7 +114,8 @@ Create `tests/viewportController.test.ts`:
 ```typescript
 import { describe, expect, it } from 'vitest';
 import { ViewportController, calculateActiveNotesBoundingBox, calculateAutoZoomTransform } from '../src/core/layout/viewportController.js';
-import { MappedGeometry } from '../src/core/types.js';
+import { RenderedGeometry } from '../src/core/types.js';
+import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
 describe('ViewportController & Auto-Zoom', () => {
   it('starts with default viewport', () => {
@@ -143,17 +144,29 @@ describe('ViewportController & Auto-Zoom', () => {
     expect(controller.getViewport()).toEqual({ zoom: 1, panX: 0, panY: 0, autoZoom: true });
   });
 
-  it('calculates bounding box of active notes from mapped geometry', () => {
-    const mockGeometry: MappedGeometry = {
-      bounds: { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 },
-      paths: [
+  it('calculates bounding box of active notes from RenderedGeometry', () => {
+    const mockGeometry: RenderedGeometry = {
+      width: 800,
+      height: 600,
+      bands: [],
+      config: DEFAULT_CONFIG,
+      voicePaths: [
         {
-          id: 'p1', channel: 0, note: 60, startTime: 0, endTime: 5, color: '#ff0000', opacity: 1, strokeWidth: 2,
-          points: [{ x: 100, y: 150, time: 0 }, { x: 300, y: 250, time: 5 }]
+          voiceId: 0,
+          channel: 0,
+          color: '#ff0000',
+          opacity: 1,
+          strokeWidth: 2,
+          segments: [
+            {
+              start: { x: 100, y: 150 },
+              end: { x: 300, y: 250 },
+              note: { pitch: 60, midi: 60, onset: 0, duration: 5, velocity: 80, channel: 0, voice: 0, trackIndex: 0 }
+            }
+          ],
+          circles: []
         }
-      ],
-      nodes: [],
-      timeLines: []
+      ]
     };
     const bounds = calculateActiveNotesBoundingBox(mockGeometry, 2.5);
     expect(bounds).toEqual({ minX: 100, minY: 150, maxX: 300, maxY: 250 });
@@ -177,8 +190,7 @@ Expected: FAIL with "Cannot find module '../src/core/layout/viewportController.j
 
 Create `src/core/layout/viewportController.ts`:
 ```typescript
-import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom } from '../types.js';
-import { MappedGeometry } from '../types.js';
+import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom, RenderedGeometry } from '../types.js';
 
 export interface BoundingBox {
   minX: number;
@@ -187,21 +199,34 @@ export interface BoundingBox {
   maxY: number;
 }
 
-export function calculateActiveNotesBoundingBox(geometry: MappedGeometry, currentTime: number): BoundingBox | null {
+export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, currentTime: number): BoundingBox | null {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
   let found = false;
 
-  for (const path of geometry.paths) {
-    if (currentTime >= path.startTime && currentTime <= path.endTime) {
-      for (const pt of path.points) {
+  for (const voice of geometry.voicePaths) {
+    for (const seg of voice.segments) {
+      const onset = seg.note.onset;
+      const endTime = onset + seg.note.duration;
+      if (currentTime >= onset && currentTime <= endTime) {
         found = true;
-        if (pt.x < minX) minX = pt.x;
-        if (pt.x > maxX) maxX = pt.x;
-        if (pt.y < minY) minY = pt.y;
-        if (pt.y > maxY) maxY = pt.y;
+        minX = Math.min(minX, seg.start.x, seg.end.x);
+        maxX = Math.max(maxX, seg.start.x, seg.end.x);
+        minY = Math.min(minY, seg.start.y, seg.end.y);
+        maxY = Math.max(maxY, seg.start.y, seg.end.y);
+      }
+    }
+    for (const circle of voice.circles) {
+      const onset = circle.note.onset;
+      const endTime = onset + circle.note.duration;
+      if (currentTime >= onset && currentTime <= endTime) {
+        found = true;
+        minX = Math.min(minX, circle.center.x - circle.radius);
+        maxX = Math.max(maxX, circle.center.x + circle.radius);
+        minY = Math.min(minY, circle.center.y - circle.radius);
+        maxY = Math.max(maxY, circle.center.y + circle.radius);
       }
     }
   }
@@ -286,7 +311,7 @@ export class ViewportController {
     this.viewport = { ...DEFAULT_VIEWPORT };
   }
 
-  public stepAutoZoom(geometry: MappedGeometry, currentTime: number, width: number, height: number): void {
+  public stepAutoZoom(geometry: RenderedGeometry, currentTime: number, width: number, height: number): void {
     if (!this.viewport.autoZoom) return;
     const bounds = calculateActiveNotesBoundingBox(geometry, currentTime);
     this.viewport = calculateAutoZoomTransform(this.viewport, bounds, width, height);
@@ -303,7 +328,7 @@ Expected: PASS
 
 ```bash
 git add src/core/layout/viewportController.ts tests/viewportController.test.ts
-git commit -m "feat(core): add ViewportController and active note auto-zoom calculation"
+git commit -m "feat(core): add ViewportController and RenderedGeometry active note auto-zoom calculation"
 ```
 
 ---
@@ -325,14 +350,16 @@ Create `tests/viewportRenderers.test.ts`:
 ```typescript
 import { describe, expect, it } from 'vitest';
 import { buildSvg } from '../src/renderers/svg/svgBuilder.js';
-import { MappedGeometry } from '../src/core/types.js';
+import { RenderedGeometry } from '../src/core/types.js';
+import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
 describe('Viewport Renderer Extensions', () => {
-  const dummyGeometry: MappedGeometry = {
-    bounds: { minX: 0, minY: 0, maxX: 800, maxY: 600, width: 800, height: 600 },
-    paths: [],
-    nodes: [],
-    timeLines: []
+  const dummyGeometry: RenderedGeometry = {
+    width: 800,
+    height: 600,
+    bands: [],
+    voicePaths: [],
+    config: DEFAULT_CONFIG
   };
 
   it('includes viewport transform group in generated SVG when zoom or pan is active', () => {
@@ -353,12 +380,22 @@ Expected: FAIL (viewport option not recognized or transform missing)
 - [ ] **Step 3: Update `CanvasRenderer` in `src/renderers/canvas/canvasRenderer.ts`**
 
 Update `CanvasRenderOptions` in `canvasRenderer.ts` to include `viewport?: ViewportTransform`.
-In `render()`, wrap score elements inside `ctx.save()`, `ctx.translate(width/2 + viewport.panX, height/2 + viewport.panY)`, `ctx.scale(viewport.zoom, viewport.zoom)`, `ctx.translate(-width/2, -height/2)`, and call `ctx.restore()` before drawing fixed legend or title elements.
+In `render()`, keep background clear and `drawAtmosphere` outside the matrix block.
+Wrap score elements (`geometry.bands` and `geometry.voicePaths`) inside:
+```typescript
+ctx.save();
+ctx.translate(width / 2 + viewport.panX, height / 2 + viewport.panY);
+ctx.scale(viewport.zoom, viewport.zoom);
+ctx.translate(-width / 2, -height / 2);
+// Render voice paths and time-band geometries
+ctx.restore();
+```
+Render fixed legend and title overlay outside `ctx.restore()`.
 
 - [ ] **Step 4: Update `buildSvg` in `src/renderers/svg/svgBuilder.ts`**
 
-Update `SvgRenderOptions` in `svgBuilder.ts` to include `viewport?: ViewportTransform`.
-If `options.viewport` is supplied and non-default (`zoom !== 1 || panX !== 0 || panY !== 0`), wrap score path elements inside `<g transform="translate(${width/2 + viewport.panX}, ${height/2 + viewport.panY}) scale(${viewport.zoom}) translate(${-width/2}, ${-height/2})">...</g>`.
+Update `SvgOptions` in `svgBuilder.ts` to include `viewport?: ViewportTransform`.
+If `options.viewport` is supplied and non-default (`zoom !== 1 || panX !== 0 || panY !== 0`), scale `panX` and `panY` proportionally (`scaleFactor = geometry.width / 900`). Wrap score path elements inside `<g transform="translate(${width/2 + viewport.panX * scaleFactor}, ${height/2 + viewport.panY * scaleFactor}) scale(${viewport.zoom}) translate(${-width/2}, ${-height/2})">...</g>`.
 
 - [ ] **Step 5: Run tests to verify they pass**
 
@@ -369,7 +406,7 @@ Expected: PASS
 
 ```bash
 git add src/renderers/canvas/canvasRenderer.ts src/renderers/svg/svgBuilder.ts tests/viewportRenderers.test.ts
-git commit -m "feat(renderers): support ViewportTransform in Canvas and SVG renderers"
+git commit -m "feat(renderers): support ViewportTransform in Canvas and SVG renderers with scaled export pan"
 ```
 
 ---
@@ -383,7 +420,7 @@ git commit -m "feat(renderers): support ViewportTransform in Canvas and SVG rend
 
 **Interfaces:**
 - Consumes: `ViewportController` from `src/core/layout/viewportController.ts`
-- Produces: Interactive wheel/drag canvas events, floating Canvas HUD overlay, side panel "05 Viewport & Framing" section, keyboard shortcuts
+- Produces: Interactive wheel/drag canvas events, floating Canvas HUD overlay, side panel "05 Viewport & Framing" section, touch-action guards, keyboard shortcut form shielding
 
 - [ ] **Step 1: Update `index.html` with Canvas HUD and Viewport Control Panel Section**
 
@@ -422,7 +459,7 @@ Add Section 05 in control sidebar:
 
 - [ ] **Step 2: Add CSS rules in `src/ui/styles/main.css`**
 
-Add styling for `.canvas-container`, `#viewport-hud`, `.hud-btn`, and `.hud-badge` with glassmorphic semi-transparent styling.
+Add styling for `#visualizer-canvas` with `touch-action: none;` to prevent touch scrolling. Add styling for `.canvas-container`, `#viewport-hud`, `.hud-btn`, and `.hud-badge` with glassmorphic semi-transparent styling.
 
 - [ ] **Step 3: Connect ViewportController events and playback tick in `src/ui/app.ts`**
 
@@ -433,8 +470,9 @@ Attach event listeners:
 - Canvas Touch pinch: Pinch distance ratio zoom
 - HUD buttons: `hud-zoom-in`, `hud-zoom-out`, `hud-reset`, `hud-autozoom-toggle`
 - Sidebar controls: `viewport-zoom-range`, `btn-reset-viewport`
-- Keyboard shortcuts: `+`, `-`, `0`, `r`/`R`, `a`/`A`
-- Update `render()` to pass `viewportController.getViewport()` to canvas and SVG downloads.
+- Keyboard shortcuts: `+`, `-`, `0`, `r`/`R`, `a`/`A`, with input field shield check:
+  `if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;`
+- Update `render()` and `geometryFor(size)` to pass scaled `viewportController.getViewport()` to canvas and SVG downloads.
 - In `tick()`, invoke `viewportController.stepAutoZoom(geometry, currentTime, 900, 900)`.
 
 - [ ] **Step 4: Run `npm run validate` to test full application build**
@@ -446,7 +484,7 @@ Expected: PASS (all tests pass, type-check passes, vite build succeeds)
 
 ```bash
 git add index.html src/ui/styles/main.css src/ui/app.ts
-git commit -m "feat(ui): add interactive canvas gestures, HUD overlay, and viewport controls"
+git commit -m "feat(ui): add interactive canvas gestures, HUD overlay, touch guards, and viewport controls"
 ```
 
 ---
@@ -467,7 +505,7 @@ Mark the zoom and pan items complete with completion date `2026-07-23`.
 Add under `[Unreleased]` -> `Added`:
 - Interactive canvas preview zoom and pan with mouse wheel, click-drag, touch pinch/pan, HUD overlay, and keyboard shortcuts (`+`/`-`/`R`/`A`).
 - Dynamic playback auto-zoom tracking active note bounding boxes during MIDI preview.
-- Viewport framing preservation across SVG, PNG, and pen-plotter exports.
+- Viewport framing preservation across SVG, PNG, and pen-plotter exports with proportional resolution scaling.
 
 - [ ] **Step 3: Update `ARCHITECTURE.md`**
 

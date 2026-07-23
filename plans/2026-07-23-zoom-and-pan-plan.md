@@ -1,12 +1,12 @@
 # Interactive Zoom & Pan with Dynamic Auto-Zoom Implementation Plan
 
-Status: ready for implementation (revised after comprehensive architecture assessments)
+Status: ready for implementation (revised after final architecture assessment)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement interactive mouse, wheel, touch, and HUD/panel zoom and pan controls for the score canvas preview and vector exports (SVG/PNG/Plotter), with default dynamic auto-zoom that tracks active note regions during playback.
 
-**Architecture:** Add `ViewportTransform` to core domain types with NaN/Infinity clamping bounds. Implement pure math helpers (`calculateActiveNotesBoundingBox`, `calculateAutoZoomTransform`) plus a stateful `ViewportController` class that computes gesture transforms and lerped active-note auto-zoom (`AUTO_ZOOM_LERP = 0.15`) using `RenderedGeometry`. Extend `CanvasRenderer` to wrap score geometry drawing (`bands` and `voicePaths`) within matrix transforms while preserving screen-fixed legend/title layers and background atmosphere. Update `buildSvg` to wrap all score geometry elements in an outer transform container `<g transform="...">`. Centralize export resolution pan scaling in `app.ts` (`panX * exportSize / previewSize`) so PNG, SVG, and plotter exports match preview framing. Integrate canvas gesture handlers with `pointercapture`, canvas HUD overlay, side-panel controls (synchronized with HUD), touch-action scrolling guards, keyboard shortcut shielding, and score reset in `app.ts`.
+**Architecture:** Add `ViewportTransform` to core domain types with NaN/Infinity clamping bounds. Implement pure math helpers (`calculateActiveNotesBoundingBox`, `calculateAutoZoomTransform`) plus a stateful `ViewportController` class that computes gesture transforms and lerped active-note auto-zoom (`AUTO_ZOOM_LERP = 0.15`) using `RenderedGeometry`. Extend `CanvasRenderer` to wrap score geometry drawing (`bands` and `voicePaths`) within matrix transforms while preserving screen-fixed legend/title layers and background atmosphere. Update `buildSvg` to wrap all score geometry elements in an outer transform container `<g transform="...">`. Centralize export resolution pan scaling in `app.ts` (`panX * EXPORT_SIZE / PREVIEW_SIZE`) so PNG, SVG, and plotter exports match preview framing cleanly. Extract gesture handling into `src/ui/viewportGestures.ts`, position HUD overlay inside `.canvas-wrapper` (`z-index: 5`), synchronize sidebar section 05 controls (`max="10.0"`) with HUD, pass `viewport` to live preview `render()`, reset view on `setScore()`, and shield keyboard shortcuts on `window`.
 
 **Tech Stack:** TypeScript, HTML5 Canvas 2D Context, SVG, Vitest, Vite.
 
@@ -18,7 +18,7 @@ Status: ready for implementation (revised after comprehensive architecture asses
 - Browser MIDI file handling stays local; no telemetry; no remote user data upload.
 - SVG, PNG, and pen-plotter exports must match the active preview viewport zoom and pan framing.
 - Must pass `npm run validate` (type-checking, Vitest tests, production build).
-- Update `ARCHITECTURE.md`, `CHANGELOG.md` (MINOR), and `dev-docs/TO_DO.md`.
+- Update `ARCHITECTURE.md`, `DESIGN.md`, `CHANGELOG.md` (MINOR), and `dev-docs/TO_DO.md`.
 
 ---
 
@@ -116,7 +116,7 @@ git commit -m "feat(core): add ViewportTransform domain types and guarded zoom c
 Create `tests/viewportController.test.ts`:
 ```typescript
 import { describe, expect, it } from 'vitest';
-import { ViewportController, calculateActiveNotesBoundingBox, calculateAutoZoomTransform } from '../src/core/layout/viewportController.js';
+import { ViewportController, calculateActiveNotesBoundingBox, calculateAutoZoomTransform, AUTO_ZOOM_LERP } from '../src/core/layout/viewportController.js';
 import { RenderedGeometry } from '../src/core/types.js';
 import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
@@ -126,13 +126,13 @@ describe('ViewportController & Auto-Zoom', () => {
     expect(controller.getViewport()).toEqual({ zoom: 1, panX: 0, panY: 0, autoZoom: true });
   });
 
-  it('pans by delta (CSS pixels) and disables autoZoom', () => {
+  it('pans by delta and disables autoZoom', () => {
     const controller = new ViewportController();
     controller.panBy(50, -20);
     expect(controller.getViewport()).toEqual({ zoom: 1, panX: 50, panY: -20, autoZoom: false });
   });
 
-  it('zooms anchored at coordinate, preserves world point, and disables autoZoom', () => {
+  it('zooms anchored at coordinate, preserves world point, and disables autoZoom even if clamped', () => {
     const controller = new ViewportController();
     const w = 800, h = 600, ax = 200, ay = 100;
     const before = controller.getViewport();
@@ -148,6 +148,11 @@ describe('ViewportController & Auto-Zoom', () => {
     const screenY = h / 2 + after.panY + worldY * after.zoom;
     expect(screenX).toBeCloseTo(ax);
     expect(screenY).toBeCloseTo(ay);
+
+    // Clamped zoom attempt still disables autoZoom
+    controller.setAutoZoom(true);
+    controller.zoomAt(10.0, ax, ay, w, h);
+    expect(controller.getViewport().autoZoom).toBe(false);
   });
 
   it('resets view to default and re-enables autoZoom', () => {
@@ -157,7 +162,7 @@ describe('ViewportController & Auto-Zoom', () => {
     expect(controller.getViewport()).toEqual({ zoom: 1, panX: 0, panY: 0, autoZoom: true });
   });
 
-  it('calculates bounding box of active notes from RenderedGeometry', () => {
+  it('calculates bounding box of active notes from RenderedGeometry excluding gap segments', () => {
     const mockGeometry: RenderedGeometry = {
       width: 800,
       height: 600,
@@ -175,6 +180,15 @@ describe('ViewportController & Auto-Zoom', () => {
               width: 2,
               opacity: 1,
               note: { id: 'n0', pitch: 60, onset: 0, duration: 5, velocity: 80, voice: 0, pitchClass: 0 }
+            },
+            {
+              start: { x: 500, y: 500 },
+              end: { x: 600, y: 600 },
+              color: '#000000',
+              width: 1,
+              opacity: 0,
+              role: 'gap',
+              note: { id: 'g0', pitch: 60, onset: 0, duration: 5, velocity: 0, voice: 0, pitchClass: 0 }
             }
           ],
           circles: []
@@ -185,7 +199,21 @@ describe('ViewportController & Auto-Zoom', () => {
     expect(bounds).toEqual({ minX: 100, minY: 150, maxX: 300, maxY: 250 });
   });
 
-  it('executes stepAutoZoom (lerp bounds when active, no-op when silent or autoZoom=false)', () => {
+  it('calculates active bounds for tonal time-lines mode when voicePaths are empty', () => {
+    const mockGeometry: RenderedGeometry = {
+      width: 800,
+      height: 600,
+      bands: [
+        { y: 100, height: 50, color: '#ff0000', opacity: 0.8, onset: 1, duration: 4 }
+      ],
+      voicePaths: [],
+      config: DEFAULT_CONFIG
+    };
+    const bounds = calculateActiveNotesBoundingBox(mockGeometry, 2.0);
+    expect(bounds).toEqual({ minX: 0, minY: 100, maxX: 800, maxY: 150 });
+  });
+
+  it('executes stepAutoZoom (lerp bounds when active, lerp to default when silent)', () => {
     const mockGeometry: RenderedGeometry = {
       width: 800,
       height: 600,
@@ -211,19 +239,14 @@ describe('ViewportController & Auto-Zoom', () => {
     };
 
     const controller = new ViewportController();
-    // Silent time (currentTime = 0): viewport unchanged
-    controller.stepAutoZoom(mockGeometry, 0, 800, 600);
-    expect(controller.getViewport()).toEqual({ zoom: 1, panX: 0, panY: 0, autoZoom: true });
-
     // Active time (currentTime = 2): lerps toward active note center
     controller.stepAutoZoom(mockGeometry, 2, 800, 600);
     expect(controller.getViewport().zoom).toBeGreaterThan(1.0);
 
-    // Manual override disables autoZoom step
-    controller.panBy(10, 10);
-    const panState = controller.getViewport();
-    controller.stepAutoZoom(mockGeometry, 2, 800, 600);
-    expect(controller.getViewport()).toEqual(panState);
+    // Silent time (currentTime = 10): lerps back toward DEFAULT_VIEWPORT
+    const zoomedState = controller.getViewport();
+    controller.stepAutoZoom(mockGeometry, 10, 800, 600);
+    expect(controller.getViewport().zoom).toBeLessThan(zoomedState.zoom);
   });
 });
 ```
@@ -257,6 +280,7 @@ export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, curr
 
   for (const voice of geometry.voicePaths) {
     for (const seg of voice.segments) {
+      if (seg.role === 'gap') continue;
       const onset = seg.note.onset;
       const endTime = onset + seg.note.duration;
       if (currentTime >= onset && currentTime <= endTime) {
@@ -280,6 +304,20 @@ export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, curr
     }
   }
 
+  if (!found && geometry.bands.length > 0) {
+    for (const band of geometry.bands) {
+      if (band.onset !== undefined && band.duration !== undefined) {
+        if (currentTime >= band.onset && currentTime <= (band.onset + band.duration)) {
+          found = true;
+          minX = 0;
+          maxX = geometry.width;
+          minY = Math.min(minY, band.y);
+          maxY = Math.max(maxY, band.y + band.height);
+        }
+      }
+    }
+  }
+
   if (!found) return null;
   return { minX, minY, maxX, maxY };
 }
@@ -291,25 +329,25 @@ export function calculateAutoZoomTransform(
   canvasHeight: number,
   lerpFactor = AUTO_ZOOM_LERP
 ): ViewportTransform {
-  if (!activeBounds) return current;
+  const targetTransform = activeBounds ? (() => {
+    const boundsWidth = Math.max(20, activeBounds.maxX - activeBounds.minX);
+    const boundsHeight = Math.max(20, activeBounds.maxY - activeBounds.minY);
+    const centerX = (activeBounds.minX + activeBounds.maxX) / 2;
+    const centerY = (activeBounds.minY + activeBounds.maxY) / 2;
+    const zoom = clampZoom(Math.min((canvasWidth * 0.75) / boundsWidth, (canvasHeight * 0.75) / boundsHeight));
+    const panX = (canvasWidth / 2 - centerX) * zoom;
+    const panY = (canvasHeight / 2 - centerY) * zoom;
+    return { zoom, panX, panY };
+  })() : DEFAULT_VIEWPORT;
 
-  const boundsWidth = Math.max(20, activeBounds.maxX - activeBounds.minX);
-  const boundsHeight = Math.max(20, activeBounds.maxY - activeBounds.minY);
-  const centerX = (activeBounds.minX + activeBounds.maxX) / 2;
-  const centerY = (activeBounds.minY + activeBounds.maxY) / 2;
-
-  const targetZoom = clampZoom(Math.min((canvasWidth * 0.75) / boundsWidth, (canvasHeight * 0.75) / boundsHeight));
-  const targetPanX = (canvasWidth / 2 - centerX) * targetZoom;
-  const targetPanY = (canvasHeight / 2 - centerY) * targetZoom;
-
-  const nextZoom = current.zoom + (targetZoom - current.zoom) * lerpFactor;
-  const nextPanX = current.panX + (targetPanX - current.panX) * lerpFactor;
-  const nextPanY = current.panY + (targetPanY - current.panY) * lerpFactor;
+  const nextZoom = current.zoom + (targetTransform.zoom - current.zoom) * lerpFactor;
+  const nextPanX = current.panX + (targetTransform.panX - current.panX) * lerpFactor;
+  const nextPanY = current.panY + (targetTransform.panY - current.panY) * lerpFactor;
 
   return {
-    zoom: Number(nextZoom.toFixed(4)),
-    panX: Number(nextPanX.toFixed(2)),
-    panY: Number(nextPanY.toFixed(2)),
+    zoom: nextZoom,
+    panX: nextPanX,
+    panY: nextPanY,
     autoZoom: true,
   };
 }
@@ -345,6 +383,7 @@ export class ViewportController {
   }
 
   public zoomAt(targetZoom: number, anchorX: number, anchorY: number, width: number, height: number): void {
+    this.viewport.autoZoom = false;
     const oldZoom = this.viewport.zoom;
     const newZoom = clampZoom(targetZoom);
     if (oldZoom === newZoom) return;
@@ -358,7 +397,6 @@ export class ViewportController {
     this.viewport.panX = anchorX - centerX - pointX * newZoom;
     this.viewport.panY = anchorY - centerY - pointY * newZoom;
     this.viewport.zoom = newZoom;
-    this.viewport.autoZoom = false;
   }
 
   public resetView(): void {
@@ -464,22 +502,23 @@ git commit -m "feat(renderers): support ViewportTransform in Canvas and SVG rend
 
 ---
 
-### Task 4: UI Canvas Overlay HUD & Control Panel Integration
+### Task 4: UI Gestures, HUD Overlay & Control Panel Integration
 
 **Files:**
+- Create: `src/ui/viewportGestures.ts`
 - Modify: `index.html`
 - Modify: `src/ui/styles/main.css`
 - Modify: `src/ui/app.ts`
 
 **Interfaces:**
 - Consumes: `ViewportController` from `src/core/layout/viewportController.ts`
-- Produces: Interactive wheel/drag canvas events, floating Canvas HUD overlay, side panel "05 Viewport & Framing" section, touch-action guards, export viewport scaling, keyboard shortcut form shielding
+- Produces: `ViewportGestures` manager, canvas HUD overlay inside `.canvas-wrapper`, Section 05 sidebar controls (`max="10.0"`), live preview `render()` viewport passing, export scaling in `app.ts`
 
-- [ ] **Step 1: Update `index.html` with Canvas HUD and Viewport Control Panel Section**
+- [ ] **Step 1: Update `index.html` with Canvas HUD inside `.canvas-wrapper` and Sidebar Section 05**
 
-Add `#viewport-hud` inside canvas container:
+Add `#viewport-hud` inside `.canvas-wrapper`:
 ```html
-<div class="canvas-container">
+<div class="canvas-wrapper">
   <canvas id="visualizer-canvas"></canvas>
   <div id="viewport-hud" class="viewport-hud" aria-label="Viewport Controls">
     <button id="hud-zoom-in" class="hud-btn" title="Zoom In (+)">+</button>
@@ -516,98 +555,182 @@ Add Section 05 in control sidebar:
 
 - [ ] **Step 2: Add CSS rules in `src/ui/styles/main.css`**
 
-Add styling for `#visualizer-canvas` with `touch-action: none;` to prevent touch scrolling. Add styling for `.canvas-container`, `#viewport-hud`, `.hud-btn`, and `.hud-badge` with glassmorphic semi-transparent styling.
+Add styling for `#visualizer-canvas` with `touch-action: none;`. Add styling for `#viewport-hud` inside `.canvas-wrapper`: `position: absolute; top: 12px; right: 12px; z-index: 5; pointer-events: auto; display: flex; gap: 6px;`.
 
-- [ ] **Step 3: Connect ViewportController events, export scaling, and playback tick in `src/ui/app.ts`**
+- [ ] **Step 3: Create `ViewportGestures` in `src/ui/viewportGestures.ts`**
 
-Instantiate `this.viewportController = new ViewportController();`.
-In `setScore()`, call `this.viewportController.resetView()`.
-
-Implement CSS-to-canvas coordinate helper:
+Create `src/ui/viewportGestures.ts`:
 ```typescript
-private getCanvasCoords(event: { clientX: number; clientY: number }): { x: number; y: number } {
-  const canvas = this.element<HTMLCanvasElement>('visualizer-canvas');
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / Math.max(1, rect.width);
-  const scaleY = canvas.height / Math.max(1, rect.height);
-  return {
-    x: (event.clientX - rect.left) * scaleX,
-    y: (event.clientY - rect.top) * scaleY,
-  };
-}
-```
+import { ViewportController } from '../core/layout/viewportController.js';
 
-Attach event listeners:
-- Canvas `wheel`: `const pt = this.getCanvasCoords(event); this.viewportController.zoomAt(newZoom, pt.x, pt.y, 900, 900)`
-- Canvas `pointerdown`: `canvas.setPointerCapture(event.pointerId)`
-- Canvas `pointermove`: Drag `panBy(dxCss, dyCss)` when primary pointer is pressed. Pinch gesture tracking for multi-pointer touches.
-- HUD buttons & Sidebar controls:
-  - Synchronize `#viewport-zoom-range`, `#hud-autozoom-toggle`, `#viewport-autozoom-toggle` bidirectionally in `updateViewportUi()`.
-- Export methods:
-  ```typescript
-  private getExportViewport(exportSize: number): ViewportTransform {
-    const vp = this.viewportController.getViewport();
-    const scaleRatio = exportSize / 900;
+export class ViewportGestures {
+  private activePointers = new Map<number, { x: number; y: number }>();
+  private initialPinchDist = 0;
+  private initialPinchZoom = 1;
+
+  constructor(
+    private canvas: HTMLCanvasElement,
+    private controller: ViewportController,
+    private previewSize: number,
+    private onUpdate: () => void
+  ) {
+    this.bindEvents();
+  }
+
+  private getLogicalCoords(clientX: number, clientY: number): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.previewSize / Math.max(1, rect.width);
+    const scaleY = this.previewSize / Math.max(1, rect.height);
     return {
-      ...vp,
-      panX: vp.panX * scaleRatio,
-      panY: vp.panY * scaleRatio,
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
     };
   }
 
-  private downloadPng(): void {
-    const geometry = this.geometryFor(1200);
-    this.canvasRenderer.render(geometry, {
-      showLegend: true,
+  private bindEvents(): void {
+    this.canvas.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      const pt = this.getLogicalCoords(event.clientX, event.clientY);
+      const factor = Math.exp(-event.deltaY * 0.0015);
+      const currentZoom = this.controller.getViewport().zoom;
+      this.controller.zoomAt(currentZoom * factor, pt.x, pt.y, this.previewSize, this.previewSize);
+      this.onUpdate();
+    }, { passive: false });
+
+    let isDragging = false;
+    let lastPt = { x: 0, y: 0 };
+
+    this.canvas.addEventListener('pointerdown', (event) => {
+      this.canvas.setPointerCapture(event.pointerId);
+      this.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (this.activePointers.size === 1) {
+        isDragging = true;
+        lastPt = { x: event.clientX, y: event.clientY };
+      } else if (this.activePointers.size === 2) {
+        isDragging = false;
+        const pts = [...this.activePointers.values()];
+        this.initialPinchDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        this.initialPinchZoom = this.controller.getViewport().zoom;
+      }
+    });
+
+    this.canvas.addEventListener('pointermove', (event) => {
+      if (!this.activePointers.has(event.pointerId)) return;
+      this.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+      if (this.activePointers.size === 1 && isDragging) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.previewSize / Math.max(1, rect.width);
+        const scaleY = this.previewSize / Math.max(1, rect.height);
+        const dx = (event.clientX - lastPt.x) * scaleX;
+        const dy = (event.clientY - lastPt.y) * scaleY;
+        lastPt = { x: event.clientX, y: event.clientY };
+        this.controller.panBy(dx, dy);
+        this.onUpdate();
+      } else if (this.activePointers.size === 2) {
+        const pts = [...this.activePointers.values()];
+        const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        if (this.initialPinchDist > 0) {
+          const ratio = dist / this.initialPinchDist;
+          const centerCss = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+          const pt = this.getLogicalCoords(centerCss.x, centerCss.y);
+          this.controller.zoomAt(this.initialPinchZoom * ratio, pt.x, pt.y, this.previewSize, this.previewSize);
+          this.onUpdate();
+        }
+      }
+    });
+
+    const release = (event: PointerEvent) => {
+      this.activePointers.delete(event.pointerId);
+      if (this.activePointers.size < 2) this.initialPinchDist = 0;
+      if (this.activePointers.size === 0) isDragging = false;
+    };
+    this.canvas.addEventListener('pointerup', release);
+    this.canvas.addEventListener('pointercancel', release);
+  }
+}
+```
+
+- [ ] **Step 4: Update `src/ui/app.ts` to wire ViewportGestures, live preview render, and export scaling**
+
+Add named constants: `const PREVIEW_SIZE = 900; const EXPORT_SIZE = 1200;`
+Instantiate `ViewportController` and `ViewportGestures`.
+In `setScore()`, call `this.viewportController.resetView()`.
+Update `render()`:
+```typescript
+private render(): void {
+  const geometry = this.geometryFor(PREVIEW_SIZE);
+  this.canvasRenderer.render(geometry, {
+    time: this.currentTime,
+    showLegend: true,
+    backgroundColor: this.backgroundColor(),
+    title: this.exportTitle,
+    viewport: this.viewportController.getViewport()
+  });
+  this.updateViewportUi();
+  // ... scrubber and time display update
+}
+```
+Update export methods in `app.ts`:
+```typescript
+private getExportViewport(size: number): ViewportTransform {
+  const vp = this.viewportController.getViewport();
+  const scale = size / PREVIEW_SIZE;
+  return { ...vp, panX: vp.panX * scale, panY: vp.panY * scale };
+}
+
+private downloadPng(): void {
+  const geometry = this.geometryFor(EXPORT_SIZE);
+  this.canvasRenderer.render(geometry, {
+    showLegend: true,
+    backgroundColor: this.backgroundColor(),
+    title: this.exportTitle,
+    viewport: this.getExportViewport(EXPORT_SIZE)
+  });
+  this.canvasRenderer.downloadPng(`${this.filename()}.png`);
+  this.render();
+}
+
+private downloadSvg(plotter: boolean): void {
+  const geometry = this.geometryFor(EXPORT_SIZE);
+  this.download(
+    new Blob([buildSvg(geometry, {
+      includeLegend: !plotter,
+      penPlotterMode: plotter,
       backgroundColor: this.backgroundColor(),
       title: this.exportTitle,
-      viewport: this.getExportViewport(1200)
-    });
-    this.canvasRenderer.downloadPng(`${this.filename()}.png`);
-    this.render();
-  }
+      includePlotterTitle: false,
+      viewport: this.getExportViewport(EXPORT_SIZE)
+    })], { type: 'image/svg+xml' }),
+    `${this.filename()}${plotter ? '-plotter' : ''}.svg`
+  );
+}
+```
 
-  private downloadSvg(plotter: boolean): void {
-    const geometry = this.geometryFor(1200);
-    this.download(
-      new Blob([buildSvg(geometry, {
-        includeLegend: !plotter,
-        penPlotterMode: plotter,
-        backgroundColor: this.backgroundColor(),
-        title: this.exportTitle,
-        includePlotterTitle: false,
-        viewport: this.getExportViewport(1200)
-      })], { type: 'image/svg+xml' }),
-      `${this.filename()}${plotter ? '-plotter' : ''}.svg`
-    );
-  }
-  ```
-- Shielded Keyboard Shortcuts on `window`:
-  ```typescript
-  window.addEventListener('keydown', (event) => {
-    const t = event.target;
-    if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
-    if (t instanceof HTMLElement && t.isContentEditable) return;
-    if (event.key === '+' || event.key === '=') this.viewportController.zoomAt(this.viewportController.getViewport().zoom * 1.25, 450, 450, 900, 900);
-    else if (event.key === '-' || event.key === '_') this.viewportController.zoomAt(this.viewportController.getViewport().zoom / 1.25, 450, 450, 900, 900);
-    else if (event.key === '0' || event.key === 'r' || event.key === 'R') this.viewportController.resetView();
-    else if (event.key === 'a' || event.key === 'A') this.viewportController.setAutoZoom(!this.viewportController.getViewport().autoZoom);
-    this.render();
-  });
-  ```
-- In `tick()`, before `render()`:
-  `this.viewportController.stepAutoZoom(geometry, this.currentTime, 900, 900);`
-  `this.updateViewportUi();`
+Shielded Keyboard shortcuts on `window`:
+```typescript
+window.addEventListener('keydown', (event) => {
+  const t = event.target;
+  if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
+  if (t instanceof HTMLElement && t.isContentEditable) return;
+  if (event.key === '+' || event.key === '=') this.viewportController.zoomAt(this.viewportController.getViewport().zoom * 1.25, PREVIEW_SIZE / 2, PREVIEW_SIZE / 2, PREVIEW_SIZE, PREVIEW_SIZE);
+  else if (event.key === '-' || event.key === '_') this.viewportController.zoomAt(this.viewportController.getViewport().zoom / 1.25, PREVIEW_SIZE / 2, PREVIEW_SIZE / 2, PREVIEW_SIZE, PREVIEW_SIZE);
+  else if (event.key === '0' || event.key === 'r' || event.key === 'R') this.viewportController.resetView();
+  else if (event.key === 'a' || event.key === 'A') this.viewportController.setAutoZoom(!this.viewportController.getViewport().autoZoom);
+  else return;
+  this.render();
+});
+```
 
-- [ ] **Step 4: Run `npm run validate` to test full application build**
+- [ ] **Step 5: Run `npm run validate` to test full application build**
 
 Run: `npm run validate`
 Expected: PASS (all tests pass, type-check passes, vite build succeeds)
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add index.html src/ui/styles/main.css src/ui/app.ts
+git add index.html src/ui/styles/main.css src/ui/viewportGestures.ts src/ui/app.ts
 git commit -m "feat(ui): add interactive canvas gestures, HUD overlay, touch guards, export viewport scaling, and synced controls"
 ```
 
@@ -619,6 +742,7 @@ git commit -m "feat(ui): add interactive canvas gestures, HUD overlay, touch gua
 - Modify: `CHANGELOG.md`
 - Modify: `dev-docs/TO_DO.md`
 - Modify: `ARCHITECTURE.md`
+- Modify: `DESIGN.md`
 
 - [ ] **Step 1: Update `dev-docs/TO_DO.md`**
 
@@ -631,9 +755,9 @@ Add under `[Unreleased]` -> `Added`:
 - Dynamic playback auto-zoom tracking active note bounding boxes during MIDI preview.
 - Viewport framing preservation across SVG, PNG, and pen-plotter exports with proportional resolution scaling.
 
-- [ ] **Step 3: Update `ARCHITECTURE.md`**
+- [ ] **Step 3: Update `ARCHITECTURE.md` and `DESIGN.md`**
 
-Document `ViewportTransform` and `ViewportController` layout engine contracts.
+Document `ViewportTransform` and `ViewportController` layout engine contracts in `ARCHITECTURE.md`. Document HUD overlay and interactive framing aesthetics in `DESIGN.md`.
 
 - [ ] **Step 4: Run complete validation suite**
 
@@ -643,6 +767,6 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add CHANGELOG.md dev-docs/TO_DO.md ARCHITECTURE.md
-git commit -m "docs: update CHANGELOG, ARCHITECTURE, and TO_DO for zoom/pan feature"
+git add CHANGELOG.md dev-docs/TO_DO.md ARCHITECTURE.md DESIGN.md
+git commit -m "docs: update CHANGELOG, ARCHITECTURE, DESIGN, and TO_DO for zoom/pan feature"
 ```

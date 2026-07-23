@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- General MIDI SoundFont audio preview with selectable engines (Sample SoundFont / Oscillator synth) and banks (FluidR3 GM, MusyngKite, FatBoy), supporting CC64 sustain pedal windows and voice-router mixing. SemVer: **MINOR**.
 - Line-path **chord layout** control (`polyphony` | `chain`): polyphonic branching with
   time-true joins and 40 ms onset clustering; legacy sequential chain available.
   SemVer: **MINOR**.

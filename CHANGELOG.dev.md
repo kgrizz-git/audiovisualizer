@@ -8,6 +8,9 @@ Last reviewed: 2026-07-22
 ## Unreleased
 
 ### Added
+- SoundFont asset bundler script (`scripts/bundle-soundfonts.js` and `npm run bundle:soundfonts`) to fetch and bundle offline FluidR3 GM soundfont samples into `public/soundfonts/`.
+- Gitignore policy rule for bundled audio patches (`public/soundfonts/**/*.js`) to keep large binary asset files out of Git history.
+- SoundFont patch loader, player, voice router, and sustain window unit tests (`tests/audio/soundfont/`).
 - `SustainEvent` domain type added to `TrackScore` in `src/core/types.ts` to represent MIDI CC64 pedal states.
 - MIDI CC64 sustain pedal event parsing in `src/core/midi/parser.ts`.
 - Offline sustain helper functions (`buildSustainWindows`, `getSustainedDuration`, `sustainEventsForChannel`) in `src/audio/soundfont/sustainWindows.ts` to compute active pedal windows and extend note durations for soundfont playback synthesis.

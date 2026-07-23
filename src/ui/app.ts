@@ -4,7 +4,11 @@ import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
 import { ChordLayout, GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation } from '../core/types.js';
-import { defaultVoiceSettings, MidiPreviewPlayer, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
+import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
+import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js';
+import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
+import { VoiceRouter } from '../audio/soundfont/voiceRouter.js';
+import { PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
 
 class AudioVisualizerApp {
   private currentScore: Score = generateDemoScore();
@@ -15,7 +19,9 @@ class AudioVisualizerApp {
   private playbackStart = 0;
   private playbackOffset = 0;
   private isPlaying = false;
-  private midiPreview = new MidiPreviewPlayer();
+  private audioContext: AudioContext | null = null;
+  private soundfontPlayer: SoundfontPlayer | null = null;
+  private voiceRouter = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
   private voicePlayback = new Map<number, VoicePlaybackSettings>();
   private backgroundMode: 'black' | 'average' = 'black';
   private exportTitle: string = this.currentScore.title;
@@ -23,6 +29,7 @@ class AudioVisualizerApp {
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
     this.voicePlayback = new Map(this.currentScore.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
+    this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
     this.bindEvents();
     this.updateScoreUi();
     this.render();
@@ -65,6 +72,13 @@ class AudioVisualizerApp {
     this.range('stroke-base', 'val-stroke', (value) => { this.currentConfig.strokeWidthBase = value; }, 'px');
     this.range('time-line-density', 'val-density', (value) => { this.currentConfig.timeLineDensity = value; }, '×');
 
+    this.element<HTMLSelectElement>('playback-engine-select').addEventListener('change', (event) => {
+      this.voiceRouter.setDefaults({ engine: (event.target as HTMLSelectElement).value as PlaybackEngine });
+    });
+    this.element<HTMLSelectElement>('playback-bank-select').addEventListener('change', (event) => {
+      this.voiceRouter.setDefaults({ soundbank: (event.target as HTMLSelectElement).value as SoundbankPreset });
+    });
+
     const scrubber = this.element<HTMLInputElement>('progress-scrubber');
     scrubber.addEventListener('input', () => { this.pause(); this.currentTime = this.currentScore.duration * Number(scrubber.value) / 1000; this.render(); });
     this.element<HTMLButtonElement>('play-btn').addEventListener('click', () => this.togglePlay());
@@ -97,7 +111,18 @@ class AudioVisualizerApp {
     try { this.setScore(parseMidiData(await file.arrayBuffer(), file.name), `Loaded ${file.name}`); this.element<HTMLLabelElement>('file-label').textContent = `Loaded · ${file.name}`; }
     catch { this.setStatus('That file could not be read as MIDI.', true); }
   }
-  private setScore(score: Score, message: string): void { this.pause(); this.currentScore = score; this.currentTime = score.duration; this.currentConfig.voiceFilter = null; this.voicePlayback = new Map(score.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)])); this.exportTitle = score.title; this.updateScoreUi(); this.render(); this.setStatus(message); }
+  private setScore(score: Score, message: string): void {
+    this.pause();
+    this.currentScore = score;
+    this.currentTime = score.duration;
+    this.currentConfig.voiceFilter = null;
+    this.voicePlayback = new Map(score.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
+    this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
+    this.exportTitle = score.title;
+    this.updateScoreUi();
+    this.render();
+    this.setStatus(message);
+  }
 
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
@@ -119,10 +144,23 @@ class AudioVisualizerApp {
       const name = document.createElement('span'); name.textContent = `${track.name} · ${track.instrumentName}`;
       const timbre = document.createElement('select');
       ['sine', 'triangle', 'sawtooth', 'square'].forEach((value) => { const option = new Option(value, value, false, settings.timbre === value); timbre.add(option); });
-      timbre.addEventListener('change', () => { settings.timbre = timbre.value as VoicePlaybackSettings['timbre']; });
-      const gain = document.createElement('input'); gain.type = 'range'; gain.min = '0'; gain.max = '1.5'; gain.step = '0.05'; gain.value = String(settings.gain); gain.setAttribute('aria-label', `${track.name} volume`); gain.addEventListener('input', () => { settings.gain = Number(gain.value); });
-      const mute = this.createAudioToggle('M', settings.muted, `${track.name} mute`, (checked) => { settings.muted = checked; });
-      const solo = this.createAudioToggle('S', settings.solo, `${track.name} solo`, (checked) => { settings.solo = checked; });
+      timbre.addEventListener('change', () => {
+        settings.timbre = timbre.value as VoicePlaybackSettings['timbre'];
+        this.voiceRouter.setMix(track.channel, settings);
+      });
+      const gain = document.createElement('input'); gain.type = 'range'; gain.min = '0'; gain.max = '1.5'; gain.step = '0.05'; gain.value = String(settings.gain); gain.setAttribute('aria-label', `${track.name} volume`);
+      gain.addEventListener('input', () => {
+        settings.gain = Number(gain.value);
+        this.voiceRouter.setMix(track.channel, settings);
+      });
+      const mute = this.createAudioToggle('M', settings.muted, `${track.name} mute`, (checked) => {
+        settings.muted = checked;
+        this.voiceRouter.setMix(track.channel, settings);
+      });
+      const solo = this.createAudioToggle('S', settings.solo, `${track.name} solo`, (checked) => {
+        settings.solo = checked;
+        this.voiceRouter.setMix(track.channel, settings);
+      });
       row.append(name, timbre, gain, mute, solo); audioOptions.append(row);
     });
   }
@@ -142,12 +180,34 @@ class AudioVisualizerApp {
     if (this.isPlaying) { this.pause(); return; }
     if (this.currentTime >= this.currentScore.duration) this.currentTime = 0;
     try {
-      await this.midiPreview.start(this.currentScore, this.currentTime, this.voicePlayback);
-      this.isPlaying = true; this.playbackOffset = this.currentTime; this.playbackStart = performance.now();
-      this.element<HTMLButtonElement>('play-btn').textContent = '❚❚'; this.setStatus('Playing local synth preview'); this.tick();
-    } catch { this.setStatus('Audio preview could not start in this browser.', true); }
+      this.audioContext ??= new AudioContext();
+      this.soundfontPlayer ??= new SoundfontPlayer({
+        loader: new SoundfontPatchLoader((bytes) => this.audioContext!.decodeAudioData(bytes.slice(0))),
+      });
+      this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
+      await this.soundfontPlayer.start(this.currentScore, this.currentTime, {
+        router: this.voiceRouter,
+        context: this.audioContext,
+      });
+      this.isPlaying = true;
+      this.playbackOffset = this.currentTime;
+      this.playbackStart = performance.now();
+      this.element<HTMLButtonElement>('play-btn').textContent = '❚❚';
+      this.setStatus('Playing MIDI preview');
+      this.tick();
+    } catch {
+      this.setStatus('Audio preview could not start in this browser.', true);
+    }
   }
-  private pause(): void { this.isPlaying = false; this.midiPreview.stop(); if (this.animationFrameId !== null) cancelAnimationFrame(this.animationFrameId); this.animationFrameId = null; this.element<HTMLButtonElement>('play-btn').textContent = '▶'; }
+
+  private pause(): void {
+    this.isPlaying = false;
+    this.soundfontPlayer?.stop();
+    if (this.animationFrameId !== null) cancelAnimationFrame(this.animationFrameId);
+    this.animationFrameId = null;
+    this.element<HTMLButtonElement>('play-btn').textContent = '▶';
+  }
+
   private tick = (): void => { if (!this.isPlaying) return; this.currentTime = Math.min(this.currentScore.duration, this.playbackOffset + (performance.now() - this.playbackStart) / 1000); this.render(); if (this.currentTime >= this.currentScore.duration) this.pause(); else this.animationFrameId = requestAnimationFrame(this.tick); };
 
   private render(): void {

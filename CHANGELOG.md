@@ -10,6 +10,8 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Export title feature: MIDI filename (or embedded header name) displays as a visible title on canvas previews and SVG/PNG exports, with an editable text field for manual override. SemVer: **MINOR**.
+- CLI `--title` flag to override export title and `--include-plotter-title` flag to force title inclusion in plotter mode (stroke-only styling). SemVer: **MINOR**.
 - Spiral bias slider (−20°…+20°) so line/circle paths can take optional constant
   curvature without changing the default mapping.
 - Included-studies dropdown: public-domain Joplin *Maple Leaf Rag* and Bowman

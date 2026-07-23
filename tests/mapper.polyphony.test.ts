@@ -137,6 +137,30 @@ describe('mapScoreToGeometry polyphony', () => {
     expect(a.end.x - a.start.x).toBeCloseTo(b.end.x - b.start.x);
   });
 
+  it('advances the pen across rests with lift_pen without drawing a gap segment', () => {
+    const score = {
+      title: 'Rest', duration: 2, bpm: 120,
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+        note({ id: 'a', pitch: 60, onset: 0, duration: 0.5, pitchClass: 0 }),
+        note({ id: 'b', pitch: 64, onset: 1, duration: 0.5, pitchClass: 4 }),
+      ] }],
+    };
+    const config = {
+      ...DEFAULT_CONFIG,
+      variation: 'lines' as const,
+      chordLayout: 'polyphony' as const,
+      gapPolicy: 'lift_pen' as const,
+      intervalAngleEnabled: false,
+    };
+    const polyphony = mapScoreToGeometry(score, config, 800, 800);
+    const chain = mapScoreToGeometry(score, { ...config, chordLayout: 'chain' }, 800, 800);
+    const polySegs = polyphony.voicePaths[0].segments.filter((s) => s.role !== 'gap');
+    const chainSegs = chain.voicePaths[0].segments.filter((s) => s.role !== 'gap');
+    expect(polyphony.voicePaths[0].segments.some((s) => s.role === 'gap')).toBe(false);
+    expect(polySegs[1].start.x).toBeCloseTo(chainSegs[1].start.x);
+    expect(polySegs[1].start.y).toBeCloseTo(chainSegs[1].start.y);
+  });
+
   it('preserves sequential chain geometry when chordLayout is chain', () => {
     const score = {
       title: 'Chain', duration: 2, bpm: 120,

@@ -95,8 +95,9 @@ function addPolyphonicGapSegment(
   config: RuleConfig,
   previousNote: NoteEvent,
 ): Point2D {
-  if (gapDuration === 0 || config.gapPolicy === 'lift_pen') return cursor;
+  if (gapDuration === 0) return cursor;
   const end = advanceCursorForGapDuration(cursor, gapDuration, heading, config.lengthScale);
+  if (config.gapPolicy === 'lift_pen') return end;
   const gapNote: NoteEvent = {
     ...previousNote,
     id: `${previousNote.id}-gap`,

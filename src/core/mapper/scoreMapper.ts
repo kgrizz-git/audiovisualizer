@@ -15,6 +15,7 @@ export const DEFAULT_CONFIG: RuleConfig = {
   originMode: 'left_to_right',
   pitchHueMode: 'pitch_class',
   gapPolicy: 'lift_pen',
+  chordLayout: 'polyphony',
   lengthScale: 40,
   angleScale: 180,
   minSegmentLength: 10,

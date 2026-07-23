@@ -1,4 +1,4 @@
-import { GeometryBand, GeometrySegment, RenderedGeometry } from '../../core/types.js';
+import { GeometryBand, GeometrySegment, RenderedGeometry, ViewportTransform, DEFAULT_VIEWPORT } from '../../core/types.js';
 import { getLegendContent } from '../../core/legend/legendContent.js';
 
 export interface CanvasRenderOptions {
@@ -6,6 +6,7 @@ export interface CanvasRenderOptions {
   showLegend?: boolean;
   backgroundColor?: string;
   title?: string;
+  viewport?: ViewportTransform;
 }
 
 export class CanvasRenderer {
@@ -34,6 +35,12 @@ export class CanvasRenderer {
     this.ctx.fillRect(0, 0, width, height);
     if (geometry.bands.length === 0) this.drawAtmosphere(width, height);
 
+    const viewport = options.viewport ?? DEFAULT_VIEWPORT;
+    this.ctx.save();
+    this.ctx.translate(width / 2 + viewport.panX, height / 2 + viewport.panY);
+    this.ctx.scale(viewport.zoom, viewport.zoom);
+    this.ctx.translate(-width / 2, -height / 2);
+
     geometry.bands.forEach((band) => this.drawBand(band, width, time));
 
     voicePaths.forEach((voicePath) => {
@@ -50,6 +57,7 @@ export class CanvasRenderer {
         this.ctx.stroke();
       });
     });
+    this.ctx.restore();
 
     this.ctx.globalAlpha = 1;
     if (options.showLegend) this.drawCanvasLegend(width, height, geometry);

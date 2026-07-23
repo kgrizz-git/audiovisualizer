@@ -1,4 +1,4 @@
-import { RenderedGeometry } from '../../core/types.js';
+import { RenderedGeometry, ViewportTransform } from '../../core/types.js';
 import { getLegendContent } from '../../core/legend/legendContent.js';
 
 export interface SvgOptions {
@@ -7,6 +7,7 @@ export interface SvgOptions {
   backgroundColor?: string;
   title?: string;
   includePlotterTitle?: boolean;
+  viewport?: ViewportTransform;
 }
 
 /**
@@ -16,6 +17,8 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
   const { width, height, voicePaths, config } = geometry;
   const bgColor = options.backgroundColor || '#000000';
   const isPlotter = options.penPlotterMode || false;
+  const viewport = options.viewport;
+  const hasTransform = Boolean(viewport && (viewport.zoom !== 1 || viewport.panX !== 0 || viewport.panY !== 0));
 
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">\n`;
 
@@ -27,6 +30,10 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
   // Title Overlay
   if (options.title) {
     svg += buildTitleSvg(width, options.title, isPlotter, options.includePlotterTitle || false);
+  }
+
+  if (hasTransform && viewport) {
+    svg += `  <g id="viewport-transform" transform="translate(${width / 2 + viewport.panX}, ${height / 2 + viewport.panY}) scale(${viewport.zoom}) translate(${-width / 2}, ${-height / 2})">\n`;
   }
 
   // Draw Voice Paths
@@ -69,6 +76,10 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
     const y = band.y + band.height / 2;
     svg += `  <line x1="0" y1="${y.toFixed(2)}" x2="${width}" y2="${y.toFixed(2)}" stroke="${stroke}" stroke-width="${band.height.toFixed(2)}" stroke-opacity="${opacity}" />\n`;
   });
+
+  if (hasTransform) {
+    svg += `  </g>\n`;
+  }
 
   // Legend Group
   if (options.includeLegend && !isPlotter) {

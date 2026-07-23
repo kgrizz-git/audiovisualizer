@@ -1,7 +1,7 @@
 # Design Spec: Interactive Zoom & Pan with Dynamic Auto-Zoom
 
 Date: 2026-07-23
-Status: Approved
+Status: Approved (Revised from Independent Technical Review)
 
 ## Overview
 
@@ -10,7 +10,7 @@ This specification defines interactive zoom and pan controls for the AudioVisual
 ## Requirements & Goals
 
 1. **Interactive Viewport Control**: Allow users to zoom in/out and pan across the visual score preview using mouse wheel, click-and-drag, touch pinch/pan gestures, and UI controls.
-2. **Preserved Export Framing**: Ensure that current zoom level and pan offsets are accurately captured when exporting SVG, PNG, or pen-plotter files.
+2. **Preserved Export Framing**: Ensure that current zoom level and pan offsets are accurately captured when exporting SVG, PNG, or pen-plotter files, scaling pan offsets proportionally for higher-resolution export sizes (e.g. 1200px export vs 900px preview).
 3. **Dynamic Playback Auto-Zoom**: Automatically frame and track active note clusters during MIDI preview playback, smoothly re-centering and scaling the view as music progresses.
 4. **Manual Override & Reset**: Seamlessly pause auto-zoom when the user manually interacts with the viewport, providing an intuitive "Reset View" trigger to return to default full-score framing.
 
@@ -47,31 +47,34 @@ export const DEFAULT_VIEWPORT: ViewportTransform = {
   - `Drag` / `Touch Pan`: Update $(panX, panY)$ based on movement delta $(\Delta x, \Delta y)$.
   - `Pinch`: Multi-touch distance calculation for intuitive mobile/touchpad scaling.
 - **Auto-Zoom Calculation**:
-  - Computes active note bounding box $(minX, minY, maxX, maxY)$ at `currentTime`.
+  - Consumes `RenderedGeometry` from `src/core/types.ts`.
+  - Computes active note bounding box $(minX, minY, maxX, maxY)$ at `currentTime` by querying active segments (`start`/`end` coordinates) and circles (`center`/`radius`) across `geometry.voicePaths` matching active `note.onset` and `note.duration`.
   - Determines target center and target scale factor to maintain comfortable padding around active notes.
   - Applies linear interpolation (lerp) across animation frames for smooth transition without visual jitter.
+  - When no notes are active (silence / rests), maintains previous transform smoothly.
 - **State Transitions**:
   - Any manual user pan or zoom gesture sets `autoZoom = false`.
   - Clicking "Reset View" or pressing `R` restores `DEFAULT_VIEWPORT` and re-enables `autoZoom = true`.
 
 ### 2. Canvas Preview Renderer (`src/renderers/canvas/canvasRenderer.ts`)
 
-- Wraps score geometry rendering within matrix transformations:
+- Wraps score geometry rendering (`geometry.bands` and `geometry.voicePaths`) within matrix transformations:
   ```typescript
   ctx.save();
   ctx.translate(canvasWidth / 2 + panX, canvasHeight / 2 + panY);
   ctx.scale(zoom, zoom);
   ctx.translate(-canvasWidth / 2, -canvasHeight / 2);
-  // Render score geometry paths & nodes
+  // Render voice paths and time-band geometries
   ctx.restore();
   ```
-- Renders background across full canvas.
+- Renders canvas background fill and radial atmosphere outside matrix transformation.
 - Renders title, time display, and legend in fixed window coordinates (un-transformed screen space) for legibility.
 
 ### 3. SVG & Plotter Builder (`src/renderers/svg/svgBuilder.ts`)
 
 - Applies viewport transformation to SVG export output:
-  - Adjusts top-level SVG `viewBox` coordinates or wraps score paths in `<g transform="translate(...) scale(...)">`.
+  - Wraps score path elements in `<g transform="translate(...) scale(...)">`.
+  - Scales `panX` and `panY` proportionally when export canvas size differs from preview canvas size (`panX * exportWidth / previewWidth`).
   - Ensures exported SVG, PNG, and pen-plotter files match the exact framing viewed in the preview.
 
 ### 4. UI Layer & HUD Integration (`src/ui/app.ts`, `index.html`, `styles.css`)
@@ -82,19 +85,18 @@ export const DEFAULT_VIEWPORT: ViewportTransform = {
 - **Side Panel Section ("05 Viewport & Framing")**:
   - Zoom slider control (25% to 1000%).
   - Pan reset button and Auto-Zoom toggle checkbox.
-- **Keyboard Shortcuts**:
-  - `+` / `-`: Zoom in / out.
-  - `0` / `R`: Reset view.
-  - `A`: Toggle auto-zoom playback tracking.
+- **Gesture & Shortcut Protection**:
+  - Set `touch-action: none;` on `#visualizer-canvas` CSS to prevent mobile page scrolling during canvas gestures.
+  - Shield keyboard shortcuts (`+`, `-`, `R`, `A`) when typing in form inputs (`HTMLInputElement` / `HTMLSelectElement`).
 
 ## Testing & Verification
 
-1. **Unit Tests (`tests/core/viewportController.test.ts`)**:
+1. **Unit Tests (`tests/viewportController.test.ts`)**:
    - Verify wheel zoom math keeps cursor location anchored.
    - Verify drag panning updates panX/panY correctly.
-   - Verify active note bounding box calculation and auto-zoom lerp bounds.
+   - Verify active note bounding box calculation from `RenderedGeometry` and auto-zoom lerp bounds.
    - Verify manual gesture sets `autoZoom = false` and reset restores default transform.
-2. **Renderer Tests (`tests/renderers/svgBuilder.test.ts`)**:
-   - Verify SVG output includes transform/viewBox changes when viewport zoom/pan are non-default.
+2. **Renderer Tests (`tests/viewportRenderers.test.ts`)**:
+   - Verify SVG output includes transform tags when viewport zoom/pan are non-default.
 3. **Local Validation**:
    - Run `npm run validate` to pass type-checking, tests, and production build.

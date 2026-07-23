@@ -1,98 +1,120 @@
 # Design Spec: SoundFont Playback Engine & Asset Bundling
 
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-23
 Date: 2026-07-22
 Author: Antigravity
-Status: approved (revised for implementation accuracy)
+Status: approved (revised 2026-07-23; pre-flight locks applied)
 
 ## 1. Goal
 
-Provide high-quality, responsive General MIDI SoundFont playback for MIDI scores with automatic soundbank selection, manual per-track overrides, CC64 sustain pedal support, program-change handling, and seamless offline bundling for Tauri desktop releases.
+Provide General MIDI **sample** playback for MIDI scores using midi-js-soundfonts, with a
+bundled FluidR3 core for offline/Tauri, CDN fallback for other instruments/banks, CC64
+sustain via offline duration extension, and the existing oscillator synth as a first-class
+alternate **engine**. Preserve per-track mute, solo, gain, and timbre.
+
+**Deferred (backlog, not v1):** mid-track program-change handling; automatic bank selection
+from track names; full multi-bank offline packaging; live event-driven sustain API;
+channel-10 drum kits; per-track engine/bank overrides; deterministic WAV export.
 
 ## 2. Architecture & Components
 
 ```
                 ┌──────────────────────────────────────────────┐
                 │             UI / Controls (src/ui/app.ts)    │
-                │  (Soundbank Selector, Track Voice Overrides) │
+                │  Engine + Bank selectors, track mix/timbre   │
                 └──────────────────────┬───────────────────────┘
                                        │
                                        ▼
  ┌──────────────────────────────────────────────────────────────────────────┐
  │                            VoiceRouter                                   │
- │ - Evaluates track metadata (program #, track name) -> Auto soundbank     │
- │ - Manages per-track manual overrides & volume/mute/solo                  │
+ │ - global engine: sample | oscillator                                     │
+ │ - global soundbank when sample; timbre when oscillator / fallback        │
+ │ - per-track gain / mute / solo / timbre (ex-voicePlayback map)           │
  └──────────────┬───────────────────────────────────────────┬───────────────┘
-                │                                           │
-                ▼ (Patch loaded)                            ▼ (Patch loading/missing)
+                │ engine=sample + patch ready               │ else (miss / osc)
+                ▼                                           ▼
  ┌──────────────────────────────┐            ┌──────────────────────────────┐
  │       SoundfontPlayer        │            │      MidiPreviewPlayer       │
- │ - AudioBuffer sample playback│            │ - Basic Web Audio oscillator │
- │ - Velocity gain curves       │            │   synth (seamless fallback)  │
- │ - CC64 SustainTracker        │            └──────────────────────────────┘
- │ - TrackScore integration     │
- └──────────────┬───────────────┘
+ │ - AudioBuffer samples        │            │ - Web Audio oscillators      │
+ │ - Offline CC64 (per channel) │            │ - shared AudioContext        │
+ │ - Parallel patch load + gen  │            │ - channels allowlist on miss │
+ └──────────────┬───────────────┘            └──────────────────────────────┘
                 │
                 ▼
- ┌──────────────────────────────┐
- │     SoundfontPatchLoader     │
- │ 1. Tries local asset:        │
- │    public/soundfonts/<bank>/ │
- │ 2. Falls back to CDN:        │
- │    gleitz soundfonts CDN     │
- └──────────────────────────────┘
+ ┌────────────────────────────────┐
+ │     SoundfontPatchLoader       │
+ │ 1. /soundfonts/{bank}/…-mp3.js │
+ │ 2. gleitz CDN …/{bank}/…-mp3.js│
+ │ Parse JS wrapper (not JSON)    │
+ └────────────────────────────────┘
 ```
 
-### Component Breakdown
+### Component breakdown
 
-1. `src/audio/soundfont/soundfontTypes.ts`
-   - Interfaces: `SoundbankPreset` (`'FluidR3_GM' | 'MusyngKite' | 'FatBoy' | 'BasicSynth'`), `InstrumentPatch`, `VoiceRouteSettings`, `ActiveSustainedNote`.
+1. **`soundfontTypes.ts`** — `SoundbankPreset` (`FluidR3_GM` | `MusyngKite` | `FatBoy`),
+   `PlaybackEngine` (`sample` | `oscillator`), `InstrumentPatch`, `VoiceRouteSettings`
+   (includes `timbre`). Engine/bank on settings are copies of **global** router defaults in v1.
 
-2. `src/core/types.ts` & `src/core/midi/parser.ts`
-   - Extends `TrackScore` with optional `sustainEvents?: { time: number; value: number }[]` extracted from `@tonejs/midi` CC64 events.
+2. **`types.ts` / `parser.ts`** — `SustainEvent` on `TrackScore`; CC64 from `@tonejs/midi`
+   (`value` is 0–1 → store 0–127). Channel remains `track.channel ?? trackIdx`.
 
-3. `src/audio/soundfont/soundfontPatchLoader.ts`
-   - Class `SoundfontPatchLoader` managing async loading and caching of instrument sample banks (`AudioBuffer` maps per pitch).
-   - Correctly maps MIDI program 24 to `acoustic_guitar_nylon`.
-   - Checks local `/soundfonts/<bank>/<instrument>-mp3.js` first (bundled for Tauri/offline).
-   - Falls back to CDN (`https://gleitz.github.io/midi-js-soundfonts/...`) if local asset is absent.
+3. **`sustainWindows.ts`** — Offline `buildSustainWindows` / `getSustainedDuration`.
+   Open pedals clamp to score end (never `Infinity`). Player merges sustain events per
+   MIDI channel across tracks before building windows. No live `SustainTracker` in v1.
 
-4. `src/audio/soundfont/sustainTracker.ts`
-   - Deterministic state engine for CC64 (Damper/Sustain Pedal).
-   - Holds active note-offs when CC64 >= 64; triggers note releases when CC64 drops <= 63.
+4. **`soundfontPatchLoader.ts`** — `parseMidiJsSoundfontScript` evaluates allowlisted MIDI.js
+   bank scripts into a captured `MIDI` object; parallel `decodeAudioData` via injectable
+   `AudioDecoder`; local then CDN URLs:
+   `/soundfonts/{Bank}/{slug}-mp3.js` →
+   `https://gleitz.github.io/midi-js-soundfonts/{Bank}/{slug}-mp3.js`.
 
-5. `src/audio/soundfont/soundfontPlayer.ts`
-   - Web Audio player driving sample playback via `AudioBufferSourceNode`.
-   - Integrates velocity gain scaling, pitch adjustments, ADSR release envelopes, sustain tracking, and `VoiceRouter` mute/solo/gain settings.
-   - Batches missing patches to trigger fallback `MidiPreviewPlayer` once without stopping active tracks.
+5. **`soundfontPlayer.ts`** — Shared `AudioContext`; generation counter; parallel patch
+   loads; schedule samples for ready patches (pitch→note name, nearest key, velocity→gain,
+   play offset); one batched oscillator fallback for **miss channels only** via
+   `MidiPreviewPlayer.start(..., { channels })`; `stop()` clears samples + fallback.
 
-6. `src/audio/soundfont/voiceRouter.ts`
-   - Operates on `TrackScore` domain objects (`name`, `channel`, `program`, `instrumentName`, `notes`).
-   - Inspects parsed track metadata (`program`, `name`) to perform automatic best-match soundbank assignment per track.
-   - Exposes manual override settings (Soundbank choice, timbre fallback, mute, solo, gain).
+6. **`voiceRouter.ts`** — Global engine/bank defaults + per-channel **mix** overrides keyed by
+   resolved `TrackScore.channel`. No auto bank-by-name matching; no per-track engine UI in v1.
 
-7. `scripts/bundle-soundfonts.mjs` & `public/soundfonts/`
-   - Node script to download and package core General MIDI instrument patches (for `FluidR3_GM`) into `public/soundfonts/` for offline/Tauri bundling, including CC BY 3.0 license attribution.
+7. **`scripts/bundle-soundfonts.mjs`** — Downloads a documented FluidR3 **core** instrument
+   set (~20–25 patches), writes LICENSE attribution + optional sha256 manifest. CDN-first
+   product policy; gitignore `public/soundfonts/**/*.js`. Dev downloads; CI uses `--verify`
+   only (no network in `npm run validate`). Shared Tauri offline path: `public/soundfonts/`.
 
-8. `src/ui/app.ts` & `index.html`
-   - UI components for soundbank preset dropdown in playback controls, loading state indicators, and soundfont playback wiring.
+8. **UI** — Global engine + bank controls in the playback bar; existing per-track mix/timbre
+   rows remain authoritative for VoiceRouter; pause/scrub calls `SoundfontPlayer.stop()`.
 
-9. `ARCHITECTURE.md` & `dev-docs/TO_DO.md`
-   - Updates architecture documentation for SoundFont playback and updates backlog status.
+## 3. Data flow
 
-## 3. Data Flow & Execution
+1. Parse MIDI → notes + `sustainEvents` (per track; merged by channel at play time).
+2. User picks global engine/bank; VoiceRouter holds mix state.
+3. On play: parallel load needed patches; schedule samples; batch oscillator fallback for
+   miss channels only (or all channels when engine is oscillator).
+4. Sustain: extend scheduled note duration from per-channel pedal windows before
+   `AudioBufferSourceNode` stop times.
 
-1. **Score Loading:** When a MIDI file is parsed into a `Score`, `parser.ts` extracts note events and CC64 sustain pedal events. `VoiceRouter` inspects `track.program` and `track.name` to compute initial voice routing rules.
-2. **Patch Fetching:** `SoundfontPatchLoader` fetches required instrument patches in the background without blocking the UI or score visualization.
-3. **Playback Scheduling:** On play, `SoundfontPlayer` schedules note events and applies CC64 sustain pedal logic. If a track's soundfont patch is ready, it plays sample audio; if still fetching or unready, `MidiPreviewPlayer` plays fallback oscillator tones in a single batch pass.
-4. **Sustain & Controls:** CC64 events update `SustainTracker` dynamically. User changes in the UI update `VoiceRouter` live.
+## 4. Product policy
 
-## 4. Verification & Testing Strategy
+| Topic | v1 choice |
+|---|---|
+| Offline packaging | FluidR3 **core subset** only under `public/soundfonts/` |
+| MusyngKite / FatBoy | Network (CDN); label in UI |
+| Oscillator | Separate engine, not a fake bank name |
+| Engine / bank scope | **Global** UI defaults |
+| Mixed sample + osc | Channel allowlist on fallback (no double-play) |
+| Auto bank match | Deferred |
+| Program changes | Deferred |
+| CI bundler | `--verify` only; no download in validate |
 
-- Unit Tests:
-  - `tests/audio/sustainTracker.test.ts`: Test `SustainTracker` CC64 press, sustain hold, and pedal release handling.
-  - `tests/audio/soundfontPatchLoader.test.ts`: Test asset URL resolution (local vs CDN fallback) and program slug mapping with mock Web Audio.
-  - `tests/audio/voiceRouter.test.ts`: Test `VoiceRouter` auto-matching logic and `TrackScore` override behavior.
-  - `tests/audio/soundfontPlayer.test.ts`: Test `SoundfontPlayer` instantiation and playback lifecycle.
-  - `tests/core/midiParser.test.ts`: Test CC64 extraction during MIDI parsing.
-- Validation Gate: `npm run validate` (TypeScript type check, Vitest unit tests, and production build).
+## 5. Verification
+
+- Unit tests (flat `tests/*.test.ts`): sustain windows + clamp + edge cases; parser CC64
+  fixture; JS soundfont parse fixture; loader URL/fallback with mocks; VoiceRouter global
+  defaults + mix overrides; player fallback-once / miss-channel filter / mute / sustain /
+  stop lifecycle.
+- Gate: `npm run validate`.
+- Docs: rewrite ARCHITECTURE playback section; CHANGELOG MINOR; split TO_DO; README blurb.
+
+## 6. Implementation plan
+
+See [`plans/2026-07-22-soundfont-playback-plan.md`](../2026-07-22-soundfont-playback-plan.md).

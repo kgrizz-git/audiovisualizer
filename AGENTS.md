@@ -38,6 +38,10 @@ For multi-session or complex work, create a plan in `plans/` using `templates/pl
 
 For single-session tasks, skip the plan and work directly, updating relevant documentation and tests.
 
+### Design specs
+
+Design specs (visual rules, mapping contracts, export aesthetics) live in `plans/specs/` with the naming convention `YYYY-MM-DD-feature-name.md`. Specs describe *what* and *why*; implementation plans in `plans/` describe *how*. Link specs from their corresponding implementation plans.
+
 ## CHANGELOG and versioning
 
 Update `CHANGELOG.md` for user-facing changes following [Keep a Changelog](https://keepachangelog.com/) format. See [`policies/changelog-conventions.md`](policies/changelog-conventions.md) for the dual-track model (public vs developer changelog), detailed SemVer impact rules, and agent procedures.
@@ -68,6 +72,7 @@ Process:
 - `tests/` — deterministic unit tests.
 - `public/demo-midi/` — small, redistributable MIDI demo fixtures.
 - `dev-docs/` — project decisions and the active backlog.
+- `plans/` — implementation plans; `plans/specs/` for design specs; `plans/archive/` for completed work.
 
 ## Safety and repository hygiene
 

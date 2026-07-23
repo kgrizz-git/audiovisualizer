@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG, getAverageScoreBackground, mapScoreToGeometry } from '.
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
-import { GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation } from '../core/types.js';
+import { ChordLayout, GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation } from '../core/types.js';
 import { defaultVoiceSettings, MidiPreviewPlayer, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
 
 class AudioVisualizerApp {
@@ -52,6 +52,7 @@ class AudioVisualizerApp {
     this.select<PitchHueMode>('hue-mode-select', (value) => { this.currentConfig.pitchHueMode = value; });
     this.select<'black' | 'average'>('background-select', (value) => { this.backgroundMode = value; });
     this.select<GapPolicy>('gap-policy-select', (value) => { this.currentConfig.gapPolicy = value; });
+    this.select<ChordLayout>('chord-layout-select', (value) => { this.currentConfig.chordLayout = value; });
     this.element<HTMLInputElement>('interval-angle-toggle').addEventListener('change', (event) => { this.currentConfig.intervalAngleEnabled = (event.target as HTMLInputElement).checked; this.render(); });
     this.element<HTMLInputElement>('quantize-toggle').addEventListener('change', (event) => { this.currentConfig.quantizeOnset = (event.target as HTMLInputElement).checked; this.render(); });
     this.range('length-scale', 'val-length', (value) => { this.currentConfig.lengthScale = value; }, '');

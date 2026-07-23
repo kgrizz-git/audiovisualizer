@@ -10,7 +10,18 @@ export function getLegendContent(config: RuleConfig): LegendContent {
   const hue = config.pitchHueMode === 'pitch_class' ? 'Pitch class → hue' : 'Register → hue';
   switch (config.variation) {
     case 'lines':
-      return { title: 'LINE PATHS', lines: [hue, 'Duration → path distance', 'Velocity → stroke weight', `Rests → ${format(config.gapPolicy)}`] };
+      return {
+        title: 'LINE PATHS',
+        lines: [
+          hue,
+          'Duration → path distance',
+          'Velocity → stroke weight',
+          `Rests → ${format(config.gapPolicy)}`,
+          config.chordLayout === 'polyphony'
+            ? 'Overlaps → branch from time-true join (centroid if many)'
+            : 'Overlaps → sequential chain (legacy)',
+        ],
+      };
     case 'circles':
       return {
         title: 'NOTE HALOS',

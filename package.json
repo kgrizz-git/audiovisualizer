@@ -11,7 +11,10 @@
     "render": "npm run build:cli --silent && node dist-cli/render-midi.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "validate": "npm run test && npm run build"
+    "validate": "npm run test && npm run build",
+    "bundle:soundfonts": "node scripts/bundle-soundfonts.mjs",
+    "bundle:soundfonts:verify": "node scripts/bundle-soundfonts.mjs --verify"
+
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",

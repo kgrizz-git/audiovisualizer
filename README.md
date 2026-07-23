@@ -23,10 +23,11 @@ npm run validate
 ```
 
 The studio includes local classical and ragtime MIDI scores, original modern-genre
-style studies (blues, jazz, funk, electronic, hip-hop, rock, house), and links to freely
-licensed/public-domain folk, ancient, and traditional MIDI sources. Commercial pop
-songs are not redistributed. Source links open their license page before you download
-and load a file locally; uploaded MIDI never leaves the browser.
+style studies (blues, jazz, funk, electronic, hip-hop, rock, house), and **Find more
+MIDI online** links to FreeMIDI.org, BitMidi, Mutopia, Wikimedia Commons, and similar
+catalogs. Download a `.mid` there and drop it into the studio; rights vary by file and
+site. Commercial songs are not redistributed with the app. Uploaded MIDI never leaves
+the browser.
 
 ## Programmatic SVG generation
 

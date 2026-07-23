@@ -15,6 +15,8 @@ interface CliOptions {
   includeLegend: boolean;
   plotter: boolean;
   backgroundColor: string;
+  title?: string;
+  includePlotterTitle: boolean;
   manifest?: string;
 }
 
@@ -31,6 +33,8 @@ Options:
   --origin <left_to_right|center_outward|outside_inward>
   --voices <0,1,...>                    Include only MIDI channels
   --background <CSS color>               SVG background (default: #000000)
+  --title <text>                        Override title in output (default: MIDI filename)
+  --include-plotter-title               Include title in plotter mode (stroke-only)
   --output <file.svg|file.png>           Output format follows this extension
   --legend                               Include an explanatory SVG legend
   --plotter                              Stroke-only SVG; no background or legend
@@ -41,12 +45,12 @@ Options:
 export function parseCli(argv: string[]): CliOptions | null {
   const values = new Map<string, string>();
   const flags = new Set<string>();
-  const valueOptions = new Set(['input', 'output', 'mode', 'width', 'height', 'density', 'hue', 'origin', 'voices', 'background', 'manifest']);
+  const valueOptions = new Set(['input', 'output', 'mode', 'width', 'height', 'density', 'hue', 'origin', 'voices', 'background', 'manifest', 'title']);
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (!token.startsWith('--')) throw new Error(`Unexpected argument: ${token}`);
     const key = token.slice(2);
-    if (['legend', 'plotter', 'help'].includes(key)) { flags.add(key); continue; }
+    if (['legend', 'plotter', 'help', 'include-plotter-title'].includes(key)) { flags.add(key); continue; }
     if (!valueOptions.has(key)) throw new Error(`Unknown option: --${key}`);
     const value = argv[index + 1];
     if (!value || value.startsWith('--')) throw new Error(`Missing value for --${key}`);
@@ -71,6 +75,7 @@ export function parseCli(argv: string[]): CliOptions | null {
   return {
     input, output, width, height, includeLegend: flags.has('legend'), plotter: flags.has('plotter'),
     backgroundColor: values.get('background') ?? '#000000', manifest: values.get('manifest'),
+    title: values.get('title'), includePlotterTitle: flags.has('include-plotter-title'),
     config: { ...DEFAULT_CONFIG, variation: mode as Variation, pitchHueMode: hue as PitchHueMode, originMode: origin as OriginMode, voiceFilter, timeLineDensity: density },
   };
 }
@@ -84,12 +89,13 @@ async function main(): Promise<void> {
   try {
     const bytes = new Uint8Array(await readFile(options.input));
     const score = parseMidiData(bytes.buffer as ArrayBuffer, options.input);
+    const resolvedTitle = options.title ?? score.title;
     const mapped = mapScoreToGeometry(score, options.config, options.width, options.height);
     const geometry = fitGeometryToCanvas(mapped, options.width, options.height);
-    const svg = buildSvg(geometry, { includeLegend: options.includeLegend, penPlotterMode: options.plotter, backgroundColor: options.backgroundColor });
+    const svg = buildSvg(geometry, { includeLegend: options.includeLegend, penPlotterMode: options.plotter, backgroundColor: options.backgroundColor, title: resolvedTitle, includePlotterTitle: options.includePlotterTitle });
     const output = options.output.toLowerCase().endsWith('.png') ? new Resvg(svg).render().asPng() : svg;
     await writeFile(options.output, output);
-    if (options.manifest) await writeFile(options.manifest, JSON.stringify({ score, config: options.config, output: { width: options.width, height: options.height, backgroundColor: options.backgroundColor, plotter: options.plotter } }, null, 2) + '\n');
+    if (options.manifest) await writeFile(options.manifest, JSON.stringify({ score, config: options.config, output: { width: options.width, height: options.height, backgroundColor: options.backgroundColor, plotter: options.plotter, title: resolvedTitle } }, null, 2) + '\n');
     console.log(`Wrote ${options.output}${options.manifest ? ` and ${options.manifest}` : ''}`);
   } catch (error) {
     console.error(`Error: ${(error as Error).message}`);

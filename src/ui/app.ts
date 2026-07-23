@@ -18,6 +18,7 @@ class AudioVisualizerApp {
   private midiPreview = new MidiPreviewPlayer();
   private voicePlayback = new Map<number, VoicePlaybackSettings>();
   private backgroundMode: 'black' | 'average' = 'black';
+  private exportTitle: string = this.currentScore.title;
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
@@ -69,6 +70,9 @@ class AudioVisualizerApp {
     this.element<HTMLButtonElement>('btn-export-svg').addEventListener('click', () => this.downloadSvg(false));
     this.element<HTMLButtonElement>('btn-export-plotter').addEventListener('click', () => this.downloadSvg(true));
     this.element<HTMLButtonElement>('btn-export-png').addEventListener('click', () => this.downloadPng());
+
+    const titleInput = this.element<HTMLInputElement>('export-title-input');
+    titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateCanvasAriaLabel(); this.render(); });
   }
 
   private select<T extends string>(id: string, apply: (value: T) => void): void {
@@ -92,11 +96,13 @@ class AudioVisualizerApp {
     try { this.setScore(parseMidiData(await file.arrayBuffer(), file.name), `Loaded ${file.name}`); this.element<HTMLLabelElement>('file-label').textContent = `Loaded · ${file.name}`; }
     catch { this.setStatus('That file could not be read as MIDI.', true); }
   }
-  private setScore(score: Score, message: string): void { this.pause(); this.currentScore = score; this.currentTime = score.duration; this.currentConfig.voiceFilter = null; this.voicePlayback = new Map(score.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)])); this.updateScoreUi(); this.render(); this.setStatus(message); }
+  private setScore(score: Score, message: string): void { this.pause(); this.currentScore = score; this.currentTime = score.duration; this.currentConfig.voiceFilter = null; this.voicePlayback = new Map(score.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)])); this.exportTitle = score.title; this.updateScoreUi(); this.render(); this.setStatus(message); }
 
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
     this.element<HTMLElement>('score-meta').textContent = `${this.currentScore.tracks.length} voice${this.currentScore.tracks.length === 1 ? '' : 's'} · ${this.currentScore.bpm} BPM`;
+    this.element<HTMLInputElement>('export-title-input').value = this.exportTitle;
+    this.updateCanvasAriaLabel();
     const options = this.element<HTMLElement>('voice-filter-options'); options.replaceChildren();
     this.currentScore.tracks.forEach((track) => {
       const label = document.createElement('label'); label.className = 'voice-chip';
@@ -120,6 +126,12 @@ class AudioVisualizerApp {
     });
   }
 
+  private updateCanvasAriaLabel(): void {
+    const canvas = this.element<HTMLCanvasElement>('visualizer-canvas');
+    const title = this.exportTitle.trim() || this.currentScore.title;
+    canvas.setAttribute('aria-label', `Visual score rendering: ${title}`);
+  }
+
   private createAudioToggle(label: string, checked: boolean, ariaLabel: string, apply: (checked: boolean) => void): HTMLLabelElement {
     const wrapper = document.createElement('label'); wrapper.className = 'audio-toggle'; wrapper.textContent = label;
     const input = document.createElement('input'); input.type = 'checkbox'; input.checked = checked; input.setAttribute('aria-label', ariaLabel); input.addEventListener('change', () => apply(input.checked)); wrapper.prepend(input); return wrapper;
@@ -139,12 +151,12 @@ class AudioVisualizerApp {
 
   private render(): void {
     const geometry = this.geometryFor(900);
-    this.canvasRenderer.render(geometry, { time: this.currentTime, showLegend: true, backgroundColor: this.backgroundColor() });
+    this.canvasRenderer.render(geometry, { time: this.currentTime, showLegend: true, backgroundColor: this.backgroundColor(), title: this.exportTitle });
     this.element<HTMLInputElement>('progress-scrubber').value = String(Math.round(this.currentTime / Math.max(this.currentScore.duration, 0.01) * 1000));
     this.element<HTMLOutputElement>('time-display').value = `${formatTime(this.currentTime)} / ${formatTime(this.currentScore.duration)}`;
   }
-  private downloadSvg(plotter: boolean): void { const geometry = this.geometryFor(1200); this.download(new Blob([buildSvg(geometry, { includeLegend: !plotter, penPlotterMode: plotter, backgroundColor: this.backgroundColor() })], { type: 'image/svg+xml' }), `${this.filename()}${plotter ? '-plotter' : ''}.svg`); }
-  private downloadPng(): void { const geometry = this.geometryFor(1200); this.canvasRenderer.render(geometry, { showLegend: true, backgroundColor: this.backgroundColor() }); this.canvasRenderer.downloadPng(`${this.filename()}.png`); this.render(); }
+  private downloadSvg(plotter: boolean): void { const geometry = this.geometryFor(1200); this.download(new Blob([buildSvg(geometry, { includeLegend: !plotter, penPlotterMode: plotter, backgroundColor: this.backgroundColor(), title: this.exportTitle, includePlotterTitle: false })], { type: 'image/svg+xml' }), `${this.filename()}${plotter ? '-plotter' : ''}.svg`); }
+  private downloadPng(): void { const geometry = this.geometryFor(1200); this.canvasRenderer.render(geometry, { showLegend: true, backgroundColor: this.backgroundColor(), title: this.exportTitle }); this.canvasRenderer.downloadPng(`${this.filename()}.png`); this.render(); }
   private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }
   private backgroundColor(): string { return this.backgroundMode === 'average' ? getAverageScoreBackground(this.currentScore, this.currentConfig) : '#000000'; }
   private download(blob: Blob, name: string): void { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }

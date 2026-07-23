@@ -173,10 +173,19 @@ identity, while the visible title reflects the user's labeling intent for the ou
 - [ ] Unit test `buildTitleSvg` directly (exported from svgBuilder.ts):
   - title absent → no title element.
   - title present → SVG contains expected title pill at top-left.
-  - truncation at 40 chars.
+  - truncation at 40 chars (including boundary case: exactly 40 chars).
+  - XML special characters (`&`, `<`, `>`) are properly escaped via `escapeText`.
+  - empty string → no title element (same as absent).
+  - whitespace-only string → no title element (trimmed/empty check).
   - plotter mode without flag → title omitted.
-  - plotter mode with `--include-plotter-title` → title present.
-- [ ] Verify `filename()` uses `score.title` (not `exportTitle`).
+  - plotter mode with `--include-plotter-title` → title present (stroke-only styling).
+- [ ] Unit test `filename()` derivation logic indirectly through SVG pathway:
+  - When `exportTitle` differs from `score.title`, verify filename uses `score.title`.
+  - When `exportTitle` equals `score.title`, verify filename matches.
+- [ ] Manual verification:
+  - Canvas title draws last (overlay above all artwork) during playback animation.
+  - PNG export includes title by checking `downloadPng()` passes title in render options.
+  - Accessibility: verify canvas element has `role="img"` and `aria-label` updated on title change.
 - [ ] Run `npm run validate`.
 
 ## Risks

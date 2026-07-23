@@ -5,6 +5,8 @@ export interface SvgOptions {
   includeLegend?: boolean;
   penPlotterMode?: boolean; // stroke-only, black/monochrome or raw vector paths
   backgroundColor?: string;
+  title?: string;
+  includePlotterTitle?: boolean;
 }
 
 /**
@@ -20,6 +22,11 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
   // Background
   if (!isPlotter) {
     svg += `  <rect width="${width}" height="${height}" fill="${bgColor}" />\n`;
+  }
+
+  // Title Overlay
+  if (options.title) {
+    svg += buildTitleSvg(width, options.title, isPlotter, options.includePlotterTitle || false);
   }
 
   // Draw Voice Paths
@@ -95,4 +102,49 @@ function buildLegendSvg(w: number, h: number, config: RenderedGeometry['config']
 
 function escapeText(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
+export function buildTitleSvg(_width: number, title: string, isPlotter: boolean, includePlotterTitle: boolean): string {
+  // Omit title in plotter mode unless explicitly included
+  if (isPlotter && !includePlotterTitle) {
+    return '';
+  }
+
+  // Trim and check for empty
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) {
+    return '';
+  }
+
+  // Truncate at 40 characters
+  const displayTitle = trimmedTitle.length > 40 ? trimmedTitle.slice(0, 37) + '…' : trimmedTitle;
+  const escapedTitle = escapeText(displayTitle);
+
+  // Title pill styling
+  const padding = 12;
+  const fontSize = 14;
+  const pillWidth = displayTitle.length * fontSize * 0.6 + padding * 2; // Approximate width
+  const pillHeight = fontSize + padding;
+  const x = 16;
+  const y = 16;
+
+  if (isPlotter && includePlotterTitle) {
+    // Stroke-only styling for plotter mode
+    return `
+  <!-- Title Overlay -->
+  <g id="title-overlay" transform="translate(${x}, ${y})">
+    <rect width="${pillWidth}" height="${pillHeight}" rx="4" fill="none" stroke="#000000" stroke-width="1" />
+    <text x="${padding / 2}" y="${fontSize + padding / 4}" fill="#000000" font-family="sans-serif" font-size="${fontSize}" font-weight="600">${escapedTitle}</text>
+  </g>
+`;
+  }
+
+  // Standard mode: semi-transparent dark pill
+  return `
+  <!-- Title Overlay -->
+  <g id="title-overlay" transform="translate(${x}, ${y})">
+    <rect width="${pillWidth}" height="${pillHeight}" rx="4" fill="rgba(15, 23, 42, 0.85)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
+    <text x="${padding / 2}" y="${fontSize + padding / 4}" fill="#f8fafc" font-family="sans-serif" font-size="${fontSize}" font-weight="600">${escapedTitle}</text>
+  </g>
+`;
 }

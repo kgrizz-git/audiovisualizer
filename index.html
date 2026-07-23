@@ -36,16 +36,24 @@
           </optgroup>
         </select></div>
         <div class="file-dropzone" id="dropzone" tabindex="0"><label for="midi-file-input" id="file-label">Drop a MIDI here or browse</label><input type="file" id="midi-file-input" accept=".mid,.midi,audio/midi" /></div>
-        <div class="control-item"><label for="source-midi-select">Free online MIDI pointers</label><select id="source-midi-select">
-          <option value="">Explore a source by genre…</option>
-          <option value="https://commons.wikimedia.org/wiki/File:What_shall_we_do_with_the_drunken_sailor.mid">Folk · Drunken Sailor (CC0)</option>
-          <option value="https://commons.wikimedia.org/wiki/File:Maturika.mid">Chinese folk · Mo Li Hua (public domain)</option>
-          <option value="https://commons.wikimedia.org/wiki/File:Seikilos.mid">Ancient · Seikilos Epitaph (public domain)</option>
-          <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files_of_traditional_music">Traditional · waltz &amp; folk collection</option>
-          <option value="https://commons.wikimedia.org/wiki/Category:Ragtime">Ragtime · early jazz / rag collection</option>
-          <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files">MIDI library · blues, jazz figures &amp; more</option>
+        <div class="control-item"><label for="source-midi-select">Find more MIDI online</label><select id="source-midi-select">
+          <option value="">Browse a free MIDI site or Commons piece…</option>
+          <optgroup label="Free MIDI sites">
+            <option value="https://freemidi.org/">FreeMIDI.org · browse by artist / genre</option>
+            <option value="https://bitmidi.com/">BitMidi · large searchable catalog</option>
+            <option value="https://www.mutopiaproject.org/">Mutopia · public-domain classical</option>
+            <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files">Wikimedia Commons · MIDI library</option>
+            <option value="https://github.com/ldrolez/free-midi-chords">GitHub · free MIDI chord packs (MIT)</option>
+          </optgroup>
+          <optgroup label="Commons pieces &amp; collections">
+            <option value="https://commons.wikimedia.org/wiki/File:What_shall_we_do_with_the_drunken_sailor.mid">Folk · Drunken Sailor (CC0)</option>
+            <option value="https://commons.wikimedia.org/wiki/File:Maturika.mid">Chinese folk · Mo Li Hua (public domain)</option>
+            <option value="https://commons.wikimedia.org/wiki/File:Seikilos.mid">Ancient · Seikilos Epitaph (public domain)</option>
+            <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files_of_traditional_music">Traditional · waltz &amp; folk collection</option>
+            <option value="https://commons.wikimedia.org/wiki/Category:Ragtime">Ragtime · early jazz / rag collection</option>
+          </optgroup>
         </select></div>
-        <p class="hint">Links open the license/source page in a new tab; download the MIDI there, then drop it here.</p>
+        <p class="hint">Opens in a new tab. Download a <code>.mid</code> there, then drop it above. Site catalogs often mix rights—use files you are allowed to; nothing is uploaded from this app.</p>
       </section>
 
       <section class="control-group"><h2><span>02</span> Compose the rule set</h2>
@@ -67,13 +75,13 @@
         <fieldset class="voice-filter"><legend>Local synth voices</legend><div id="audio-voice-options" class="audio-voice-options"></div></fieldset>
       </section>
 
-      <section class="control-group export-group"><h2><span>04</span> Export</h2><div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div></section>
+      <section class="control-group export-group"><h2><span>04</span> Export</h2><div class="export-title-field"><label for="export-title-input">Export title</label><input type="text" id="export-title-input" placeholder="Auto-filled from MIDI filename" maxlength="40" /></div><div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div></section>
       <p class="status" id="app-status" role="status">Ready · Generative study</p>
     </aside>
 
     <main class="viewport-container">
       <div class="stage-header"><div><p class="eyebrow">CURRENT SCORE</p><h2 id="score-title">Generative study · C major</h2></div><p id="score-meta">2 voices · 120 BPM</p></div>
-      <div class="canvas-wrapper"><canvas id="visualizer-canvas" width="800" height="800"></canvas><div class="stage-corner">DETERMINISTIC<br>VISUALIZATION</div></div>
+      <div class="canvas-wrapper"><canvas id="visualizer-canvas" width="800" height="800" role="img" aria-label="Visual score rendering"></canvas><div class="stage-corner">DETERMINISTIC<br>VISUALIZATION</div></div>
       <div class="playback-bar"><button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button><output id="time-display">00:00 / 00:00</output><input id="progress-scrubber" type="range" min="0" max="1000" value="1000" aria-label="MIDI playback time" /><span class="audio-label">LOCAL SYNTH</span></div>
     </main>
   </div>

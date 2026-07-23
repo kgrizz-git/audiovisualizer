@@ -1,9 +1,6 @@
 import { Midi } from '@tonejs/midi';
-import { Score, NoteEvent, TrackScore } from '../types.js';
+import { Score, NoteEvent, TrackScore, SustainEvent } from '../types.js';
 
-/**
- * Parses binary MIDI data into a normalized Score object.
- */
 export function parseMidiData(arrayBuffer: ArrayBuffer, fileName: string = 'Untitled Score'): Score {
   const midi = new Midi(arrayBuffer);
 
@@ -11,7 +8,16 @@ export function parseMidiData(arrayBuffer: ArrayBuffer, fileName: string = 'Unti
   const tracks: TrackScore[] = [];
 
   midi.tracks.forEach((track, trackIdx) => {
-    if (track.notes.length === 0) return;
+    const sustainEvents: SustainEvent[] = [];
+    const sustainCCs = track.controlChanges?.[64] ?? track.controlChanges?.sustain;
+    if (sustainCCs) {
+      for (const cc of sustainCCs) {
+        sustainEvents.push({ time: cc.time, value: Math.round(cc.value * 127) });
+      }
+      sustainEvents.sort((a, b) => a.time - b.time);
+    }
+
+    if (track.notes.length === 0 && sustainEvents.length === 0) return;
 
     const notes: NoteEvent[] = track.notes.map((n, noteIdx) => {
       const duration = Math.max(0.01, n.duration);
@@ -21,7 +27,7 @@ export function parseMidiData(arrayBuffer: ArrayBuffer, fileName: string = 'Unti
       }
 
       return {
-        id: `t${trackIdx}-n${noteIdx}`,
+        id: 't' + trackIdx + '-n' + noteIdx,
         pitch: n.midi,
         onset: n.time,
         duration: duration,
@@ -31,15 +37,15 @@ export function parseMidiData(arrayBuffer: ArrayBuffer, fileName: string = 'Unti
       };
     });
 
-    // Sort notes chronologically by onset time
     notes.sort((a, b) => a.onset - b.onset);
 
     tracks.push({
-      name: track.name || `Track ${trackIdx + 1}`,
+      name: track.name || ('Track ' + (trackIdx + 1)),
       channel: track.channel ?? trackIdx,
       program: track.instrument.number,
       instrumentName: track.instrument.name || 'Unknown instrument',
       notes,
+      sustainEvents,
     });
   });
 
@@ -53,11 +59,8 @@ export function parseMidiData(arrayBuffer: ArrayBuffer, fileName: string = 'Unti
   };
 }
 
-/**
- * Generates a synthetic multi-track demo score for initial UI previews without needing an external MIDI file.
- */
 export function generateDemoScore(): Score {
-  const pitchScale = [60, 62, 64, 65, 67, 69, 71, 72, 74, 76]; // C major scale
+  const pitchScale = [60, 62, 64, 65, 67, 69, 71, 72, 74, 76];
   const bassScale = [36, 41, 43, 45, 48];
 
   const leadNotes: NoteEvent[] = [];
@@ -66,7 +69,7 @@ export function generateDemoScore(): Score {
     const pitch = pitchScale[i % pitchScale.length];
     const duration = 0.25 + (i % 3) * 0.25;
     leadNotes.push({
-      id: `lead-${i}`,
+      id: 'lead-' + i,
       pitch,
       onset: currentTime,
       duration,
@@ -83,7 +86,7 @@ export function generateDemoScore(): Score {
     const pitch = bassScale[i % bassScale.length];
     const duration = 0.8;
     bassNotes.push({
-      id: `bass-${i}`,
+      id: 'bass-' + i,
       pitch,
       onset: bassTime,
       duration,
@@ -99,8 +102,8 @@ export function generateDemoScore(): Score {
     duration: Math.max(currentTime, bassTime),
     bpm: 120,
     tracks: [
-      { name: 'Melody (Channel 1)', channel: 0, program: 0, instrumentName: 'Acoustic Grand Piano', notes: leadNotes },
-      { name: 'Bass (Channel 2)', channel: 1, program: 32, instrumentName: 'Acoustic Bass', notes: bassNotes },
+      { name: 'Melody (Channel 1)', channel: 0, program: 0, instrumentName: 'Acoustic Grand Piano', notes: leadNotes, sustainEvents: [] },
+      { name: 'Bass (Channel 2)', channel: 1, program: 32, instrumentName: 'Acoustic Bass', notes: bassNotes, sustainEvents: [] },
     ],
   };
 }

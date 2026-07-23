@@ -14,12 +14,18 @@ export interface NoteEvent {
   pitchClass: number; // midi % 12 (0 = C, 1 = C#, ...)
 }
 
+export interface SustainEvent {
+  time: number;  // seconds
+  value: number; // 0-127; >= 64 = pedal down
+}
+
 export interface TrackScore {
   name: string;
   channel: number;
   program: number;
   instrumentName: string;
   notes: NoteEvent[];
+  sustainEvents?: SustainEvent[];
 }
 
 export interface Score {

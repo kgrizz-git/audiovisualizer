@@ -16,13 +16,9 @@ export function cdnSoundfontUrl(bank: SoundbankPreset, slug: string): string {
  * Only call on bundled /soundfonts assets or gleitz CDN responses — never on user MIDI.
  */
 export function parseMidiJsSoundfontScript(text: string, slug: string): Record<string, string> {
-  const MIDI: { Soundfont: Record<string, Record<string, string>> } = { Soundfont: {} };
-  // Parameter MIDI is defined, so `var MIDI = {}` inside the script is skipped.
-  const run = new Function('MIDI', `${text}\n; return MIDI;`);
-  const result = run(MIDI) as typeof MIDI;
-  const map = result?.Soundfont?.[slug];
-  if (!map || typeof map !== 'object') throw new Error(`Soundfont slug missing: ${slug}`);
-  return map;
+  const match = text.match(/MIDI\.Soundfont\.[a-zA-Z0-9_]+\s*=\s*(\{[\s\S]+\});?/);
+  if (!match) throw new Error(`Soundfont script invalid format: ${slug}`);
+  return JSON.parse(match[1]);
 }
 
 export function dataUriToArrayBuffer(dataUri: string): ArrayBuffer {

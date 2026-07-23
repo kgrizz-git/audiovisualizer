@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-23
 Date: 2026-07-22
 Author: Antigravity
-Status: approved (revised 2026-07-23; pre-flight locks applied)
+Status: approved (revised 2026-07-23; pre-flight locks + weaker-model-ready plan)
 
 ## 1. Goal
 
@@ -117,4 +117,5 @@ channel-10 drum kits; per-track engine/bank overrides; deterministic WAV export.
 
 ## 6. Implementation plan
 
-See [`plans/2026-07-22-soundfont-playback-plan.md`](../2026-07-22-soundfont-playback-plan.md).
+See [`plans/2026-07-22-soundfont-playback-plan.md`](../2026-07-22-soundfont-playback-plan.md)
+(weaker-model-ready: full test bodies, class skeletons, URL/GM-slug/HTML snippets).

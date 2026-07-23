@@ -1,0 +1,159 @@
+{
+  "bank": "FluidR3_GM",
+  "files": [
+    {
+      "slug": "acoustic_grand_piano",
+      "file": "acoustic_grand_piano-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3.js",
+      "sha256": "00eebe0214c12ff8f32c47c2f7ac92ef352800e868ab0f883b80854486ac4ca6",
+      "bytes": 2631954
+    },
+    {
+      "slug": "bright_acoustic_piano",
+      "file": "bright_acoustic_piano-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/bright_acoustic_piano-mp3.js",
+      "sha256": "17fe637f5868899a4c1a777c62ad0c3816c1852cb90f6e477b5a6f945a5722d8",
+      "bytes": 2632311
+    },
+    {
+      "slug": "electric_piano_1",
+      "file": "electric_piano_1-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_piano_1-mp3.js",
+      "sha256": "19041530232e66f8d9b00f43ede2fa50f59a55b1a27a81daf864c54d371426b2",
+      "bytes": 2232690
+    },
+    {
+      "slug": "harpsichord",
+      "file": "harpsichord-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/harpsichord-mp3.js",
+      "sha256": "d3f214640a2373e362adc236a2e2adc7868fa7b2602cd51baab96321b4382a09",
+      "bytes": 2332057
+    },
+    {
+      "slug": "vibraphone",
+      "file": "vibraphone-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/vibraphone-mp3.js",
+      "sha256": "263bf866f7facd9652d39d4f7f499e8f883bc40adbdee75d8c5caf11403132f5",
+      "bytes": 2020776
+    },
+    {
+      "slug": "acoustic_guitar_nylon",
+      "file": "acoustic_guitar_nylon-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_nylon-mp3.js",
+      "sha256": "5375fa9e0408d960e12b6e4ec120c42bce824d80b18e982b27ddaece146a4f64",
+      "bytes": 1837439
+    },
+    {
+      "slug": "acoustic_guitar_steel",
+      "file": "acoustic_guitar_steel-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_steel-mp3.js",
+      "sha256": "cb3caa60a5dfe49734c07f8c069df48ab2d0ddca4b38260d8562d8af477db456",
+      "bytes": 1984415
+    },
+    {
+      "slug": "overdriven_guitar",
+      "file": "overdriven_guitar-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/overdriven_guitar-mp3.js",
+      "sha256": "038f84e0ddfa5ae7a3c677379a4a166cb12646abbf922657f9419158accb7557",
+      "bytes": 2929907
+    },
+    {
+      "slug": "acoustic_bass",
+      "file": "acoustic_bass-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_bass-mp3.js",
+      "sha256": "7b6d656613f2b8e2e73526317543a491c630bd5dab4426c54dae55f67dfd1e91",
+      "bytes": 1958275
+    },
+    {
+      "slug": "electric_bass_finger",
+      "file": "electric_bass_finger-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_bass_finger-mp3.js",
+      "sha256": "4b45ce5222c73a849fb6dcdf96e5cd489866a120d7cbf13498ac53a3a81e57e5",
+      "bytes": 1991634
+    },
+    {
+      "slug": "violin",
+      "file": "violin-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/violin-mp3.js",
+      "sha256": "3c169ac4c7781fe145e545e909993371188aa6bad617bc3a5f0692b7678995f8",
+      "bytes": 2870964
+    },
+    {
+      "slug": "viola",
+      "file": "viola-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/viola-mp3.js",
+      "sha256": "0aabb7733ddb5852cb41a5e4881ca2a96781009243ba31d62e3e114c642d9051",
+      "bytes": 2803843
+    },
+    {
+      "slug": "cello",
+      "file": "cello-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/cello-mp3.js",
+      "sha256": "fc72c9351e0dda586802f97a1b890e415640f54dc6cc397bd5dc32b078f6ce4c",
+      "bytes": 3005203
+    },
+    {
+      "slug": "string_ensemble_1",
+      "file": "string_ensemble_1-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/string_ensemble_1-mp3.js",
+      "sha256": "8571395f4c42a989a63e0aed48ad9d79f0ac1a822ff2afd7cb356191be8fd4a2",
+      "bytes": 2803855
+    },
+    {
+      "slug": "choir_aahs",
+      "file": "choir_aahs-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/choir_aahs-mp3.js",
+      "sha256": "45586b4abdfc7595af8ae1784dee9bf8b7da73fc4f967cd0333f460297f1eb7a",
+      "bytes": 2803848
+    },
+    {
+      "slug": "trumpet",
+      "file": "trumpet-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/trumpet-mp3.js",
+      "sha256": "7f37e0b8fbbfbf67a1183c746d83c85c11790283e2ea9994bdcdb9055bb0e67c",
+      "bytes": 2937749
+    },
+    {
+      "slug": "trombone",
+      "file": "trombone-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/trombone-mp3.js",
+      "sha256": "670c03635d7147847d029f09d9bb2d8c8e902852192713dce3750d16d7265abd",
+      "bytes": 2621806
+    },
+    {
+      "slug": "french_horn",
+      "file": "french_horn-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/french_horn-mp3.js",
+      "sha256": "02ab9a746f2f43c9867d67735e52d100996a0d194f06da5e3c4844528869928e",
+      "bytes": 2803849
+    },
+    {
+      "slug": "alto_sax",
+      "file": "alto_sax-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/alto_sax-mp3.js",
+      "sha256": "18ec57c02f27c7e8dc4620f57fa9b94e32babf4ebae7d1f2205e053d3287abce",
+      "bytes": 2602486
+    },
+    {
+      "slug": "tenor_sax",
+      "file": "tenor_sax-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/tenor_sax-mp3.js",
+      "sha256": "6e4d21071902042d98b3538138c547d6c71924d2ccb9c33ecbf3d772b82555df",
+      "bytes": 3005207
+    },
+    {
+      "slug": "flute",
+      "file": "flute-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/flute-mp3.js",
+      "sha256": "e2e35283876eec60b919beeb8bfa49f46f12dddf5b8c6025e7a45c5d2a24bda5",
+      "bytes": 2969583
+    },
+    {
+      "slug": "synth_strings_1",
+      "file": "synth_strings_1-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/synth_strings_1-mp3.js",
+      "sha256": "48b2ac1aefd3d83d24e7b6ce50fa9284cdbdd5dc7ad8472a6db103f791afcda2",
+      "bytes": 2897125
+    }
+  ]
+}

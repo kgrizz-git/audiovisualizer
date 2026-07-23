@@ -21,6 +21,14 @@ uses [Semantic Versioning](https://semver.org/).
 ### Changed
 - Default `spiralBias` is `0` (was `2`) so interval turns map ascending/descending
   pitch to opposite heading directions without a constant skew. SemVer: **MINOR**.
+- Circle (note halo) paths use the shared Interval turns control: on → turn by melodic
+  interval (same sign rule as lines); off → advance straight on the origin heading.
+  Removes the former fixed +15° per-note turn. SemVer: **MINOR**.
+- Turn scale is now **degrees per octave** (`angleScale`, default `180`, UI 0–360 step
+  15). Semitone contribution is `angleScale / 12` (default still 15°/semitone).
+  SemVer: **MINOR** (config unit change).
+- Local synth defaults assign distinct oscillator timbres by voice order (sine →
+  triangle → sawtooth → square, then wrap), not by MIDI program family. SemVer: **PATCH**.
 
 ## [0.4.4] - 2026-07-09
 

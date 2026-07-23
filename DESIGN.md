@@ -37,7 +37,9 @@ the score.
 - `circles`: note halos whose radius and center-to-center path advance reflect duration,
   for a more punctate composition. Specifically, the center advances by the note's mapped
   length and radius is 40% of that length, with a 5px minimum; mapped length is
-  `max(minSegmentLength, duration × lengthScale)`. Standard circles have a pitch-colored
+  `max(minSegmentLength, duration × lengthScale)`. Path heading follows the same interval
+  rule as line paths when Interval turns is on; when off, centers advance straight along
+  the origin heading (right / outward / inward). Standard circles have a pitch-colored
   fill at 75% opacity and a white outline. Fill versus outline currently carries no
   musical distinction: unfilled circles occur only in plotter SVG, where fills are
   removed deliberately for pen compatibility.
@@ -48,11 +50,13 @@ the score.
   detected key or chord. Silent time is a low-contrast neutral band.
 
 Origins for path-based modes are left-to-right, center-outward, and outside-inward.
-Line paths can turn by melodic interval. Ascending intervals always turn one way and
-descending the opposite (positive `angleScale`); optional spiral bias adds a constant
-curvature each turn and defaults to `0` so turn direction matches interval sign unless
-the viewer opts into ornament. Quantization snaps onsets to a sixteenth-note grid for a
-deliberately more regular visual rhythm.
+Line and circle paths share Interval turns: ascending intervals always turn one way and
+descending the opposite (positive `angleScale`, degrees of turn per octave, default
+`180`); each semitone contributes `angleScale / 12`. Optional spiral bias adds a
+constant curvature each turn and defaults to `0` so turn direction matches interval
+sign unless the viewer opts into ornament. With Interval turns off, both modes advance
+straight on the initial heading. Quantization snaps onsets to a sixteenth-note grid for
+a deliberately more regular visual rhythm.
 
 ## Canvas and export aesthetic
 

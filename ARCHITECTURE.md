@@ -60,7 +60,9 @@ used to create them. Its public semantics are defined in [DESIGN.md](DESIGN.md).
 
 MIDI playback is a local Web Audio oscillator preview, not General MIDI reproduction.
 It is synchronized with the visual scrubber and offers per-track timbre, volume, mute,
-and solo. Program metadata is retained for future soundfont routing.
+and solo. Default timbres cycle sine → triangle → sawtooth → square by voice order so
+tracks sound distinct even when they share a MIDI program. Program metadata is retained
+for future soundfont routing.
 
 Planned audio files enter through a separate local decode/transcription boundary. The
 adapted estimated score will reuse the same mapper/renderers, while original-audio

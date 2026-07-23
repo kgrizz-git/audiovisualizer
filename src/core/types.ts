@@ -34,7 +34,7 @@ export interface RuleConfig {
   pitchHueMode: PitchHueMode;
   gapPolicy: GapPolicy;
   lengthScale: number;    // pixels per second
-  angleScale: number;     // degrees per semitone interval
+  angleScale: number;     // degrees of path turn per octave (12 semitones)
   minSegmentLength: number;
   strokeWidthBase: number;
   strokeWidthScale: number;

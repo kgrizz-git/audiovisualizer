@@ -12,7 +12,15 @@ export function getLegendContent(config: RuleConfig): LegendContent {
     case 'lines':
       return { title: 'LINE PATHS', lines: [hue, 'Duration → path distance', 'Velocity → stroke weight', `Rests → ${format(config.gapPolicy)}`] };
     case 'circles':
-      return { title: 'NOTE HALOS', lines: [hue, 'Duration → radius + path advance', 'Velocity → outline weight', 'Fill + outline → one note (not separate data)'] };
+      return {
+        title: 'NOTE HALOS',
+        lines: [
+          hue,
+          'Duration → radius + path advance',
+          config.intervalAngleEnabled ? 'Interval → path turn' : 'Path advances on initial heading',
+          'Fill + outline → one note (not separate data)',
+        ],
+      };
     case 'vertical_tone':
       return { title: 'PITCH TIMELINE', lines: ['Time → left to right', 'Pitch → vertical position + hue', 'Duration → segment length', 'Velocity → stroke weight'] };
     case 'tonal_time_lines':

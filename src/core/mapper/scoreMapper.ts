@@ -9,12 +9,14 @@ import {
   Point2D,
   NoteEvent,
 } from '../types.js';
+import { mapPolyphonicLineSegments } from './polyphonicLines.js';
 
 export const DEFAULT_CONFIG: RuleConfig = {
   variation: 'lines',
   originMode: 'left_to_right',
   pitchHueMode: 'pitch_class',
   gapPolicy: 'lift_pen',
+  chordLayout: 'polyphony',
   lengthScale: 40,
   angleScale: 180,
   minSegmentLength: 10,
@@ -97,6 +99,11 @@ export function mapScoreToGeometry(
       .sort((a, b) => a.onset - b.onset || a.id.localeCompare(b.id))
       .map((note) => quantizeNote(note, score.bpm, config));
 
+    if (config.variation === 'lines' && config.chordLayout === 'polyphony') {
+      const origin = getInitialCursor(config.originMode, targetWidth, targetHeight, track.channel);
+      const heading = getInitialHeading(config.originMode, track.channel);
+      segments.push(...mapPolyphonicLineSegments(notes, config, origin, heading));
+    } else {
     notes.forEach((note) => {
       const color = getNoteColor(note, config);
       const strokeWidth = config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale;
@@ -171,6 +178,7 @@ export function mapScoreToGeometry(
 
       prevNote = note;
     });
+    }
 
     voicePaths.push({
       voice: track.channel,

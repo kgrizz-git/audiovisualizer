@@ -52,9 +52,13 @@ parser-local id, MIDI pitch `0..127`, onset/duration in seconds, velocity `0..12
 voice, and pitch class. Empty tracks are omitted and zero durations are clamped to
 `0.01` seconds.
 
-`RuleConfig` is the complete reproducible mapping configuration. `RenderedGeometry`
-contains per-voice segments/circles or full-width tonal bands plus the configuration
-used to create them. Its public semantics are defined in [DESIGN.md](DESIGN.md).
+`RuleConfig` is the complete reproducible mapping configuration, including
+`chordLayout` (`polyphony` | `chain`) for line-path polyphony. Line-path polyphony
+is resolved in the mapper (`mapScoreToGeometry`), producing export-identical geometry
+for preview and SVG/PNG; the canvas scrubber does not recalculate joins or fans.
+`RenderedGeometry` contains per-voice segments/circles or full-width tonal bands plus
+the configuration used to create them. Its public semantics are defined in
+[DESIGN.md](DESIGN.md).
 
 ## Playback and source boundaries
 

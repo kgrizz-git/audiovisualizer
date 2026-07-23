@@ -3,17 +3,23 @@ import { DEFAULT_CONFIG, getAverageScoreBackground, mapScoreToGeometry } from '.
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
-import { ChordLayout, GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation } from '../core/types.js';
+import { ChordLayout, GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation, ViewportTransform } from '../core/types.js';
 import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
 import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js';
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
 import { VoiceRouter } from '../audio/soundfont/voiceRouter.js';
 import { PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
+import { ViewportController } from '../core/layout/viewportController.js';
+import { ViewportGestures } from './viewportGestures.js';
+
+const PREVIEW_SIZE = 900;
+const EXPORT_SIZE = 1200;
 
 class AudioVisualizerApp {
   private currentScore: Score = generateDemoScore();
   private currentConfig: RuleConfig = { ...DEFAULT_CONFIG };
   private canvasRenderer: CanvasRenderer;
+  private viewportController: ViewportController;
   private currentTime = this.currentScore.duration;
   private animationFrameId: number | null = null;
   private playbackStart = 0;
@@ -28,6 +34,13 @@ class AudioVisualizerApp {
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
+    this.viewportController = new ViewportController();
+    new ViewportGestures(
+      this.element<HTMLCanvasElement>('visualizer-canvas'),
+      this.viewportController,
+      PREVIEW_SIZE,
+      () => this.render()
+    );
     this.voicePlayback = new Map(this.currentScore.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
     this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
     this.bindEvents();
@@ -88,6 +101,58 @@ class AudioVisualizerApp {
 
     const titleInput = this.element<HTMLInputElement>('export-title-input');
     titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateCanvasAriaLabel(); this.render(); });
+
+    // Viewport HUD + Section 05 controls
+    const center = PREVIEW_SIZE / 2;
+    this.element<HTMLButtonElement>('hud-zoom-in').addEventListener('click', () => {
+      const z = this.viewportController.getViewport().zoom;
+      this.viewportController.zoomAt(z * 1.25, center, center, PREVIEW_SIZE, PREVIEW_SIZE);
+      this.render();
+    });
+    this.element<HTMLButtonElement>('hud-zoom-out').addEventListener('click', () => {
+      const z = this.viewportController.getViewport().zoom;
+      this.viewportController.zoomAt(z / 1.25, center, center, PREVIEW_SIZE, PREVIEW_SIZE);
+      this.render();
+    });
+    const reset = () => { this.viewportController.resetView(); this.render(); };
+    this.element<HTMLButtonElement>('hud-reset').addEventListener('click', reset);
+    this.element<HTMLButtonElement>('btn-reset-viewport').addEventListener('click', reset);
+
+    const syncAuto = (enabled: boolean) => {
+      this.viewportController.setAutoZoom(enabled);
+      this.render();
+    };
+    this.element<HTMLInputElement>('hud-autozoom-toggle').addEventListener('change', (e) => {
+      syncAuto((e.target as HTMLInputElement).checked);
+    });
+    this.element<HTMLInputElement>('viewport-autozoom-toggle').addEventListener('change', (e) => {
+      syncAuto((e.target as HTMLInputElement).checked);
+    });
+    this.element<HTMLInputElement>('viewport-zoom-range').addEventListener('input', (e) => {
+      const zoom = Number((e.target as HTMLInputElement).value);
+      this.viewportController.zoomAt(zoom, center, center, PREVIEW_SIZE, PREVIEW_SIZE);
+      this.render();
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (event) => {
+      const t = event.target;
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
+      if (t instanceof HTMLElement && t.isContentEditable) return;
+      const centerPt = PREVIEW_SIZE / 2;
+      if (event.key === '+' || event.key === '=') {
+        this.viewportController.zoomAt(this.viewportController.getViewport().zoom * 1.25, centerPt, centerPt, PREVIEW_SIZE, PREVIEW_SIZE);
+      } else if (event.key === '-' || event.key === '_') {
+        this.viewportController.zoomAt(this.viewportController.getViewport().zoom / 1.25, centerPt, centerPt, PREVIEW_SIZE, PREVIEW_SIZE);
+      } else if (event.key === '0' || event.key === 'r' || event.key === 'R') {
+        this.viewportController.resetView();
+      } else if (event.key === 'a' || event.key === 'A') {
+        this.viewportController.setAutoZoom(!this.viewportController.getViewport().autoZoom);
+      } else {
+        return;
+      }
+      this.render();
+    });
   }
 
   private select<T extends string>(id: string, apply: (value: T) => void): void {
@@ -119,6 +184,7 @@ class AudioVisualizerApp {
     this.voicePlayback = new Map(score.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
     this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
     this.exportTitle = score.title;
+    this.viewportController.resetView();
     this.updateScoreUi();
     this.render();
     this.setStatus(message);
@@ -208,16 +274,82 @@ class AudioVisualizerApp {
     this.element<HTMLButtonElement>('play-btn').textContent = '▶';
   }
 
-  private tick = (): void => { if (!this.isPlaying) return; this.currentTime = Math.min(this.currentScore.duration, this.playbackOffset + (performance.now() - this.playbackStart) / 1000); this.render(); if (this.currentTime >= this.currentScore.duration) this.pause(); else this.animationFrameId = requestAnimationFrame(this.tick); };
+  private tick = (): void => {
+    if (!this.isPlaying) return;
+    this.currentTime = Math.min(
+      this.currentScore.duration,
+      this.playbackOffset + (performance.now() - this.playbackStart) / 1000
+    );
+    const geometry = this.geometryFor(PREVIEW_SIZE);
+    this.viewportController.stepAutoZoom(geometry, this.currentTime, PREVIEW_SIZE, PREVIEW_SIZE);
+    this.render();
+    if (this.currentTime >= this.currentScore.duration) this.pause();
+    else this.animationFrameId = requestAnimationFrame(this.tick);
+  };
+
+  private updateViewportUi(): void {
+    const vp = this.viewportController.getViewport();
+    const zoomRange = this.element<HTMLInputElement>('viewport-zoom-range');
+    const zoomOut = this.element<HTMLOutputElement>('val-viewport-zoom');
+    const hudAuto = this.element<HTMLInputElement>('hud-autozoom-toggle');
+    const panelAuto = this.element<HTMLInputElement>('viewport-autozoom-toggle');
+
+    if (Number(zoomRange.value) !== vp.zoom) zoomRange.value = String(vp.zoom);
+    zoomOut.value = `${Math.round(vp.zoom * 100)}%`;
+    if (hudAuto.checked !== vp.autoZoom) hudAuto.checked = vp.autoZoom;
+    if (panelAuto.checked !== vp.autoZoom) panelAuto.checked = vp.autoZoom;
+  }
 
   private render(): void {
-    const geometry = this.geometryFor(900);
-    this.canvasRenderer.render(geometry, { time: this.currentTime, showLegend: true, backgroundColor: this.backgroundColor(), title: this.exportTitle });
-    this.element<HTMLInputElement>('progress-scrubber').value = String(Math.round(this.currentTime / Math.max(this.currentScore.duration, 0.01) * 1000));
-    this.element<HTMLOutputElement>('time-display').value = `${formatTime(this.currentTime)} / ${formatTime(this.currentScore.duration)}`;
+    const geometry = this.geometryFor(PREVIEW_SIZE);
+    this.canvasRenderer.render(geometry, {
+      time: this.currentTime,
+      showLegend: true,
+      backgroundColor: this.backgroundColor(),
+      title: this.exportTitle,
+      viewport: this.viewportController.getViewport()
+    });
+    this.element<HTMLInputElement>('progress-scrubber').value = String(
+      Math.round(this.currentTime / Math.max(this.currentScore.duration, 0.01) * 1000)
+    );
+    this.element<HTMLOutputElement>('time-display').value =
+      `${formatTime(this.currentTime)} / ${formatTime(this.currentScore.duration)}`;
+    this.updateViewportUi();
   }
-  private downloadSvg(plotter: boolean): void { const geometry = this.geometryFor(1200); this.download(new Blob([buildSvg(geometry, { includeLegend: !plotter, penPlotterMode: plotter, backgroundColor: this.backgroundColor(), title: this.exportTitle, includePlotterTitle: false })], { type: 'image/svg+xml' }), `${this.filename()}${plotter ? '-plotter' : ''}.svg`); }
-  private downloadPng(): void { const geometry = this.geometryFor(1200); this.canvasRenderer.render(geometry, { showLegend: true, backgroundColor: this.backgroundColor(), title: this.exportTitle }); this.canvasRenderer.downloadPng(`${this.filename()}.png`); this.render(); }
+
+  private getExportViewport(size: number): ViewportTransform {
+    const vp = this.viewportController.getViewport();
+    const scale = size / PREVIEW_SIZE;
+    return { ...vp, panX: vp.panX * scale, panY: vp.panY * scale };
+  }
+
+  private downloadSvg(plotter: boolean): void {
+    const geometry = this.geometryFor(EXPORT_SIZE);
+    this.download(
+      new Blob([buildSvg(geometry, {
+        includeLegend: !plotter,
+        penPlotterMode: plotter,
+        backgroundColor: this.backgroundColor(),
+        title: this.exportTitle,
+        includePlotterTitle: false,
+        viewport: this.getExportViewport(EXPORT_SIZE)
+      })], { type: 'image/svg+xml' }),
+      `${this.filename()}${plotter ? '-plotter' : ''}.svg`
+    );
+  }
+
+  private downloadPng(): void {
+    const geometry = this.geometryFor(EXPORT_SIZE);
+    this.canvasRenderer.render(geometry, {
+      showLegend: true,
+      backgroundColor: this.backgroundColor(),
+      title: this.exportTitle,
+      viewport: this.getExportViewport(EXPORT_SIZE)
+    });
+    this.canvasRenderer.downloadPng(`${this.filename()}.png`);
+    this.render();
+  }
+
   private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }
   private backgroundColor(): string { return this.backgroundMode === 'average' ? getAverageScoreBackground(this.currentScore, this.currentConfig) : '#000000'; }
   private download(blob: Blob, name: string): void { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }

@@ -1,6 +1,6 @@
 # AudioVisualizer Visual Design
 
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-23
 
 ## Intent
 
@@ -71,13 +71,11 @@ safe inset before preview and export so artwork uses the available canvas withou
 cropped. Tonal time-lines deliberately fill every canvas row instead of receiving this
 art padding.
 
-SVG and PNG exports use the same calculated geometry as the preview. Standard SVG can
-include the explanatory legend; plotter SVG removes background and legend and uses
-single-color strokes. Legends must describe the current rule set, not imply harmonic or
-musicological conclusions that the renderer does not calculate. They are mode-aware:
-line paths explain distance/weight/rests, note halos explain radius plus path advance and
-the non-semantic fill/outline treatment, pitch timelines explain axes, and tonal time-lines
-explain aggregate active-pitch color and silence.
+The score canvas supports interactive zoom and pan (mouse wheel, click-drag, touch pinch/pan, keyboard shortcuts `+`/`-`/`R`/`A`, and HUD overlay). An overlay HUD (`+`, `-`, `Reset`, `Auto`) is anchored inside the canvas wrapper at the bottom-left (`z-index: 5`) with frosted glass styling, remaining clear of top-right `.stage-corner` metadata. Title headers, legend overlays, and background atmosphere remain screen-fixed while score geometry transforms within the viewport matrix.
+
+During MIDI playback, dynamic auto-zoom is active by default. It calculates bounding boxes of active note segments, circles, or tonal bands and smoothly lerps (`AUTO_ZOOM_LERP = 0.15`) to keep active performance regions centered with 75% canvas padding, easing back to full score view during silence. Manual pan/zoom interactions suspend auto-zoom so viewers can explore score detail without interference; pressing `Reset` or toggling `Auto` restores tracking.
+
+SVG and PNG exports preserve the active preview framing using proportional pan scaling (`panX * EXPORT_SIZE / PREVIEW_SIZE`). Standard SVG can include the explanatory legend; plotter SVG removes background and legend and uses single-color strokes while maintaining the selected zoom and pan crop. Legends describe the active rule set, not implied musicological conclusions. They are mode-aware: line paths explain distance/weight/rests, note halos explain radius plus path advance and the non-semantic fill/outline treatment, pitch timelines explain axes, and tonal time-lines explain aggregate active-pitch color and silence.
 
 ## Design guardrails
 

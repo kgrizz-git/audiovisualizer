@@ -1,7 +1,7 @@
 # Design Spec: Interactive Zoom & Pan with Dynamic Auto-Zoom
 
 Date: 2026-07-23
-Status: Approved (Revised from Final Architecture Assessment)
+Status: Approved (Final Production Revision)
 
 ## Overview
 
@@ -10,8 +10,8 @@ This specification defines interactive zoom and pan controls for the AudioVisual
 ## Requirements & Goals
 
 1. **Interactive Viewport Control**: Allow users to zoom in/out and pan across the visual score preview using mouse wheel, click-and-drag, touch pinch/pan gestures, UI HUD buttons, and sidebar sliders.
-2. **Preserved Export Framing**: Ensure that current zoom level and pan offsets are accurately captured when exporting SVG, PNG, or pen-plotter files, scaling pan offsets proportionally for higher-resolution export sizes (`panX * exportSize / previewSize`) in `app.ts` so all exports (PNG, SVG, Plotter) match preview framing cleanly without renderer coupling.
-3. **Dynamic Playback Auto-Zoom**: Automatically frame and track active note clusters during MIDI preview playback, smoothly re-centering and scaling the view as music progresses.
+2. **Preserved Export Framing**: Ensure that current zoom level and pan offsets are accurately captured when exporting SVG, PNG, or pen-plotter files, scaling pan offsets proportionally for higher-resolution export sizes (`panX * EXPORT_SIZE / PREVIEW_SIZE`) in `app.ts` so all exports (PNG, SVG, Plotter) match preview framing cleanly.
+3. **Dynamic Playback Auto-Zoom**: Automatically frame and track active note clusters and active time-lines during MIDI preview playback, smoothly re-centering and scaling the view as music progresses, and zooming out gracefully during silence.
 4. **Manual Override & Reset**: Seamlessly pause auto-zoom when the user manually interacts with the viewport, providing an intuitive "Reset View" trigger to return to default full-score framing. View resets automatically when loading a new score.
 
 ## Data Model & Domain Types
@@ -48,13 +48,13 @@ export function clampZoom(zoom: number): number {
 ### 1. Viewport & Gesture Controller (`src/core/layout/viewportController.ts`)
 
 - **Pure Helpers & Stateful Controller**:
-  - `calculateActiveNotesBoundingBox`: Pure function querying active segments and circles across `RenderedGeometry.voicePaths` matching active `note.onset` and `note.duration`. `NoteEvent` type matches `{ id, pitch, onset, duration, velocity, voice, pitchClass }`.
-  - `calculateAutoZoomTransform`: Pure function computing target center and lerped scale (`AUTO_ZOOM_LERP = 0.15`).
+  - `calculateActiveNotesBoundingBox`: Pure function querying active voice segments (excluding `role === 'gap'`), active circles, and active time-band extents across `RenderedGeometry` matching active `note.onset` and `note.duration`.
+  - `calculateAutoZoomTransform`: Pure function computing target center and lerped scale (`AUTO_ZOOM_LERP = 0.15`). When no notes/bands are active during playback, lerps gracefully toward `DEFAULT_VIEWPORT`.
   - `ViewportController`: Class managing `ViewportTransform` state.
 - **Gesture Handling**:
-  - `Wheel`: Zoom in/out anchored at mouse cursor coordinate $(x, y)$.
-  - `Drag` / `Touch Pan`: Update $(panX, panY)$ based on movement delta $(\Delta x, \Delta y)$ with `canvas.setPointerCapture(event.pointerId)`.
-  - `Pinch`: Multi-touch tracking using pointer/touch events calculating centroid and distance ratio, delegating to `zoomAt(newZoom, centerX, centerY, width, height)`.
+  - `Wheel`: Zoom in/out anchored at mouse cursor coordinate $(x, y)$ with `event.preventDefault()`.
+  - `Drag` / `Touch Pan`: Update $(panX, panY)$ based on movement delta $(\Delta x, \Delta y)$ scaled to logical geometry coordinates, using `canvas.setPointerCapture(event.pointerId)`.
+  - `Pinch`: Multi-touch tracking using pointer events calculating centroid and distance ratio, delegating to `zoomAt(newZoom, centerX, centerY, width, height)`.
 - **State Transitions**:
   - Any manual user pan or zoom gesture sets `autoZoom = false`.
   - Clicking "Reset View", pressing `R`, or loading a new score (`setScore`) restores `DEFAULT_VIEWPORT` and re-enables `autoZoom = true`.
@@ -76,20 +76,24 @@ export function clampZoom(zoom: number): number {
 ### 3. SVG & Plotter Builder (`src/renderers/svg/svgBuilder.ts`)
 
 - Accepts `options.viewport?: ViewportTransform`.
-- Wraps all score geometry (both `voicePaths` and `bands`) in `<g transform="translate(...) scale(...)">`.
+- Wraps all score geometry (both `voicePaths` and `bands`) in an outer `<g transform="...">` container group, keeping title/legend outside.
 - Rendered SVG and pen-plotter files receive pre-scaled viewport transform from `app.ts` matching preview framing.
 
-### 4. UI Layer & HUD Integration (`src/ui/app.ts`, `index.html`, `styles.css`)
+### 4. UI Layer, Gestures & HUD (`src/ui/app.ts`, `src/ui/viewportGestures.ts`, `index.html`, `styles.css`)
 
-- **Canvas Overlay HUD**:
-  - Glassmorphic overlay positioned on top-right of canvas container.
+- **Canvas Overlay HUD (`.canvas-wrapper`)**:
+  - Positioned inside `.canvas-wrapper` with high `z-index: 5` and `pointer-events: auto`.
   - Controls: `[+]` (Zoom in), `[-]` (Zoom out), `[Reset]` (Reset view), `[Auto]` (Toggle auto-zoom state).
 - **Side Panel Section ("05 Viewport & Framing")**:
   - Zoom slider control (25% to 1000%, `max="10"`).
   - Auto-Zoom toggle checkbox and Reset framing button.
-  - Synchronized bidirectionally with HUD controls and auto-zoom updates.
-- **Export Viewport Scaling in `app.ts`**:
-  - `downloadPng()` and `downloadSvg()` calculate export scale ratio (`scaleRatio = exportWidth / previewWidth`) and pass scaled viewport `{ ...vp, panX: vp.panX * scaleRatio, panY: vp.panY * scaleRatio }` to `render()` and `buildSvg()`.
+  - Synchronized bidirectionally with HUD controls and auto-zoom updates via `updateViewportUi()`.
+- **Viewport Gestures Helper (`src/ui/viewportGestures.ts`)**:
+  - Dedicated event listener manager mapping DOM pointer, wheel, and multi-touch events to `ViewportController`.
+  - Maps CSS pointer coordinates to logical geometry space (`PREVIEW_SIZE = 900`) using `(clientX - rect.left) * (PREVIEW_SIZE / rect.width)`.
+- **Live Preview & Export Viewport Scaling in `app.ts`**:
+  - Live preview `render()` passes `viewport: this.viewportController.getViewport()`.
+  - `downloadPng()` and `downloadSvg()` calculate export scale ratio (`scaleRatio = EXPORT_SIZE / PREVIEW_SIZE`) and pass scaled viewport `{ ...vp, panX: vp.panX * scaleRatio, panY: vp.panY * scaleRatio }` to `render()` and `buildSvg()`.
 - **Gesture & Shortcut Protection**:
   - Set `touch-action: none;` on `#visualizer-canvas` CSS to prevent mobile page scrolling during canvas gestures.
   - Shield keyboard shortcuts (`+`, `-`, `R`, `A`) when typing in form inputs (`HTMLInputElement`, `HTMLTextAreaElement`, `HTMLSelectElement`, or `isContentEditable`).
@@ -99,8 +103,8 @@ export function clampZoom(zoom: number): number {
 1. **Unit Tests (`tests/viewportController.test.ts`)**:
    - Verify wheel zoom math keeps cursor location anchored (`zoomAt` anchor preservation test).
    - Verify drag panning updates panX/panY correctly.
-   - Verify active note bounding box calculation from `RenderedGeometry` using valid `NoteEvent` literals (`id`, `pitch`, `onset`, `duration`, `velocity`, `voice`, `pitchClass`).
-   - Verify `stepAutoZoom` (silence fallback, active note lerping, no-op when autoZoom=false).
+   - Verify active note bounding box calculation from `RenderedGeometry` excluding gap segments.
+   - Verify `stepAutoZoom` (silence fallback lerp to default, active note lerping, no-op when autoZoom=false).
    - Verify `clampZoom` NaN/Infinity fallback guard.
    - Verify manual gesture sets `autoZoom = false` and reset restores default transform.
 2. **Renderer Tests (`tests/viewportRenderers.test.ts`)**:

@@ -1,12 +1,12 @@
 # Interactive Zoom & Pan with Dynamic Auto-Zoom Implementation Plan
 
-Status: ready for implementation (revised after independent subagent technical review)
+Status: ready for implementation (revised after architectural assessment in `tmp/2026-07-23-zoom-and-pan-assessment.md`)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement interactive mouse, wheel, touch, and HUD/panel zoom and pan controls for the score canvas preview and vector exports (SVG/PNG/Plotter), with default dynamic auto-zoom that tracks active note regions during playback.
 
-**Architecture:** Add `ViewportTransform` to core domain types. Implement a side-effect-free `ViewportController` that computes gesture transforms and lerped active-note bounding box auto-zoom using `RenderedGeometry`. Extend `CanvasRenderer` to wrap score geometry drawing within matrix transforms while preserving screen-fixed legend/title layers and background atmosphere. Update `buildSvg` to wrap exported geometry in transform containers with proportional pan scaling matching preview framing. Integrate canvas gesture handlers, canvas HUD overlay, side-panel controls, touch-action scrolling guards, and keyboard shortcuts in `app.ts`.
+**Architecture:** Add `ViewportTransform` to core domain types. Implement a side-effect-free `ViewportController` that computes gesture transforms and lerped active-note bounding box auto-zoom using `RenderedGeometry`. Extend `CanvasRenderer` to wrap score geometry drawing within matrix transforms while preserving screen-fixed legend/title layers and background atmosphere. Update `buildSvg` to wrap exported geometry in transform containers with proportional pan scaling (`panX * geometry.width / previewWidth`) matching preview framing cleanly. Integrate canvas gesture handlers, canvas HUD overlay, side-panel controls (synchronized with HUD), touch-action scrolling guards, export viewport threading, and keyboard shortcuts in `app.ts`.
 
 **Tech Stack:** TypeScript, HTML5 Canvas 2D Context, SVG, Vitest, Vite.
 
@@ -152,15 +152,15 @@ describe('ViewportController & Auto-Zoom', () => {
       config: DEFAULT_CONFIG,
       voicePaths: [
         {
-          voiceId: 0,
-          channel: 0,
-          color: '#ff0000',
-          opacity: 1,
-          strokeWidth: 2,
+          voice: 0,
+          voiceName: 'Voice 0',
           segments: [
             {
               start: { x: 100, y: 150 },
               end: { x: 300, y: 250 },
+              color: '#ff0000',
+              width: 2,
+              opacity: 1,
               note: { pitch: 60, midi: 60, onset: 0, duration: 5, velocity: 80, channel: 0, voice: 0, trackIndex: 0 }
             }
           ],
@@ -342,7 +342,7 @@ git commit -m "feat(core): add ViewportController and RenderedGeometry active no
 
 **Interfaces:**
 - Consumes: `ViewportTransform` from `src/core/types.ts`
-- Produces: Updated `CanvasRenderer.render` and `buildSvg` taking optional `viewport?: ViewportTransform`
+- Produces: Updated `CanvasRenderer.render` and `buildSvg` taking optional `viewport?: ViewportTransform` and `previewWidth?: number`
 
 - [ ] **Step 1: Write failing tests for renderer viewport transformations**
 
@@ -355,16 +355,17 @@ import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
 describe('Viewport Renderer Extensions', () => {
   const dummyGeometry: RenderedGeometry = {
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 1200,
     bands: [],
     voicePaths: [],
     config: DEFAULT_CONFIG
   };
 
-  it('includes viewport transform group in generated SVG when zoom or pan is active', () => {
+  it('includes viewport transform group in generated SVG with proportional pan scaling', () => {
     const svg = buildSvg(dummyGeometry, {
-      viewport: { zoom: 2.0, panX: 50, panY: -20, autoZoom: false }
+      viewport: { zoom: 2.0, panX: 50, panY: -20, autoZoom: false },
+      previewWidth: 900
     });
     expect(svg).toContain('transform="translate(');
     expect(svg).toContain('scale(2)');
@@ -394,8 +395,8 @@ Render fixed legend and title overlay outside `ctx.restore()`.
 
 - [ ] **Step 4: Update `buildSvg` in `src/renderers/svg/svgBuilder.ts`**
 
-Update `SvgOptions` in `svgBuilder.ts` to include `viewport?: ViewportTransform`.
-If `options.viewport` is supplied and non-default (`zoom !== 1 || panX !== 0 || panY !== 0`), scale `panX` and `panY` proportionally (`scaleFactor = geometry.width / 900`). Wrap score path elements inside `<g transform="translate(${width/2 + viewport.panX * scaleFactor}, ${height/2 + viewport.panY * scaleFactor}) scale(${viewport.zoom}) translate(${-width/2}, ${-height/2})">...</g>`.
+Update `SvgOptions` in `svgBuilder.ts` to include `viewport?: ViewportTransform` and `previewWidth?: number` (default 900).
+If `options.viewport` is supplied and non-default (`zoom !== 1 || panX !== 0 || panY !== 0`), calculate `scaleFactor = geometry.width / (options.previewWidth ?? 900)`. Wrap score path elements inside `<g transform="translate(${width/2 + viewport.panX * scaleFactor}, ${height/2 + viewport.panY * scaleFactor}) scale(${viewport.zoom}) translate(${-width/2}, ${-height/2})">...</g>`.
 
 - [ ] **Step 5: Run tests to verify they pass**
 
@@ -420,7 +421,7 @@ git commit -m "feat(renderers): support ViewportTransform in Canvas and SVG rend
 
 **Interfaces:**
 - Consumes: `ViewportController` from `src/core/layout/viewportController.ts`
-- Produces: Interactive wheel/drag canvas events, floating Canvas HUD overlay, side panel "05 Viewport & Framing" section, touch-action guards, keyboard shortcut form shielding
+- Produces: Interactive wheel/drag canvas events, floating Canvas HUD overlay, side panel "05 Viewport & Framing" section, touch-action guards, export viewport threading, keyboard shortcut form shielding
 
 - [ ] **Step 1: Update `index.html` with Canvas HUD and Viewport Control Panel Section**
 
@@ -461,19 +462,47 @@ Add Section 05 in control sidebar:
 
 Add styling for `#visualizer-canvas` with `touch-action: none;` to prevent touch scrolling. Add styling for `.canvas-container`, `#viewport-hud`, `.hud-btn`, and `.hud-badge` with glassmorphic semi-transparent styling.
 
-- [ ] **Step 3: Connect ViewportController events and playback tick in `src/ui/app.ts`**
+- [ ] **Step 3: Connect ViewportController events, export threading, and playback tick in `src/ui/app.ts`**
 
 Instantiate `this.viewportController = new ViewportController();`.
 Attach event listeners:
 - Canvas `wheel`: `this.viewportController.zoomAt(...)`
 - Canvas `pointerdown`/`pointermove`/`pointerup`: Drag to `panBy(...)`
-- Canvas Touch pinch: Pinch distance ratio zoom
+- Canvas Touch pinch: Pinch distance ratio zoom on multi-touch `pointermove`/`touchmove` delegating to `zoomAt()`
 - HUD buttons: `hud-zoom-in`, `hud-zoom-out`, `hud-reset`, `hud-autozoom-toggle`
-- Sidebar controls: `viewport-zoom-range`, `btn-reset-viewport`
+- Sidebar controls: `viewport-zoom-range`, `btn-reset-viewport` (synchronized bidirectionally with HUD and auto-zoom updates via `updateViewportUi()`)
+- Update `downloadPng()` and `downloadSvg()` to explicitly thread `viewport: this.viewportController.getViewport()`:
+  ```typescript
+  private downloadPng(): void {
+    const geometry = this.geometryFor(1200);
+    this.canvasRenderer.render(geometry, {
+      showLegend: true,
+      backgroundColor: this.backgroundColor(),
+      title: this.exportTitle,
+      viewport: this.viewportController.getViewport()
+    });
+    this.canvasRenderer.downloadPng(`${this.filename()}.png`);
+    this.render();
+  }
+  private downloadSvg(plotter: boolean): void {
+    const geometry = this.geometryFor(1200);
+    this.download(
+      new Blob([buildSvg(geometry, {
+        includeLegend: !plotter,
+        penPlotterMode: plotter,
+        backgroundColor: this.backgroundColor(),
+        title: this.exportTitle,
+        includePlotterTitle: false,
+        viewport: this.viewportController.getViewport(),
+        previewWidth: 900
+      })], { type: 'image/svg+xml' }),
+      `${this.filename()}${plotter ? '-plotter' : ''}.svg`
+    );
+  }
+  ```
 - Keyboard shortcuts: `+`, `-`, `0`, `r`/`R`, `a`/`A`, with input field shield check:
   `if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;`
-- Update `render()` and `geometryFor(size)` to pass scaled `viewportController.getViewport()` to canvas and SVG downloads.
-- In `tick()`, invoke `viewportController.stepAutoZoom(geometry, currentTime, 900, 900)`.
+- In `tick()`, invoke `viewportController.stepAutoZoom(geometry, currentTime, 900, 900)` and update UI controls.
 
 - [ ] **Step 4: Run `npm run validate` to test full application build**
 
@@ -484,7 +513,7 @@ Expected: PASS (all tests pass, type-check passes, vite build succeeds)
 
 ```bash
 git add index.html src/ui/styles/main.css src/ui/app.ts
-git commit -m "feat(ui): add interactive canvas gestures, HUD overlay, touch guards, and viewport controls"
+git commit -m "feat(ui): add interactive canvas gestures, HUD overlay, touch guards, export viewport threading, and synced controls"
 ```
 
 ---

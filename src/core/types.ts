@@ -119,3 +119,23 @@ export interface LegendSpec {
   pitchColors: { pitchName: string; hue: number; hex: string }[];
   rulesSummary: string[];
 }
+
+export interface ViewportTransform {
+  zoom: number;
+  panX: number;
+  panY: number;
+  autoZoom: boolean;
+}
+
+export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  autoZoom: true,
+});
+
+export function clampZoom(zoom: number): number {
+  if (Number.isNaN(zoom)) return 1;
+  return Math.min(10.0, Math.max(0.25, zoom));
+}
+

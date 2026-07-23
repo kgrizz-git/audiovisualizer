@@ -34,6 +34,11 @@ the score.
 ## Variations and composition
 
 - `lines`: one directional segment per note. It is the primary, calligraphic mode.
+  `chordLayout` (`polyphony` default): near-simultaneous onsets (40 ms) fan from one
+  join using the Interval turns / `angleScale` rule relative to the cluster median
+  pitch; staggered overlaps fork from the time-true point on active tips; with multiple
+  active tips the join is their centroid; `'chain'` restores sequential end-to-start
+  layout.
 - `circles`: note halos whose radius and center-to-center path advance reflect duration,
   for a more punctate composition. Specifically, the center advances by the note's mapped
   length and radius is 40% of that length, with a 5px minimum; mapped length is

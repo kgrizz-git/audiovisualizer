@@ -2,6 +2,7 @@ export type Variation = 'lines' | 'circles' | 'vertical_tone' | 'tonal_time_line
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
 export type PitchHueMode = 'pitch_class' | 'register_spiral';
 export type GapPolicy = 'lift_pen' | 'faint_line' | 'ghost';
+export type ChordLayout = 'chain' | 'polyphony';
 
 export interface NoteEvent {
   id: string;
@@ -33,6 +34,7 @@ export interface RuleConfig {
   originMode: OriginMode;
   pitchHueMode: PitchHueMode;
   gapPolicy: GapPolicy;
+  chordLayout: ChordLayout;
   lengthScale: number;    // pixels per second
   angleScale: number;     // degrees of path turn per octave (12 semitones)
   minSegmentLength: number;

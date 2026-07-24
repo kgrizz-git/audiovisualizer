@@ -99,12 +99,16 @@ export interface GeometryVoicePath {
   circles: GeometryCircle[];
 }
 
+export type AutoZoomWindowMode = 'musical' | 'time';
+
 export interface RenderedGeometry {
   width: number;
   height: number;
   voicePaths: GeometryVoicePath[];
   bands: GeometryBand[];
   config: RuleConfig;
+  /** Score tempo used for musical window conversion (beats per minute). */
+  bpm: number;
 }
 
 export interface LegendItem {
@@ -125,6 +129,11 @@ export interface ViewportTransform {
   panX: number;
   panY: number;
   autoZoom: boolean;
+  autoZoomMode: AutoZoomWindowMode;
+  /** Musical window in bars (4/4). Use Infinity for full track. */
+  autoZoomWindowBars: number;
+  /** Wall-clock window in seconds. Use Infinity for full track. */
+  autoZoomWindowSeconds: number;
 }
 
 export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
@@ -132,6 +141,9 @@ export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
   panX: 0,
   panY: 0,
   autoZoom: true,
+  autoZoomMode: 'musical',
+  autoZoomWindowBars: 4,
+  autoZoomWindowSeconds: 3,
 });
 
 export function clampZoom(zoom: number): number {

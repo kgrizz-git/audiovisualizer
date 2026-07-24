@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { ViewportController, calculateActiveNotesBoundingBox, calculateAutoZoomTransform, AUTO_ZOOM_LERP } from '../src/core/layout/viewportController.js';
-import { RenderedGeometry } from '../src/core/types.js';
+import { RenderedGeometry, DEFAULT_VIEWPORT } from '../src/core/types.js';
 import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
 describe('ViewportController & Auto-Zoom', () => {
   it('starts with default viewport', () => {
     expect(AUTO_ZOOM_LERP).toBe(0.15);
     const controller = new ViewportController();
-    expect(controller.getViewport()).toEqual({ zoom: 1, panX: 0, panY: 0, autoZoom: true });
+    expect(controller.getViewport()).toEqual(DEFAULT_VIEWPORT);
   });
 
   it('pans by delta and disables autoZoom', () => {
     const controller = new ViewportController();
     controller.panBy(50, -20);
-    expect(controller.getViewport()).toEqual({ zoom: 1, panX: 50, panY: -20, autoZoom: false });
+    expect(controller.getViewport()).toEqual({ ...DEFAULT_VIEWPORT, zoom: 1, panX: 50, panY: -20, autoZoom: false });
   });
 
   it('zooms anchored at coordinate, preserves world point, and disables autoZoom even if clamped', () => {
@@ -45,7 +45,7 @@ describe('ViewportController & Auto-Zoom', () => {
     const controller = new ViewportController();
     controller.panBy(100, 100);
     controller.resetView();
-    expect(controller.getViewport()).toEqual({ zoom: 1, panX: 0, panY: 0, autoZoom: true });
+    expect(controller.getViewport()).toEqual(DEFAULT_VIEWPORT);
   });
 
   it('calculates bounding box of active notes from RenderedGeometry excluding gap segments', () => {
@@ -54,6 +54,7 @@ describe('ViewportController & Auto-Zoom', () => {
       height: 600,
       bands: [],
       config: DEFAULT_CONFIG,
+      bpm: 120,
       voicePaths: [
         {
           voice: 0,
@@ -94,7 +95,8 @@ describe('ViewportController & Auto-Zoom', () => {
         { y: 400, height: 50, color: '#cccccc', opacity: 0.3, onset: 1, duration: 4, silent: true }
       ],
       voicePaths: [],
-      config: { ...DEFAULT_CONFIG, variation: 'tonal_time_lines' }
+      config: { ...DEFAULT_CONFIG, variation: 'tonal_time_lines' },
+      bpm: 120,
     };
     const bounds = calculateActiveNotesBoundingBox(mockGeometry, 2.0);
     // Silent band excluded; active band → full width × band y-extent
@@ -107,6 +109,7 @@ describe('ViewportController & Auto-Zoom', () => {
       height: 600,
       bands: [],
       config: DEFAULT_CONFIG,
+      bpm: 120,
       voicePaths: [
         {
           voice: 0,
@@ -146,7 +149,7 @@ describe('ViewportController & Auto-Zoom', () => {
   it('calculateAutoZoomTransform with lerpFactor=1 reaches exact active target', () => {
     const bounds = { minX: 200, minY: 200, maxX: 400, maxY: 400 };
     const next = calculateAutoZoomTransform(
-      { zoom: 1, panX: 0, panY: 0, autoZoom: true },
+      DEFAULT_VIEWPORT,
       bounds,
       800,
       600,

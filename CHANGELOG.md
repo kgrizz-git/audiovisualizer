@@ -17,6 +17,7 @@ uses [Semantic Versioning](https://semver.org/).
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- Current score title no longer shows MuseScore's `"control track"` placeholder for bundled full-score MIDIs; the included-study label (or filename) is used instead. SemVer: **PATCH**.
 - Non-bundled instruments now load from the CDN instead of silently using the synth: the loader previously accepted the SPA `index.html` that dev servers / static hosts return (with a 200 status) for a missing local asset, so it never tried the CDN and cached the bad response. It now validates that fetched and cached content is a real soundfont script, self-healing any poisoned cache entries. SemVer: **PATCH**.
 - Playback no longer cuts off partway through dense scores: notes are now scheduled a short window ahead of the playhead instead of allocating every Web Audio source node up front (thousands at once tripped a Chrome scheduling limit and silenced playback). SemVer: **PATCH**.
 - SoundFont patches no longer silently fall back to the synth: the midi-js patch parser now tolerates the trailing comma present in the real soundfont scripts, which previously made every patch fail to load. SemVer: **PATCH**.

@@ -1,5 +1,35 @@
+/**
+ * MIDI → Score normalization.
+ *
+ * Inputs: raw MIDI ArrayBuffer plus an optional display fallback title (filename
+ * or included-study label). Outputs: a deterministic Score with onset-sorted
+ * notes, sustain CC64 events, and a resolved display title. Side-effect free.
+ *
+ * Requirements: @tonejs/midi. Empty note/sustain tracks are omitted; durations
+ * are clamped to at least 0.01s. Placeholder sequence names such as MuseScore's
+ * "control track" are ignored so the fallback title is used instead.
+ */
 import { Midi } from '@tonejs/midi';
 import { Score, NoteEvent, TrackScore, SustainEvent } from '../types.js';
+
+/** Sequence / header names that are tooling metadata, not piece titles. */
+const PLACEHOLDER_SCORE_TITLES = new Set([
+  'control track',
+  'conductor',
+  'conductor track',
+  'tempo track',
+]);
+
+/**
+ * Prefer a real embedded sequence name; otherwise use the caller-supplied fallback
+ * (study label or filename). Ignores blank and known placeholder names.
+ */
+export function resolveScoreTitle(headerName: string | undefined, fallbackTitle: string): string {
+  const trimmed = (headerName ?? '').trim();
+  if (!trimmed) return fallbackTitle;
+  if (PLACEHOLDER_SCORE_TITLES.has(trimmed.toLowerCase())) return fallbackTitle;
+  return trimmed;
+}
 
 export function parseMidiData(arrayBuffer: ArrayBuffer, fileName: string = 'Untitled Score'): Score {
   const midi = new Midi(arrayBuffer);
@@ -52,7 +82,7 @@ export function parseMidiData(arrayBuffer: ArrayBuffer, fileName: string = 'Unti
   const bpm = midi.header.tempos.length > 0 ? Math.round(midi.header.tempos[0].bpm) : 120;
 
   return {
-    title: midi.header.name || fileName,
+    title: resolveScoreTitle(midi.header.name, fileName),
     duration: maxDuration > 0 ? maxDuration : 10,
     bpm,
     tracks,

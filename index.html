@@ -56,7 +56,16 @@
       </section>
 
       <section class="control-group"><h2><span>02</span> Compose the rule set</h2>
-        <div class="control-item"><label for="variation-select">Geometry</label><select id="variation-select"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option><option value="tonal_time_lines">Average active pitch color</option></select></div>
+        <div class="control-item"><label for="variation-select">Geometry</label><select id="variation-select"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option><option value="tonal_time_lines">Average active pitch color</option><optgroup label="3D (Three.js)"><option value="3d_lines">3D line paths</option><option value="3d_note_halos">3D note halos</option><option value="3d_piano_roll">3D piano-roll slab</option></optgroup></select></div>
+        <div class="control-subgroup is-hidden" id="threed-controls">
+          <div class="control-item"><label for="camera-preset-select">Camera angle</label><select id="camera-preset-select"><option value="3d_isometric" selected>Isometric</option><option value="3d_front">Front</option><option value="3d_side">Side</option><option value="3d_birds_eye">Bird's eye</option><option value="3d_free">Free orbit</option></select></div>
+          <div class="control-item"><label for="zscale-range">Time depth <output id="val-zscale">200</output></label><input id="zscale-range" type="range" min="20" max="600" step="10" value="200" /></div>
+          <div class="control-item"><label for="bloom-range">Glow <output id="val-bloom">1.4</output></label><input id="bloom-range" type="range" min="0" max="2.5" step="0.1" value="1.4" /></div>
+          <div class="control-item"><label for="playback-cue-select">Playback cue</label><select id="playback-cue-select"><option value="now_plane" selected>Now-plane</option><option value="reveal">Reveal through time</option></select></div>
+          <div class="control-grid"><label class="toggle"><input id="threed-autofollow-toggle" type="checkbox"><span>Auto-follow</span></label><label class="toggle"><input id="threed-chase-toggle" type="checkbox"><span>Chase camera</span></label><label class="toggle"><input id="threed-rotate-toggle" type="checkbox"><span>Idle turntable</span></label></div>
+          <button type="button" class="btn" id="btn-export-webm">Capture 6s WebM</button>
+          <p class="hint">Drag to orbit, wheel to zoom, and right-drag (or two fingers) to pan. Manual navigation suspends auto-follow.</p>
+        </div>
         <div class="control-item"><label for="origin-select">Growth direction</label><select id="origin-select"><option value="left_to_right">Left to right</option><option value="center_outward">Center outward</option><option value="outside_inward">Outside inward</option></select></div>
         <div class="control-item"><label for="hue-mode-select">Pitch color</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option></select></div>
         <div class="control-item"><label for="background-select">Canvas background</label><select id="background-select"><option value="black">Black</option><option value="average">Average pitch color</option></select></div>
@@ -132,6 +141,7 @@
       <div class="stage-header"><div><p class="eyebrow">CURRENT SCORE</p><h2 id="score-title">Generative study · C major</h2></div><p id="score-meta">2 voices · 120 BPM</p></div>
       <div class="canvas-wrapper">
         <canvas id="visualizer-canvas" width="800" height="800" role="img" aria-label="Visual score rendering"></canvas>
+        <canvas id="visualizer-canvas-3d" width="900" height="900" class="is-hidden" role="img" aria-label="3D visual score rendering"></canvas>
         <div class="stage-corner">DETERMINISTIC<br>VISUALIZATION</div>
         <div id="viewport-hud" class="viewport-hud" aria-label="Viewport Controls">
           <button type="button" id="hud-zoom-in" class="hud-btn" title="Zoom In (+)">+</button>

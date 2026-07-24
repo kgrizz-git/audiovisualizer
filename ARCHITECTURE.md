@@ -20,7 +20,8 @@ remote services and CDN-only runtime dependencies are not part of the architectu
 | Application | TypeScript + Vite | Browser build, development server, strict type checking |
 | MIDI parsing | `@tonejs/midi` | MIDI binary to normalized score |
 | Live rendering | Canvas 2D | Device-pixel-ratio-aware preview and PNG capture |
-| Vector export | Internal SVG builder | Deterministic SVG and plotter output |
+| 3D rendering | `three` (dynamically imported) | WebGL renderer for the 3D score modes; loaded only when a 3D variation is first selected |
+| Vector export | Internal SVG builder | Deterministic SVG and plotter output (2D modes only) |
 | CLI rasterization | `@resvg/resvg-js` | SVG-to-PNG in Node CLI |
 | SoundFont playback | Custom patch loader + Gleitz soundbank audio | Sample-based General MIDI soundbank playback with CacheStorage caching and oscillator fallback |
 | Testing | Vitest | Core mapping, parser, layout, and SVG behavior |
@@ -57,7 +58,8 @@ voice, and pitch class. `SustainEvent` records pedal state changes (`time` in se
 `0.01` seconds. Offline sustain helpers (`buildSustainWindows`, `getSustainedDuration`, `sustainEventsForChannel` in `src/audio/soundfont/sustainWindows.ts`) calculate sustained note release times from CC64 events for playback synthesis without altering visual geometry mapping.
 
 `RuleConfig` is the complete reproducible mapping configuration, including
-`chordLayout` (`polyphony` | `chain`) for line-path polyphony. Line-path polyphony
+`chordLayout` (`polyphony` | `chain`) for line-path polyphony and `zScale` (3D time-depth
+factor; total Z depth ≈ canvas width × `zScale`/100). Line-path polyphony
 is resolved in the mapper (`mapScoreToGeometry`), producing export-identical geometry
 for preview and SVG/PNG; the canvas scrubber does not recalculate joins or fans.
 `RenderedGeometry` contains per-voice segments/circles or full-width tonal bands, the
@@ -65,6 +67,12 @@ score's initial tempo `bpm` (propagated from `Score.bpm` or 120 default; `RuleCo
 [DESIGN.md](DESIGN.md).
 
 `ViewportTransform` defines interactive canvas/export framing (`zoom` clamped to `0.25..10.0`, `panX`, `panY`, `autoZoom`, `autoZoomMode` (`'musical'` | `'time'`), `autoZoomWindowBars` default `4`, `autoZoomWindowSeconds` default `3`). `ViewportController` (`src/core/layout/viewportController.ts`) manages viewport state, gesture math, and per-frame lerped active-note auto-zoom (`AUTO_ZOOM_LERP = 0.15`). During playback, `stepAutoZoom()` calculates active note/band bounding boxes from `RenderedGeometry` over a symmetric sampling window `[t - W/2, t + W/2]` around playhead time `t`, lerping toward target framing (with 75% canvas padding) and easing back to default full-score framing (`DEFAULT_VIEWPORT`) during silence. `calculateWindowSeconds()` converts musical bar windows to seconds (`autoZoomWindowBars * 4 * 60 / bpm`, assuming a fixed 4/4 meter and single score BPM) or returns explicit seconds / `Infinity` (Full Track mode). A window of `0` retains instantaneous active-note framing. Manual drag, wheel, or zoom interactions set `autoZoom = false` until reset (`resetView()`) or re-enabled. Both `CanvasRenderer` and `buildSvg` wrap score geometry inside a viewport matrix (`translate(w/2 + panX, h/2 + panY) scale(zoom) translate(-w/2, -h/2)`), leaving title, legend, and background elements screen-fixed. Export paths adjust pan offsets proportionally (`panX * EXPORT_SIZE / PREVIEW_SIZE`) so vector and raster exports reproduce the active preview framing without re-running note mapping. CLI rendering remains identity-framed (unzoomed).
+
+The 3D score modes (`3d_lines`, `3d_note_halos`, `3d_piano_roll`; `is3DVariation()` in `src/core/types.ts`) use a separate pure mapper, `map3DGeometry()` (`src/core/mapper/map3d.ts`). Path modes run the corresponding 2D mapper (`lines` / `circles`), fit it to the canvas, then lift each primitive into `RenderedGeometry3D` by attaching Z from note time; piano roll maps pitch × voice × onset/duration to instanced boxes. Z depth is normalized (`effectiveZScale()`: total depth ≈ canvas width × `zScale`/100) so any-length score reads as a proportioned solid. Rendering is owned by `ThreeDRenderer` (`src/renderers/three/`), which implements the `I3DRenderer` interface and is the only module that imports `three`. `src/ui/app.ts` dynamically imports it on first 3D activation, swaps the visible `<canvas>` (2D vs WebGL), and drives it with serializable `ViewportTransform3D` framing (preset/free-orbit azimuth, elevation, zoom, pan, bloom, follow/chase/turntable flags). The renderer is on-demand (each mutator renders one frame; during playback only the sweeping now-plane and optional follow camera update) and must release GPU resources through `dispose()`. 3D modes export to PNG or a bounded browser-native WebM capture; SVG/plotter export and the CLI remain 2D-only. See [`plans/2026-07-24-3d-calligraphic-modes.md`](plans/2026-07-24-3d-calligraphic-modes.md).
+
+For 3D playback, `ViewportTransform3D.playbackCue` selects `now_plane` (the default) or
+`reveal`. Reveal updates a shared WebGL clipping plane at the playhead, hiding future
+primitives without rebuilding geometry buffers.
 
 ## Playback and source boundaries
 

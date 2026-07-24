@@ -178,6 +178,15 @@ orbited view can be reproduced from a manifest.
 current `t × zScale` Z position and offset behind it by a configurable `chaseLead`
 distance. Similar to auto-zoom tracking in 2D, but in Z. Enabled/disabled from HUD.
 
+**3D auto-zoom / auto-pan** (a toggle, like the 2D auto-zoom): during playback the camera
+frames the active-note bounding box over a symmetric time window and lerps to keep it
+centered, easing back to the full-solid view during silence. This reuses the 2D windowing
+concept but computes a 3D box (Z included) and drives the camera target + orthographic
+scale rather than a 2D pan/zoom matrix. It should carry a **higher minimum time window
+than the 2D mode** — a very short window in 3D whips the camera through depth and reads as
+nauseating, so the window floor is clamped larger (tuned during implementation). Manual
+orbit suspends it, matching the 2D manual-interaction suspension.
+
 **Free camera**: Camera position and look-at are fully detached from any preset or
 orbit constraint. Keyboard or sidebar inputs drive fine-grained azimuth/elevation/roll/
 position. Intended for art-direction and screenshot purposes.

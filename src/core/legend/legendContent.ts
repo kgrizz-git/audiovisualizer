@@ -36,6 +36,39 @@ export function getLegendContent(config: RuleConfig): LegendContent {
       return { title: 'PITCH TIMELINE', lines: ['Time → left to right', 'Pitch → vertical position + hue', 'Duration → segment length', 'Velocity → stroke weight'] };
     case 'tonal_time_lines':
       return { title: 'AVERAGE ACTIVE PITCH', lines: ['Time → top to bottom', 'Band hue → circular average of active notes', 'Weight → velocity × sounding overlap', 'Neutral band → silence (not a key/chord)'] };
+    case '3d_lines':
+      return {
+        title: '3D LINE PATHS',
+        lines: [
+          hue,
+          'X / Y → interval path (same as line paths)',
+          'Z (depth) → musical time',
+          'Velocity → stroke weight',
+          'Now-plane → current playback moment',
+        ],
+      };
+    case '3d_note_halos':
+      return {
+        title: '3D NOTE HALOS',
+        lines: [
+          hue,
+          'X / Y → note-halo path (same as note halos)',
+          'Z (depth) → onset time',
+          'Duration → radius',
+          'Now-plane → current playback moment',
+        ],
+      };
+    case '3d_piano_roll':
+      return {
+        title: '3D PIANO ROLL',
+        lines: [
+          hue,
+          'X → pitch; Y → voice lane',
+          'Z (depth) → onset + duration',
+          'Box opacity → velocity',
+          'Now-plane → current playback moment',
+        ],
+      };
   }
 }
 

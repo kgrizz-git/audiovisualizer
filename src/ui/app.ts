@@ -8,7 +8,8 @@ import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPrevie
 import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js';
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
 import { VoiceRouter } from '../audio/soundfont/voiceRouter.js';
-import { PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
+import { GM_INSTRUMENT_SLUGS } from '../audio/soundfont/gmInstrumentSlugs.js';
+import { PatchStatus, PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
 import { ViewportController } from '../core/layout/viewportController.js';
 import { ViewportGestures } from './viewportGestures.js';
 
@@ -87,9 +88,11 @@ class AudioVisualizerApp {
 
     this.element<HTMLSelectElement>('playback-engine-select').addEventListener('change', (event) => {
       this.voiceRouter.setDefaults({ engine: (event.target as HTMLSelectElement).value as PlaybackEngine });
+      this.updateScoreUi();
     });
     this.element<HTMLSelectElement>('playback-bank-select').addEventListener('change', (event) => {
       this.voiceRouter.setDefaults({ soundbank: (event.target as HTMLSelectElement).value as SoundbankPreset });
+      this.updateScoreUi();
     });
 
     const scrubber = this.element<HTMLInputElement>('progress-scrubber');
@@ -182,12 +185,27 @@ class AudioVisualizerApp {
     this.currentTime = score.duration;
     this.currentConfig.voiceFilter = null;
     this.voicePlayback = new Map(score.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
+    this.voiceRouter.clearPrograms();
     this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
     this.exportTitle = score.title;
     this.viewportController.resetView();
     this.updateScoreUi();
     this.render();
     this.setStatus(message);
+  }
+
+  private gmLabel(program: number): string {
+    const slug = GM_INSTRUMENT_SLUGS[program] ?? 'acoustic_grand_piano';
+    return `${program} · ${slug.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`;
+  }
+
+  private applyBadge(span: HTMLElement, status: PatchStatus | undefined): void {
+    const map: Record<PatchStatus, string> = {
+      loading: '⏳ Loading…',
+      loaded: '✓ Loaded',
+      fallback: '⚡ Synth Fallback',
+    };
+    span.textContent = status ? map[status] : '—';
   }
 
   private updateScoreUi(): void {
@@ -203,17 +221,49 @@ class AudioVisualizerApp {
       label.append(input, document.createTextNode(track.name)); options.append(label);
     });
     const audioOptions = this.element<HTMLElement>('audio-voice-options'); audioOptions.replaceChildren();
+    const engine = this.voiceRouter.getDefaults().engine;
+    const statusMap = this.soundfontPlayer?.getStatusMap();
+
     this.currentScore.tracks.forEach((track, index) => {
       const settings = this.voicePlayback.get(track.channel) ?? defaultVoiceSettings(index);
       this.voicePlayback.set(track.channel, settings);
       const row = document.createElement('div'); row.className = 'audio-voice-row';
       const name = document.createElement('span'); name.textContent = `${track.name} · ${track.instrumentName}`;
-      const timbre = document.createElement('select');
-      ['sine', 'triangle', 'sawtooth', 'square'].forEach((value) => { const option = new Option(value, value, false, settings.timbre === value); timbre.add(option); });
-      timbre.addEventListener('change', () => {
-        settings.timbre = timbre.value as VoicePlaybackSettings['timbre'];
-        this.voiceRouter.setMix(track.channel, settings);
-      });
+
+      let timbreOrGmSelect: HTMLElement;
+      let badgeSpan: HTMLSpanElement | null = null;
+
+      if (engine === 'sample') {
+        const currentProgram = this.voiceRouter.resolveTrackSettings(track).program;
+        const gmSelect = document.createElement('select');
+        gmSelect.setAttribute('aria-label', `${track.name} instrument`);
+        GM_INSTRUMENT_SLUGS.forEach((_, pIndex) => {
+          const option = new Option(this.gmLabel(pIndex), String(pIndex), false, pIndex === currentProgram);
+          gmSelect.add(option);
+        });
+        gmSelect.addEventListener('change', () => {
+          this.voiceRouter.setProgram(track.channel, Number(gmSelect.value));
+          if (badgeSpan) this.applyBadge(badgeSpan, undefined);
+        });
+        timbreOrGmSelect = gmSelect;
+
+        badgeSpan = document.createElement('span');
+        badgeSpan.className = 'patch-badge';
+        this.applyBadge(badgeSpan, statusMap?.get(track.channel));
+      } else {
+        const timbreSelect = document.createElement('select');
+        timbreSelect.setAttribute('aria-label', `${track.name} timbre`);
+        ['sine', 'triangle', 'sawtooth', 'square'].forEach((value) => {
+          const option = new Option(value, value, false, settings.timbre === value);
+          timbreSelect.add(option);
+        });
+        timbreSelect.addEventListener('change', () => {
+          settings.timbre = timbreSelect.value as VoicePlaybackSettings['timbre'];
+          this.voiceRouter.setMix(track.channel, settings);
+        });
+        timbreOrGmSelect = timbreSelect;
+      }
+
       const gain = document.createElement('input'); gain.type = 'range'; gain.min = '0'; gain.max = '1.5'; gain.step = '0.05'; gain.value = String(settings.gain); gain.setAttribute('aria-label', `${track.name} volume`);
       gain.addEventListener('input', () => {
         settings.gain = Number(gain.value);
@@ -227,7 +277,13 @@ class AudioVisualizerApp {
         settings.solo = checked;
         this.voiceRouter.setMix(track.channel, settings);
       });
-      row.append(name, timbre, gain, mute, solo); audioOptions.append(row);
+
+      if (badgeSpan) {
+        row.append(name, timbreOrGmSelect, badgeSpan, gain, mute, solo);
+      } else {
+        row.append(name, timbreOrGmSelect, gain, mute, solo);
+      }
+      audioOptions.append(row);
     });
   }
 
@@ -251,18 +307,56 @@ class AudioVisualizerApp {
         loader: new SoundfontPatchLoader((bytes) => this.audioContext!.decodeAudioData(bytes.slice(0))),
       });
       this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
+
+      if (this.voiceRouter.getDefaults().engine === 'sample') {
+        const badges = this.element<HTMLElement>('audio-voice-options').querySelectorAll<HTMLElement>('.patch-badge');
+        badges.forEach((span) => this.applyBadge(span, 'loading'));
+      }
+
       await this.soundfontPlayer.start(this.currentScore, this.currentTime, {
         router: this.voiceRouter,
         context: this.audioContext,
       });
+
+      this.updateScoreUi();
+
       this.isPlaying = true;
       this.playbackOffset = this.currentTime;
       this.playbackStart = performance.now();
       this.element<HTMLButtonElement>('play-btn').textContent = '❚❚';
-      this.setStatus('Playing MIDI preview');
+      this.updatePlaybackStatus();
       this.tick();
     } catch {
       this.setStatus('Audio preview could not start in this browser.', true);
+    }
+  }
+
+  private updatePlaybackStatus(): void {
+    const engine = this.voiceRouter.getDefaults().engine;
+    if (engine === 'oscillator') {
+      this.setStatus('Playing (oscillator synth)');
+      return;
+    }
+    const statusMap = this.soundfontPlayer?.getStatusMap();
+    if (!statusMap || statusMap.size === 0) {
+      this.setStatus('Playing MIDI preview');
+      return;
+    }
+    let loadedCount = 0;
+    let fallbackCount = 0;
+    statusMap.forEach((status) => {
+      if (status === 'loaded') loadedCount++;
+      else if (status === 'fallback') fallbackCount++;
+    });
+
+    if (fallbackCount > 0) {
+      if (loadedCount === 0) {
+        this.setStatus(`Playing SoundFont — ${fallbackCount} track${fallbackCount === 1 ? '' : 's'} using synth fallback`);
+      } else {
+        this.setStatus(`Playing SoundFont — ${loadedCount}/${statusMap.size} patches loaded (${fallbackCount} using synth fallback)`);
+      }
+    } else {
+      this.setStatus(`Playing SoundFont — ${loadedCount}/${statusMap.size} patches loaded`);
     }
   }
 

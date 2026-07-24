@@ -518,7 +518,7 @@ class AudioVisualizerApp {
       this.element<HTMLOutputElement>('val-viewport-bars').value = AUTO_ZOOM_BAR_LABELS[idx];
       badgeText = `Auto · ${AUTO_ZOOM_BAR_LABELS[idx]}`;
     } else {
-      const secs = vp.autoZoomWindowSeconds ?? AUTO_ZOOM_SECOND_STEPS[2];
+      const secs = vp.autoZoomWindowSeconds ?? AUTO_ZOOM_SECOND_STEPS[3];
       let idx = AUTO_ZOOM_SECOND_STEPS.indexOf(secs);
       if (idx === -1) idx = AUTO_ZOOM_SECOND_STEPS.length - 1;
       
@@ -526,7 +526,7 @@ class AudioVisualizerApp {
       const label = s === Infinity ? 'Full track' : `${s}s`;
       this.element<HTMLInputElement>('viewport-seconds-range').value = String(idx);
       this.element<HTMLOutputElement>('val-viewport-seconds').value = label;
-      badgeText = s === Infinity ? 'Auto · Full' : `Auto · ${label}`;
+      badgeText = s === Infinity ? 'Auto · Full track' : `Auto · ${label}`;
     }
 
     if (!vp.autoZoom) badgeText = 'Auto';

@@ -60,9 +60,15 @@ the score.
   normalized to the canvas (≈ width × `zScale`/100) so a long piece stays a legible solid
   rather than an unviewable tunnel. Rendered with Three.js: pitch-hued geometry glows via
   bloom against a graded dark field with exponential depth fog, a translucent "now-plane"
-  sweeps forward at the current playback moment, and the camera uses fixed preset angles
+  sweeps forward at the current playback moment with pitch-hued onset pulses, and the camera uses fixed preset angles
   (Isometric, Front, Side, Bird's eye). These modes export to PNG only; SVG/plotter and
-  free-orbit navigation are planned follow-ups. See
+  free-orbit navigation are available through drag / wheel / pan controls. The `3d_piano_roll`
+  mode maps pitch to X, voice to Y, and onset/duration to Z boxes. A deterministic grounding
+  grid and particle field support depth perception; playback can auto-follow active notes or
+  chase the now-plane, while manual navigation deliberately suspends those modes. PNG and a
+  six-second WebM capture are available. Playback Cue selects either the default sweeping
+  now-plane or a cumulative Reveal through time, which clips future geometry at the playhead.
+  SVG/plotter remain 2D-only. See
   [`plans/specs/2026-07-23-3d-time-slice-modes.md`](plans/specs/2026-07-23-3d-time-slice-modes.md).
 
 Origins for path-based modes are left-to-right, center-outward, and outside-inward.
@@ -81,6 +87,10 @@ for path/circle modes, and an optional live legend. Geometry is uniformly fitted
 safe inset before preview and export so artwork uses the available canvas without being
 cropped. Tonal time-lines deliberately fill every canvas row instead of receiving this
 art padding.
+
+2D `lines` and `circles` receive a color-matched Canvas glow: line strokes use a compact
+soft shadow and note halos use a radius-scaled bloom. It is a rendering treatment only and
+does not alter their deterministic geometry or SVG/plotter output.
 
 The score canvas supports interactive zoom and pan (mouse wheel, click-drag, touch pinch/pan, keyboard shortcuts `+`/`-`/`R`/`A`, and HUD overlay). An overlay HUD (`+`, `-`, `Reset`, `Auto`, mode badge `Auto · 4 bars`) is anchored inside the canvas wrapper at the bottom-left (`z-index: 5`) with frosted glass styling, remaining clear of top-right `.stage-corner` metadata. Title headers, legend overlays, and background atmosphere remain screen-fixed while score geometry transforms within the viewport matrix.
 

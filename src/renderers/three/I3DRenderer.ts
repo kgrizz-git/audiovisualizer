@@ -7,7 +7,7 @@ import { RenderedGeometry3D, ViewportTransform3D } from '../../core/types.js';
  */
 export interface I3DRenderer {
   /** Attaches the renderer to a canvas and sizes it to width × height CSS pixels. */
-  mount(canvas: HTMLCanvasElement, width: number, height: number): void;
+  mount(canvas: HTMLCanvasElement, width: number, height: number, onViewportChange?: (viewport: ViewportTransform3D) => void): void;
   /** Replaces the rendered geometry and re-frames the camera. */
   setGeometry(geometry: RenderedGeometry3D): void;
   /** Applies camera preset and bloom settings. */
@@ -19,6 +19,8 @@ export interface I3DRenderer {
   stepPlayhead(t: number | null): void;
   /** Renders a PNG snapshot of the current frame at the mounted resolution. */
   capturePNG(): Promise<Blob>;
+  /** Records the current canvas for a bounded number of seconds. */
+  captureWebM(durationSeconds: number): Promise<Blob>;
   /** Releases all GPU resources (geometries, materials, render targets, context). */
   dispose(): void;
 }

@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { LookaheadScheduler } from '../src/audio/playbackScheduler.js';
 
 describe('LookaheadScheduler', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
 
   it('dispatches only tasks within the lookahead window, in time order', () => {
     let clock = 0;

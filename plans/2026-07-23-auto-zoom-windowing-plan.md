@@ -1,6 +1,6 @@
 # Configurable Auto-Zoom Musical & Time Windowing Implementation Plan
 
-Status: ready for implementation (revised after plan review 2026-07-23)
+Status: approved (revised after plan review 2026-07-23)
 Last reviewed: 2026-07-23
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -176,7 +176,7 @@ return {
 };
 ```
 
-Update existing tests that assert `getViewport()` / `DEFAULT_VIEWPORT` equality to include the new fields, and add `bpm` to hand-built geometries (typically `bpm: 120`).
+Update existing tests that assert `getViewport()` / `DEFAULT_VIEWPORT` equality to include the new fields, and add `bpm` to hand-built geometries (typically `bpm: 120`). **Crucial:** Do not forget to update the `mockGeometry` inside `tests/viewportController.test.ts` (around line 105) which is used in `stepAutoZoom` tests; it will need `bpm: 120` to compile.
 
 - [ ] **Step 4: Run tests**
 
@@ -410,7 +410,7 @@ Insert window controls **after** the auto-zoom toggle and **before** Reset frami
 </div>
 ```
 
-Update HUD badge label span (keep checkbox) so `updateViewportUi` can set text, e.g. wrap copy in `<span id="hud-autozoom-label">Auto</span>`.
+Update HUD badge label span (keep checkbox) so `updateViewportUi` can set text, e.g. wrap copy in `<span id="hud-autozoom-label">Auto</span>`. (Currently, the text "Auto" in `index.html` is inside a generic `<span>`, so you must add the `id="hud-autozoom-label"` attribute to it).
 
 - [ ] **Step 2: CSS for `.segmented-control`, `.control-subgroup`, `.is-hidden`**
 
@@ -442,7 +442,7 @@ git commit -m "feat(ui): musical vs time auto-zoom window controls"
 
 **Files:**
 - Modify: `CHANGELOG.md` (Unreleased **Added**, SemVer **MINOR**)
-- Modify: `dev-docs/TO_DO.md` (add/complete backlog item linking this plan)
+- Modify: `dev-docs/TO_DO.md` (add/complete backlog item linking this plan — note that the item does not currently exist, so you must write the new item bullet and check it off simultaneously)
 - Modify: `ARCHITECTURE.md` (ViewportTransform fields, `RenderedGeometry.bpm`, window helper)
 - Modify: `DESIGN.md` (auto-zoom window modes, 4/4 assumption, HUD copy)
 

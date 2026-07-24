@@ -71,4 +71,35 @@ describe('SoundfontPlayer', () => {
     player.stop();
     expect(fallbackStop).toHaveBeenCalled();
   });
+
+  it('reports loaded vs fallback status per channel', async () => {
+    const fakeBuffer = {} as AudioBuffer;
+    const loader = {
+      loadPatch: vi.fn(async (_bank: string, program: number) =>
+        program === 0
+          ? { bank: 'FluidR3_GM', program: 0, slug: 'acoustic_grand_piano', buffers: { C4: fakeBuffer } }
+          : null),
+    };
+    const player = new SoundfontPlayer({
+      loader: loader as never,
+      createFallback: () => ({ start: vi.fn(async () => {}), stop: vi.fn() }) as never,
+    });
+    const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+    await player.start(demoScore(), 0, { router });
+
+    const status = player.getStatusMap();
+    expect(status.get(0)).toBe('loaded');   // program 0 patch resolved
+    expect(status.get(1)).toBe('fallback'); // program 32 patch null
+  });
+
+  it('clears status on stop', async () => {
+    const player = new SoundfontPlayer({
+      loader: { loadPatch: vi.fn(async () => null) } as never,
+      createFallback: () => ({ start: vi.fn(async () => {}), stop: vi.fn() }) as never,
+    });
+    const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+    await player.start(demoScore(), 0, { router });
+    player.stop();
+    expect(player.getStatusMap().size).toBe(0);
+  });
 });

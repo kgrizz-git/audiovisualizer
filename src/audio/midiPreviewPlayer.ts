@@ -1,4 +1,5 @@
 import { NoteEvent, Score } from '../core/types.js';
+import { LookaheadScheduler, TimedTask } from './playbackScheduler.js';
 
 export type SynthTimbre = 'sine' | 'triangle' | 'sawtooth' | 'square';
 
@@ -13,6 +14,7 @@ export interface VoicePlaybackSettings {
 export class MidiPreviewPlayer {
   private context: AudioContext | null = null;
   private activeSources: OscillatorNode[] = [];
+  private scheduler: LookaheadScheduler | null = null;
 
   constructor(context?: AudioContext) {
     this.context = context ?? null;
@@ -31,14 +33,23 @@ export class MidiPreviewPlayer {
     await this.context?.resume();
     const now = (this.context?.currentTime ?? 0) + 0.03;
     const tracks = selectAudibleTracks(score, voices, opts?.channels);
+    const tasks: TimedTask[] = [];
     for (const track of tracks) {
       const index = score.tracks.indexOf(track);
       const settings = voices.get(track.channel) ?? defaultVoiceSettings(index);
-      track.notes.forEach((note) => this.schedule(note, offsetSeconds, now, settings));
+      for (const note of track.notes) {
+        if (note.onset + note.duration <= offsetSeconds) continue;
+        const at = now + Math.max(0, note.onset - offsetSeconds);
+        tasks.push({ at, run: () => this.schedule(note, offsetSeconds, now, settings) });
+      }
     }
+    this.scheduler = new LookaheadScheduler(tasks, () => this.context?.currentTime ?? 0);
+    this.scheduler.start();
   }
 
   public stop(): void {
+    this.scheduler?.stop();
+    this.scheduler = null;
     this.activeSources.forEach((source) => {
       try {
         source.stop();

@@ -5,6 +5,7 @@ import { InstrumentPatch, PatchStatus, SoundbankPreset } from './soundfontTypes.
 import { VoiceRouter } from './voiceRouter.js';
 import { buildSustainWindows, getSustainedDuration, sustainEventsForChannel } from './sustainWindows.js';
 import { midiFromNoteName, nearestSampleKey } from './midiNoteName.js';
+import { LookaheadScheduler, TimedTask } from '../playbackScheduler.js';
 
 export interface SoundfontPlayerDeps {
   loader: SoundfontPatchLoader;
@@ -42,6 +43,7 @@ export class SoundfontPlayer {
   private activeSources: AudioBufferSourceNode[] = [];
   private fallback: MidiPreviewPlayer | null = null;
   private status = new Map<number, PatchStatus>();
+  private scheduler: LookaheadScheduler | null = null;
   private readonly loader: SoundfontPatchLoader;
   private readonly createFallback: (context: AudioContext) => MidiPreviewPlayer;
 
@@ -115,6 +117,7 @@ export class SoundfontPlayer {
     }
 
     const now = this.context.currentTime + 0.03;
+    const tasks: TimedTask[] = [];
     for (const track of audible) {
       const patch = patchByChannel.get(track.channel);
       if (!patch) continue;
@@ -124,9 +127,13 @@ export class SoundfontPlayer {
         score.duration,
       );
       for (const note of track.notes) {
-        this.scheduleSample(note, offsetSeconds, now, patch, route.gain, windows);
+        if (note.onset + getSustainedDuration(note, windows) <= offsetSeconds) continue;
+        const at = now + Math.max(0, note.onset - offsetSeconds);
+        tasks.push({ at, run: () => this.scheduleSample(note, offsetSeconds, now, patch, route.gain, windows) });
       }
     }
+    this.scheduler = new LookaheadScheduler(tasks, () => this.context?.currentTime ?? 0);
+    this.scheduler.start();
 
     const missChannels = audible
       .map((t) => t.channel)
@@ -146,6 +153,8 @@ export class SoundfontPlayer {
   stop(): void {
     this.generation += 1;
     this.status.clear();
+    this.scheduler?.stop();
+    this.scheduler = null;
     for (const source of this.activeSources) {
       try {
         source.stop();

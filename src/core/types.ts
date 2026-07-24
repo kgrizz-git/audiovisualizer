@@ -4,11 +4,12 @@ export type Variation =
   | 'vertical_tone'
   | 'tonal_time_lines'
   | '3d_lines'
-  | '3d_note_halos';
+  | '3d_note_halos'
+  | '3d_piano_roll';
 
 /** True when the variation is rendered by the Three.js 3D renderer rather than Canvas/SVG. */
 export function is3DVariation(variation: Variation): boolean {
-  return variation === '3d_lines' || variation === '3d_note_halos';
+  return variation === '3d_lines' || variation === '3d_note_halos' || variation === '3d_piano_roll';
 }
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
 export type PitchHueMode = 'pitch_class' | 'register_spiral';
@@ -152,9 +153,23 @@ export interface GeometryDisc3D {
   note: NoteEvent;
 }
 
+/** An axis-aligned box (piano-roll slab note). Center + size in world-ish coordinates. */
+export interface GeometryBox3D {
+  cx: number;
+  cy: number;
+  cz: number;
+  sx: number;
+  sy: number;
+  sz: number;
+  color: string;
+  opacity: number;
+  note: NoteEvent;
+}
+
 /**
- * Geometry for the Three.js 3D visualization family. The X/Y coordinates come from the
- * existing 2D interval/path algorithms; Z is musical time (seconds × zScale). Consumers
+ * Geometry for the Three.js 3D visualization family. For 3d_lines/3d_note_halos the X/Y
+ * coordinates come from the existing 2D interval/path algorithms; for 3d_piano_roll they
+ * are a pitch × voice grid. Z is always musical time (seconds × zScale). Consumers
  * discriminate against RenderedGeometry with the `kind` field.
  */
 export interface RenderedGeometry3D {
@@ -167,6 +182,7 @@ export interface RenderedGeometry3D {
   zScale: number;
   segments: GeometrySegment3D[]; // populated for 3d_lines
   discs: GeometryDisc3D[];       // populated for 3d_note_halos
+  boxes: GeometryBox3D[];        // populated for 3d_piano_roll
   config: RuleConfig;
   bpm: number;
 }
@@ -218,10 +234,11 @@ export function clampZoom(zoom: number): number {
   return Math.min(10.0, Math.max(0.25, zoom));
 }
 
-export type CameraPreset3D = '3d_isometric' | '3d_front' | '3d_side' | '3d_birds_eye';
+export type CameraPreset3D = '3d_isometric' | '3d_front' | '3d_side' | '3d_birds_eye' | '3d_free';
+export type PlaybackCue3D = 'now_plane' | 'reveal';
 
 /** Orbit angles (degrees) for each fixed camera preset. */
-export const CAMERA_PRESETS_3D: Readonly<Record<CameraPreset3D, { azimuth: number; elevation: number }>> = Object.freeze({
+export const CAMERA_PRESETS_3D: Readonly<Partial<Record<CameraPreset3D, { azimuth: number; elevation: number }>>> = Object.freeze({
   '3d_isometric': { azimuth: 45, elevation: 30 },
   '3d_front': { azimuth: 0, elevation: 0 },
   '3d_side': { azimuth: 90, elevation: 0 },
@@ -233,15 +250,37 @@ export const CAMERA_PRESET_LABELS_3D: Readonly<Record<CameraPreset3D, string>> =
   '3d_front': 'Front',
   '3d_side': 'Side',
   '3d_birds_eye': "Bird's eye",
+  '3d_free': 'Free orbit',
 });
 
 export interface ViewportTransform3D {
   preset: CameraPreset3D;
   bloom: number; // 0 = off, ~1.5 = neon
+  /** Orthographic zoom. 1 frames the full score; higher values move closer. */
+  zoom: number;
+  /** Camera orbit in degrees, retained so an adjusted view is reproducible. */
+  azimuth: number;
+  elevation: number;
+  /** Camera target offset in world coordinates. */
+  panX: number;
+  panY: number;
+  autoFollow: boolean;
+  chaseCamera: boolean;
+  autoRotate: boolean;
+  /** Playback visualization: a sweeping plane or a cumulative reveal through depth. */
+  playbackCue: PlaybackCue3D;
 }
 
 export const DEFAULT_VIEWPORT_3D: Readonly<ViewportTransform3D> = Object.freeze({
   preset: '3d_isometric',
-  bloom: 0.9,
+  bloom: 1.4,
+  zoom: 1,
+  azimuth: 45,
+  elevation: 30,
+  panX: 0,
+  panY: 0,
+  autoFollow: false,
+  chaseCamera: false,
+  autoRotate: false,
+  playbackCue: 'now_plane',
 });
-

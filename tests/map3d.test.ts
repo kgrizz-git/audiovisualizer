@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 import { map3DGeometry, liftGeometryTo3D, base2DVariation, effectiveZScale } from '../src/core/mapper/map3d.js';
 import { mapScoreToGeometry } from '../src/core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../src/core/layout/fitGeometry.js';
-import { NoteEvent, RuleConfig, Score } from '../src/core/types.js';
+import { DEFAULT_VIEWPORT_3D, NoteEvent, RuleConfig, Score } from '../src/core/types.js';
 
 function note(partial: Partial<NoteEvent> & Pick<NoteEvent, 'id' | 'pitch' | 'onset' | 'duration'>): NoteEvent {
   return {
@@ -25,11 +25,18 @@ function scoreOf(notes: NoteEvent[], duration = 4): Score {
 
 const linesConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_lines', zScale: 100 };
 const halosConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_note_halos', zScale: 100 };
+const pianoConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_piano_roll', zScale: 100 };
 
 describe('base2DVariation', () => {
   it('maps 3d_lines to lines and 3d_note_halos to circles', () => {
     expect(base2DVariation('3d_lines')).toBe('lines');
     expect(base2DVariation('3d_note_halos')).toBe('circles');
+  });
+});
+
+describe('3D viewport defaults', () => {
+  it('uses the existing now-plane cue unless reveal is explicitly selected', () => {
+    expect(DEFAULT_VIEWPORT_3D.playbackCue).toBe('now_plane');
   });
 });
 
@@ -97,6 +104,25 @@ describe('map3DGeometry', () => {
     const a = map3DGeometry(scoreOf(notes), linesConfig, 800, 800);
     const b = map3DGeometry(scoreOf(notes), linesConfig, 800, 800);
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+
+  it('maps piano-roll notes into deterministic pitch × voice × time boxes', () => {
+    const score: Score = {
+      title: 'Piano roll', duration: 4, bpm: 120,
+      tracks: [
+        { name: 'Low', channel: 0, program: 0, instrumentName: 'Piano', notes: [note({ id: 'a', pitch: 48, onset: 0, duration: 1 })] },
+        { name: 'High', channel: 1, program: 0, instrumentName: 'Piano', notes: [note({ id: 'b', pitch: 72, onset: 2, duration: 1 })] },
+      ],
+    };
+    const geometry = map3DGeometry(score, pianoConfig, 800, 600);
+    expect(geometry.segments).toHaveLength(0);
+    expect(geometry.discs).toHaveLength(0);
+    expect(geometry.boxes).toHaveLength(2);
+    expect(geometry.boxes[1].cx).toBeGreaterThan(geometry.boxes[0].cx);
+    expect(geometry.boxes[1].cy).toBeGreaterThan(geometry.boxes[0].cy);
+    expect(geometry.boxes[1].cz).toBeGreaterThan(geometry.boxes[0].cz);
+    expect(geometry.boxes[0].sz).toBeCloseTo(effectiveZScale(4, 800, pianoConfig));
+    expect(JSON.stringify(map3DGeometry(score, pianoConfig, 800, 600))).toBe(JSON.stringify(geometry));
   });
 });
 

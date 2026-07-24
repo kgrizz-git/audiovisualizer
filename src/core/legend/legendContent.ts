@@ -58,6 +58,17 @@ export function getLegendContent(config: RuleConfig): LegendContent {
           'Now-plane → current playback moment',
         ],
       };
+    case '3d_piano_roll':
+      return {
+        title: '3D PIANO ROLL',
+        lines: [
+          hue,
+          'X → pitch; Y → voice lane',
+          'Z (depth) → onset + duration',
+          'Box opacity → velocity',
+          'Now-plane → current playback moment',
+        ],
+      };
   }
 }
 

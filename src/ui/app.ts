@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG, getAverageScoreBackground, mapScoreToGeometry } from '.
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
-import { AutoZoomWindowMode, CameraPreset3D, ChordLayout, DEFAULT_VIEWPORT_3D, GapPolicy, is3DVariation, OriginMode, PitchHueMode, RuleConfig, Score, Variation, ViewportTransform, ViewportTransform3D } from '../core/types.js';
+import { AutoZoomWindowMode, CameraPreset3D, ChordLayout, DEFAULT_VIEWPORT_3D, GapPolicy, is3DVariation, OriginMode, PitchHueMode, PlaybackCue3D, RuleConfig, Score, Variation, ViewportTransform, ViewportTransform3D } from '../core/types.js';
 import { map3DGeometry } from '../core/mapper/map3d.js';
 import type { I3DRenderer } from '../renderers/three/I3DRenderer.js';
 import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
@@ -85,6 +85,19 @@ class AudioVisualizerApp {
     this.select<CameraPreset3D>('camera-preset-select', (value) => { this.viewport3d = { ...this.viewport3d, preset: value }; });
     this.range('zscale-range', 'val-zscale', (value) => { this.currentConfig.zScale = value; }, '');
     this.range('bloom-range', 'val-bloom', (value) => { this.viewport3d = { ...this.viewport3d, bloom: value }; }, '');
+    this.select<PlaybackCue3D>('playback-cue-select', (value) => { this.viewport3d = { ...this.viewport3d, playbackCue: value }; });
+    this.element<HTMLInputElement>('threed-autofollow-toggle').addEventListener('change', (event) => {
+      this.viewport3d = { ...this.viewport3d, autoFollow: (event.target as HTMLInputElement).checked };
+      this.render();
+    });
+    this.element<HTMLInputElement>('threed-chase-toggle').addEventListener('change', (event) => {
+      this.viewport3d = { ...this.viewport3d, chaseCamera: (event.target as HTMLInputElement).checked };
+      this.render();
+    });
+    this.element<HTMLInputElement>('threed-rotate-toggle').addEventListener('change', (event) => {
+      this.viewport3d = { ...this.viewport3d, autoRotate: (event.target as HTMLInputElement).checked };
+      this.render();
+    });
     this.select<OriginMode>('origin-select', (value) => { this.currentConfig.originMode = value; });
     this.select<PitchHueMode>('hue-mode-select', (value) => { this.currentConfig.pitchHueMode = value; });
     this.select<'black' | 'average'>('background-select', (value) => { this.backgroundMode = value; });
@@ -117,6 +130,7 @@ class AudioVisualizerApp {
     this.element<HTMLButtonElement>('btn-export-svg').addEventListener('click', () => this.downloadSvg(false));
     this.element<HTMLButtonElement>('btn-export-plotter').addEventListener('click', () => this.downloadSvg(true));
     this.element<HTMLButtonElement>('btn-export-png').addEventListener('click', () => this.downloadPng());
+    this.element<HTMLButtonElement>('btn-export-webm').addEventListener('click', () => void this.downloadWebM3D());
 
     const titleInput = this.element<HTMLInputElement>('export-title-input');
     titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateCanvasAriaLabel(); this.render(); });
@@ -599,7 +613,12 @@ class AudioVisualizerApp {
     if (!this.threeRenderer) {
       const { ThreeDRenderer } = await import('../renderers/three/ThreeDRenderer.js');
       const renderer = new ThreeDRenderer();
-      renderer.mount(this.element<HTMLCanvasElement>('visualizer-canvas-3d'), PREVIEW_SIZE, PREVIEW_SIZE);
+      renderer.mount(this.element<HTMLCanvasElement>('visualizer-canvas-3d'), PREVIEW_SIZE, PREVIEW_SIZE, (viewport) => {
+        this.viewport3d = viewport;
+        this.element<HTMLSelectElement>('camera-preset-select').value = viewport.preset;
+        this.element<HTMLInputElement>('threed-autofollow-toggle').checked = viewport.autoFollow;
+        this.element<HTMLInputElement>('threed-chase-toggle').checked = viewport.chaseCamera;
+      });
       this.threeRenderer = renderer;
     }
     return this.threeRenderer;
@@ -666,6 +685,21 @@ class AudioVisualizerApp {
       this.download(blob, `${this.filename()}.png`);
     } catch {
       this.setStatus('3D PNG export failed.', true);
+    }
+  }
+
+  private async downloadWebM3D(): Promise<void> {
+    if (!is3DVariation(this.currentConfig.variation)) {
+      this.setStatus('WebM capture is available for 3D modes only.', true);
+      return;
+    }
+    try {
+      const renderer = await this.ensureThreeRenderer();
+      this.setStatus('Recording a 6-second 3D capture…');
+      this.download(await renderer.captureWebM(6), `${this.filename()}.webm`);
+      this.setStatus('3D WebM capture saved.');
+    } catch {
+      this.setStatus('WebM capture is not supported in this browser.', true);
     }
   }
 

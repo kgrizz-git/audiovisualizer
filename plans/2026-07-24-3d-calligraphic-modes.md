@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-24
 Date: 2026-07-24
 Author: Claude
-Status: Phase 1 complete (2026-07-24); Phases 2–3 pending
+Status: Implementation complete (2026-07-24); browser manual verification pending
 Linked issue/PR: n/a
 Spec: [`plans/specs/2026-07-23-3d-time-slice-modes.md`](specs/2026-07-23-3d-time-slice-modes.md)
 
@@ -108,8 +108,8 @@ package.json                    — add `three` (and `@types/three` dev).
       ACES tone mapping + sRGB, MSAA (`antialias: true`).
 - [x] Now-plane playhead: sweeps at `t × zScale`; shown during playback/scrub, hidden at
       full-score view. **Deferred:** per-note past/future dimming (needs custom shader).
-- [ ] Onset pulse on now-plane crossing — **deferred to Phase 2** (needs a per-instance
-      shader; the sweeping now-plane is the Phase 1 temporal cue).
+- [x] Onset pulse on now-plane crossing — expanding pitch-hued rings are emitted at crossed
+      note onsets (implemented in the Phase 2 polish pass without a per-instance shader).
 - [x] Fixed camera presets (isometric/front/side/birds-eye) via ortho camera + sidebar select.
 - [x] `zScale` (Time depth) and bloom (Glow) sidebar controls; 3D-aware legend.
 - [x] PNG export via `capturePNG()` (canvas `toBlob`, `preserveDrawingBuffer`).
@@ -123,16 +123,16 @@ package.json                    — add `three` (and `@types/three` dev).
 
 ### Phase 2: Orbit + piano-roll slab
 
-- [ ] `OrbitControls`; manual orbit suspends preset snap (mirrors 2D auto-zoom suspend).
-- [ ] Serialize `ViewportTransform3D` {azimuth, elevation, zoom, pan} for reproducible framing.
-- [ ] `3d_piano_roll` variation: pitch × voice × time boxes via `InstancedMesh`.
-- [ ] Grounding grid + parallax particle field (deterministic seed).
+- [x] `OrbitControls`; manual orbit suspends preset snap and playback tracking.
+- [x] Serialize `ViewportTransform3D` {azimuth, elevation, zoom, pan} for reproducible framing.
+- [x] `3d_piano_roll` variation: pitch × voice × time boxes via `InstancedMesh`.
+- [x] Grounding grid + parallax particle field (deterministic seed).
 - [ ] Optional: projected-line SVG export for 3D (evaluate feasibility).
 
 ### Phase 3: Cinematic cameras & 3D auto-follow
 
-- [ ] Chase cam locked to playhead Z with configurable `chaseLead`.
-- [ ] **3D auto-zoom / auto-pan** (toggle, like the 2D auto-zoom): during playback, frame
+- [x] Chase camera follows the playhead Z through the active score solid.
+- [x] **3D auto-zoom / auto-pan** (toggle, like the 2D auto-zoom): during playback, frame
       the active-note bounding box over a symmetric time window and lerp the camera to keep
       it centered, easing back to the full-solid view during silence. Reuse the 2D windowing
       concept (`calculateActiveNotesBoundingBox` / `calculateWindowSeconds`) but compute a 3D
@@ -140,18 +140,19 @@ package.json                    — add `three` (and `@types/three` dev).
       **Enforce a higher minimum time window than 2D** — a too-short 3D window whips the
       camera through depth and reads as nauseating; clamp to a larger floor (tune during
       implementation, e.g. ≥ 2–4 s or ≥ 1 bar). Manual orbit suspends it (mirrors 2D).
-- [ ] Free camera (detached azimuth/elevation/roll/position controls).
-- [ ] Idle turntable auto-rotate.
-- [ ] Turntable / playback-pass WebM capture via `MediaRecorder`.
+- [x] Free camera via detached OrbitControls framing (azimuth/elevation/zoom/pan).
+- [x] Idle turntable auto-rotate.
+- [x] Turntable / playback-pass WebM capture via `MediaRecorder`.
 
 ## Verification
 
-- [ ] `npm run validate` passes (Vitest + strict TS + production build) at each phase.
-- [ ] 2D-only production bundle size is unchanged (Three.js is a separate lazy chunk) —
+- [x] `npm run validate` passes (Vitest + strict TS + production build) after implementation.
+- [x] 2D-only production bundle remains a separate lazy Three.js chunk —
       confirm in the Vite build output.
-- [ ] `map3DGeometry()` is pure and deterministic: same score+config → identical XYZ
+- [x] `map3DGeometry()` is pure and deterministic: same score+config → identical XYZ
       (unit-tested), matching the mapper determinism rule in AGENTS.md.
-- [ ] Manual: load the Bach prelude demo, switch to `3d_lines` and `3d_note_halos`, verify
+- [ ] Manual: load the Bach prelude demo, switch to `3d_lines`, `3d_note_halos`, and
+      `3d_piano_roll`, verify
       bloom + now-plane + onset pulses during playback, cycle camera presets, export PNG.
 - [ ] Manual perf: dense score holds interactive frame rate during playback/orbit; idle
       CPU/GPU drops to ~zero (render-on-demand); no WebGL context/memory leak on repeated

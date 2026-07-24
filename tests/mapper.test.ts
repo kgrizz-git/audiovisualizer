@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateDemoScore } from '../src/core/midi/parser.js';
-import { getAverageScoreBackground, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor } from '../src/core/mapper/scoreMapper.js';
+import { getAverageScoreBackground, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor } from '../src/core/mapper/scoreMapper.js';
 import { NoteEvent } from '../src/core/types.js';
 
 describe('Score Mapper Unit Tests', () => {
@@ -14,6 +14,21 @@ describe('Score Mapper Unit Tests', () => {
 
     expect(getNoteColor(noteC, DEFAULT_CONFIG)).toBe('hsl(0, 85%, 60%)');
     expect(getNoteColor(noteFs, DEFAULT_CONFIG)).toBe('hsl(180, 85%, 60%)');
+  });
+
+  it('supports visual transposition and a stable voice palette without mutating source notes', () => {
+    const note: NoteEvent = { id: 'transpose', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 1, pitchClass: 0 };
+    expect(getVisualPitch(note, { ...DEFAULT_CONFIG, transposeSemitones: 2 })).toBe(62);
+    expect(getNoteColor(note, { ...DEFAULT_CONFIG, transposeSemitones: 1 })).toBe('hsl(55, 85%, 60%)');
+    expect(getNoteColor(note, { ...DEFAULT_CONFIG, pitchHueMode: 'voice_palette', transposeSemitones: 12 })).toBe('hsl(196, 85%, 60%)');
+    expect(note.pitch).toBe(60);
+  });
+
+  it('derives one deterministic mapped accent per visible track', () => {
+    const score = generateDemoScore();
+    const accents = getTrackAverageAccents(score, { ...DEFAULT_CONFIG, pitchHueMode: 'voice_palette' });
+    expect(accents).toHaveLength(score.tracks.length);
+    expect(accents[0]).toBe('hsl(12, 85%, 60%)');
   });
 
   it('generates expected geometry segments for demo score in Left-to-Right mode', () => {

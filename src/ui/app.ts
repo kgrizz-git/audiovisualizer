@@ -1,5 +1,5 @@
 import { generateDemoScore, parseMidiData } from '../core/midi/parser.js';
-import { DEFAULT_CONFIG, getAverageScoreBackground, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
+import { DEFAULT_CONFIG, getAverageScoreBackground, getTrackAverageAccents, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
@@ -100,6 +100,7 @@ class AudioVisualizerApp {
     });
     this.select<OriginMode>('origin-select', (value) => { this.currentConfig.originMode = value; });
     this.select<PitchHueMode>('hue-mode-select', (value) => { this.currentConfig.pitchHueMode = value; });
+    this.range('transpose-range', 'val-transpose', (value) => { this.currentConfig.transposeSemitones = value; }, ' st');
     this.select<'black' | 'average'>('background-select', (value) => { this.backgroundMode = value; });
     this.select<GapPolicy>('gap-policy-select', (value) => { this.currentConfig.gapPolicy = value; });
     this.select<ChordLayout>('chord-layout-select', (value) => { this.currentConfig.chordLayout = value; });
@@ -589,6 +590,7 @@ class AudioVisualizerApp {
       time: this.currentTime,
       showLegend: true,
       backgroundColor: this.backgroundColor(),
+      atmosphereColors: this.atmosphereColors(),
       title: this.exportTitle,
       viewport: this.viewportController.getViewport()
     });
@@ -670,6 +672,7 @@ class AudioVisualizerApp {
     this.canvasRenderer.render(geometry, {
       showLegend: true,
       backgroundColor: this.backgroundColor(),
+      atmosphereColors: this.atmosphereColors(),
       title: this.exportTitle,
       viewport: this.getExportViewport(EXPORT_SIZE)
     });
@@ -705,6 +708,7 @@ class AudioVisualizerApp {
 
   private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }
   private backgroundColor(): string { return this.backgroundMode === 'average' ? getAverageScoreBackground(this.currentScore, this.currentConfig) : '#000000'; }
+  private atmosphereColors(): string[] | undefined { return this.backgroundMode === 'black' ? getTrackAverageAccents(this.currentScore, this.currentConfig) : undefined; }
   private download(blob: Blob, name: string): void { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }
   private filename(): string { return `${this.currentScore.title.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase()}-${this.currentConfig.variation}`; }
   private setStatus(message: string, isError = false): void { const status = this.element<HTMLElement>('app-status'); status.textContent = message; status.classList.toggle('is-error', isError); }

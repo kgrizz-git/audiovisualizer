@@ -67,7 +67,8 @@
           <p class="hint">Drag to orbit, wheel to zoom, and right-drag (or two fingers) to pan. Manual navigation suspends auto-follow.</p>
         </div>
         <div class="control-item"><label for="origin-select">Growth direction</label><select id="origin-select"><option value="left_to_right">Left to right</option><option value="center_outward">Center outward</option><option value="outside_inward">Outside inward</option></select></div>
-        <div class="control-item"><label for="hue-mode-select">Pitch color</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option></select></div>
+        <div class="control-item"><label for="hue-mode-select">Color source</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option><option value="voice_palette">Voice palette</option></select></div>
+        <div class="control-item"><label for="transpose-range">Visual transpose <output id="val-transpose">0 st</output></label><input id="transpose-range" type="range" min="-24" max="24" step="1" value="0" /></div>
         <div class="control-item"><label for="background-select">Canvas background</label><select id="background-select"><option value="black">Black</option><option value="average">Average pitch color</option></select></div>
         <div class="control-grid"><label class="toggle"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label></div>
         <div class="control-item"><label for="gap-policy-select">Rest treatment</label><select id="gap-policy-select"><option value="lift_pen">Lift pen</option><option value="faint_line">Faint connection</option><option value="ghost">Ghost trace</option></select></div>

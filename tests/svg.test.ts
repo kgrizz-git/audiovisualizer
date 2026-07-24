@@ -52,6 +52,14 @@ describe('SVG Builder Unit Tests', () => {
     expect(tonal).toContain('Neutral band → silence (not a key/chord)');
   });
 
+  it('includes active color swatches and visual transpose in a standard legend', () => {
+    const score = generateDemoScore();
+    const svg = buildSvg(mapScoreToGeometry(score, { ...DEFAULT_CONFIG, pitchHueMode: 'voice_palette', transposeSemitones: 3 }, 400, 400), { includeLegend: true });
+    expect(svg).toContain('Voice → stable palette color');
+    expect(svg).toContain('Visual transpose → +3 st');
+    expect(svg).toContain('hsl(12, 85%, 60%)');
+  });
+
   describe('buildTitleSvg', () => {
     it('omits title when not provided', () => {
       const result = buildTitleSvg(1000, '', false, false);

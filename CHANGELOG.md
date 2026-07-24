@@ -10,6 +10,8 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Per-voice color palettes, compact Canvas/SVG palette swatches, and visual-only semitone
+  transposition (including reproducible CLI `--hue` and `--transpose` options). SemVer: **MINOR**.
 - Stronger default 3D bloom and color-matched Canvas glow for 2D line paths and note halos.
   SemVer: **MINOR**.
 - A 3D Playback Cue selector: retain the now-plane or cumulatively reveal score geometry

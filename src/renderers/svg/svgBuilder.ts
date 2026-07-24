@@ -97,7 +97,7 @@ function escapeComment(value: string): string {
 function buildLegendSvg(w: number, h: number, config: RenderedGeometry['config']): string {
   const content = getLegendContent(config);
   const legendW = 340;
-  const legendH = 130;
+  const legendH = 155;
   const x = w - legendW - 20;
   const y = h - legendH - 20;
 
@@ -107,6 +107,7 @@ function buildLegendSvg(w: number, h: number, config: RenderedGeometry['config']
     <rect width="${legendW}" height="${legendH}" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1" />
     <text x="15" y="24" fill="#f8fafc" font-family="sans-serif" font-size="12" font-weight="bold">Visual Score · ${content.title}</text>
     ${content.lines.map((line, index) => `<text x="15" y="${48 + index * 17}" fill="#a5b4fc" font-family="sans-serif" font-size="10">${escapeText(line)}</text>`).join('\n    ')}
+    ${content.swatches.map((swatch, index) => `<circle cx="${20 + index * 60}" cy="${legendH - 18}" r="5" fill="${swatch.color}" /><text x="${29 + index * 60}" y="${legendH - 14}" fill="#cbd5e1" font-family="sans-serif" font-size="10">${escapeText(swatch.label)}</text>`).join('\n    ')}
   </g>
   `;
 }

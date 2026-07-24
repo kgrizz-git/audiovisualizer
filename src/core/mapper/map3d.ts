@@ -20,7 +20,7 @@ import {
   GeometryDisc3D,
   GeometryBox3D,
 } from '../types.js';
-import { mapScoreToGeometry, getNoteColor } from './scoreMapper.js';
+import { mapScoreToGeometry, getNoteColor, getVisualPitch } from './scoreMapper.js';
 import { fitGeometryToCanvas } from '../layout/fitGeometry.js';
 
 /** Maps a 3D variation to the 2D variation whose XY geometry it reuses. */
@@ -130,8 +130,9 @@ export function mapPianoRoll3D(
   let minPitch = Infinity;
   let maxPitch = -Infinity;
   for (const note of allNotes) {
-    if (note.pitch < minPitch) minPitch = note.pitch;
-    if (note.pitch > maxPitch) maxPitch = note.pitch;
+    const pitch = getVisualPitch(note, config);
+    if (pitch < minPitch) minPitch = pitch;
+    if (pitch > maxPitch) maxPitch = pitch;
   }
   if (!Number.isFinite(minPitch)) { minPitch = 60; maxPitch = 72; }
   const pitchSpan = Math.max(1, maxPitch - minPitch);
@@ -146,7 +147,7 @@ export function mapPianoRoll3D(
   tracks.forEach((track, laneIndex) => {
     const laneCenterY = pad + laneHeight * (laneIndex + 0.5);
     for (const note of track.notes) {
-      const cx = pad + ((note.pitch - minPitch) / pitchSpan) * usableW;
+      const cx = pad + ((getVisualPitch(note, config) - minPitch) / pitchSpan) * usableW;
       const zStart = note.onset * zScale;
       const zEnd = (note.onset + note.duration) * zScale;
       maxZ = Math.max(maxZ, zEnd);

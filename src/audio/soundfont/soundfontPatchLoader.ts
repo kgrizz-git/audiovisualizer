@@ -18,7 +18,10 @@ export function cdnSoundfontUrl(bank: SoundbankPreset, slug: string): string {
 export function parseMidiJsSoundfontScript(text: string, slug: string): Record<string, string> {
   const match = text.match(/MIDI\.Soundfont\.[a-zA-Z0-9_]+\s*=\s*(\{[\s\S]+\});?/);
   if (!match) throw new Error(`Soundfont script invalid format: ${slug}`);
-  return JSON.parse(match[1]);
+  // midi-js soundfont files are JS object literals with a trailing comma before
+  // the closing brace, which strict JSON.parse rejects — strip it first.
+  const json = match[1].replace(/,\s*}/g, '}');
+  return JSON.parse(json);
 }
 
 export function dataUriToArrayBuffer(dataUri: string): ArrayBuffer {

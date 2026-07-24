@@ -10,7 +10,14 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- On-demand full SoundFont library download: a first-launch prompt and a "SoundFont library" panel (Refine section) let you cache all 128 FluidR3 GM instruments (~320 MB) for offline use, with live progress, cancel, cache-count status, and a clear-cache action. SemVer: **MINOR**.
 - Engine-aware voice controls with dynamic per-track UI switching between General MIDI instrument selection (SoundFont mode) and oscillator waveform selection (Synth mode). SemVer: **MINOR**.
+
+### Changed
+- The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
+
+### Fixed
+- SoundFont patches no longer silently fall back to the synth: the midi-js patch parser now tolerates the trailing comma present in the real soundfont scripts, which previously made every patch fail to load. SemVer: **PATCH**.
 - Per-track General MIDI instrument override support in `VoiceRouter` and `SoundfontPlayer`. SemVer: **MINOR**.
 - Persistent SoundFont patch caching via browser `CacheStorage` (`soundfonts-v1`) to accelerate audio loading and work offline after initial fetch. SemVer: **MINOR**.
 - Real-time patch load status badges (`✓ Loaded`, `⚡ Synth Fallback`, `⏳ Loading…`) and engine-aware status summary during audio playback. SemVer: **MINOR**.

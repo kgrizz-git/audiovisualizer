@@ -7,6 +7,11 @@ Last reviewed: 2026-07-22
 
 ## Unreleased
 
+### Changed
+- Upgraded devDependencies `vite` to `^8.1.5` and `vitest` to `^4.1.10` to resolve high and critical dev-tooling security vulnerabilities.
+- Added `esbuild` (`^0.28.1`) explicitly to devDependencies to ensure offline CLI render builds execute reliably without relying on transitive hoisted binaries from Vite.
+- Updated `tests/soundfontPlayer.test.ts` types for compatibility with Vitest 4's `vi.fn` generics.
+
 ### Added
 - SoundFont asset bundler script (`scripts/bundle-soundfonts.js` and `npm run bundle:soundfonts`) to fetch and bundle offline FluidR3 GM soundfont samples into `public/soundfonts/`.
 - Gitignore policy rule for bundled audio patches (`public/soundfonts/**/*.js`) to keep large binary asset files out of Git history.

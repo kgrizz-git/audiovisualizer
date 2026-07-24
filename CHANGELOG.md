@@ -17,6 +17,7 @@ uses [Semantic Versioning](https://semver.org/).
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- Playback no longer cuts off partway through dense scores: notes are now scheduled a short window ahead of the playhead instead of allocating every Web Audio source node up front (thousands at once tripped a Chrome scheduling limit and silenced playback). SemVer: **PATCH**.
 - SoundFont patches no longer silently fall back to the synth: the midi-js patch parser now tolerates the trailing comma present in the real soundfont scripts, which previously made every patch fail to load. SemVer: **PATCH**.
 - Per-track General MIDI instrument override support in `VoiceRouter` and `SoundfontPlayer`. SemVer: **MINOR**.
 - Persistent SoundFont patch caching via browser `CacheStorage` (`soundfonts-v1`) to accelerate audio loading and work offline after initial fetch. SemVer: **MINOR**.

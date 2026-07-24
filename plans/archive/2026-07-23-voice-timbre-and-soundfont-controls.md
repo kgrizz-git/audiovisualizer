@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** completed (2026-07-23)
+
 **Goal:** Provide dynamic, engine-aware per-track voice controls (SoundFont GM instrument selector when in SoundFont/sample mode vs synth waveform selector in Oscillator mode), persistent browser caching for SoundFonts, and clear loading/fallback status reporting.
 
 **Architecture:** Update `SoundfontPatchLoader` to persist CDN-fetched scripts in browser `CacheStorage` (`soundfonts-v1`); add per-channel patch-status tracking to `SoundfontPlayer` and make it honor per-channel program overrides; add per-channel program reassignment to `VoiceRouter`; and update `AudioVisualizerApp` in `src/ui/app.ts` to dynamically adapt the sidebar voice controls to the active engine with patch load status badges.
@@ -41,7 +43,7 @@
 - Use a **stable, absolute cache key** so the browser's `Cache.put`/`Cache.match` scheme requirement (http/https only) is always satisfied and the key does not depend on which source (local vs CDN) served the script. Use `cdnSoundfontUrl(bank, slug)` as the cache key string for both read and write, regardless of which URL actually returned the bytes.
 - Guard every CacheStorage access with `typeof caches !== 'undefined'` **and** a `try/catch` (private mode / storage errors must not break loading).
 
-- [ ] **Step 1: Write failing test for CacheStorage read + write**
+- [x] **Step 1: Write failing test for CacheStorage read + write**
 
 Add to `tests/soundfontPatchLoader.test.ts`. Stub both `fetch` and `caches`. Example:
 
@@ -99,11 +101,11 @@ it('writes a freshly fetched script into the cache', async () => {
 
 Ensure the existing tests that do **not** stub `caches` still pass — the guard makes CacheStorage optional.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/soundfontPatchLoader.test.ts`
 
-- [ ] **Step 3: Implement CacheStorage in `fetchScript`**
+- [x] **Step 3: Implement CacheStorage in `fetchScript`**
 
 Replace `fetchScript` in `src/audio/soundfont/soundfontPatchLoader.ts`:
 
@@ -152,11 +154,11 @@ Replace `fetchScript` in `src/audio/soundfont/soundfontPatchLoader.ts`:
   }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/soundfontPatchLoader.test.ts`
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```bash
 git add src/audio/soundfont/soundfontPatchLoader.ts tests/soundfontPatchLoader.test.ts
@@ -181,7 +183,7 @@ git commit -m "feat(soundfont): persist fetched patch scripts in CacheStorage"
 - Clear the map at the start of `start()` and in `stop()` so stale status from a previous score/session is not reported.
 - `getStatusMap()` returns a copy: `new Map(this.status)`.
 
-- [ ] **Step 1: Write failing test for status reporting**
+- [x] **Step 1: Write failing test for status reporting**
 
 Add to `tests/soundfontPlayer.test.ts` (reuse the existing `demoScore()` helper and the mock-loader pattern already in that file):
 
@@ -218,21 +220,21 @@ it('clears status on stop', async () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/soundfontPlayer.test.ts`
 
-- [ ] **Step 3: Implement status tracking**
+- [x] **Step 3: Implement status tracking**
 
 1. In `soundfontTypes.ts` add: `export type PatchStatus = 'loading' | 'loaded' | 'fallback';`
 2. In `soundfontPlayer.ts` import `PatchStatus`, add the `status` field, clear it in `stop()` and at the top of `start()`, set `'loading'` before the `loadPatch` `Promise.all`, and set `'loaded'`/`'fallback'` from `readyChannels`/`missChannels` after the generation guard. Add `getStatusMap()`.
 3. Note the oscillator branch returns early and leaves `status` empty — that is intentional.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/soundfontPlayer.test.ts`
 
-- [ ] **Step 5: Commit Task 2**
+- [x] **Step 5: Commit Task 2**
 
 ```bash
 git add src/audio/soundfont/soundfontPlayer.ts src/audio/soundfont/soundfontTypes.ts tests/soundfontPlayer.test.ts
@@ -255,7 +257,7 @@ git commit -m "feat(soundfont): track per-channel patch load status"
 - Produces: `VoiceRouter.setProgram(channel: number, program: number): void`, `VoiceRouter.getProgram(channel: number): number | undefined`, and `VoiceRouter.clearPrograms(): void` (used by the UI when a new score is loaded so stale overrides do not leak between files).
 - `VoiceRouter.resolveTrackSettings(...).program` returns the override when present, else `track.program`.
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 In `tests/voiceRouter.test.ts` (a `track(channel, program)` helper already exists in that file):
 
@@ -293,11 +295,11 @@ it('loads the overridden program, not the track program', async () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx vitest run tests/voiceRouter.test.ts tests/soundfontPlayer.test.ts`
 
-- [ ] **Step 3a: Implement `setProgram` in VoiceRouter**
+- [x] **Step 3a: Implement `setProgram` in VoiceRouter**
 
 In `src/audio/soundfont/voiceRouter.ts`:
 - Add `private programs = new Map<number, number>();`
@@ -312,7 +314,7 @@ In `src/audio/soundfont/voiceRouter.ts`:
   program: this.programs.get(track.channel) ?? track.program,
   ```
 
-- [ ] **Step 3b: Make SoundfontPlayer honor the resolved program**
+- [x] **Step 3b: Make SoundfontPlayer honor the resolved program**
 
 In `src/audio/soundfont/soundfontPlayer.ts`, in the unique-patch grouping loop (currently lines 80–87), replace the use of `track.program` with the router-resolved program:
 
@@ -330,11 +332,11 @@ In `src/audio/soundfont/soundfontPlayer.ts`, in the unique-patch grouping loop (
 
 This keeps `patchByChannel` correct because the ready/miss bookkeeping is still keyed by `track.channel`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run tests/voiceRouter.test.ts tests/soundfontPlayer.test.ts`
 
-- [ ] **Step 5: Commit Task 3**
+- [x] **Step 5: Commit Task 3**
 
 ```bash
 git add src/audio/soundfont/voiceRouter.ts src/audio/soundfont/soundfontPlayer.ts tests/voiceRouter.test.ts tests/soundfontPlayer.test.ts
@@ -357,7 +359,7 @@ git commit -m "feat(audio): honor per-channel GM program overrides in playback"
 - Instrument/waveform selection and engine/bank changes take effect on the **next Play**, not instantly mid-note (the player reads the router at `start()`). Badges reflect the last `start()`.
 - Before the first playback of a score, sample-mode badges show a neutral "not loaded" state (empty string or `—`); after `start()` resolves they show `✓ Loaded` / `⚡ Synth Fallback`; `⏳ Loading…` is shown for the brief window while `start()` is in flight (see Step 3).
 
-- [ ] **Step 1: Add a GM label helper and refactor the per-voice row builder**
+- [x] **Step 1: Add a GM label helper and refactor the per-voice row builder**
 
 In `src/ui/app.ts`:
 1. Import `GM_INSTRUMENT_SLUGS` (and keep `getInstrumentSlug` if useful) from `../audio/soundfont/gmInstrumentSlugs.js`, and `PatchStatus` from `../audio/soundfont/soundfontTypes.js`.
@@ -369,7 +371,7 @@ In `src/ui/app.ts`:
    }
    ```
 
-- [ ] **Step 2: Make `updateScoreUi()` render the engine-appropriate control**
+- [x] **Step 2: Make `updateScoreUi()` render the engine-appropriate control**
 
 Rework the per-track loop in `updateScoreUi()` (currently `src/ui/app.ts:206–231`). Read `const engine = this.voiceRouter.getDefaults().engine;` once before the loop. For each track:
 
@@ -394,7 +396,7 @@ private applyBadge(span: HTMLElement, status: PatchStatus | undefined): void {
 }
 ```
 
-- [ ] **Step 3: Wire engine/bank changes and playback to refresh the controls/badges**
+- [x] **Step 3: Wire engine/bank changes and playback to refresh the controls/badges**
 
 1. Extend the **existing** listeners (do not add new ones):
    - `playback-engine-select` change handler (`src/ui/app.ts:88`): after `setDefaults`, call `this.updateScoreUi();` so the controls switch between GM and waveform.
@@ -402,22 +404,22 @@ private applyBadge(span: HTMLElement, status: PatchStatus | undefined): void {
 2. On new score load: call `this.voiceRouter.clearPrograms();` before `updateScoreUi()` (find the load path around `src/ui/app.ts:185–188`) so instrument overrides do not leak between files.
 3. In `togglePlay()` (`src/ui/app.ts:245`), after `await this.soundfontPlayer.start(...)` resolves, call `this.updateScoreUi();` (or a lighter badge-only refresh) so badges pick up the new `getStatusMap()`. Because `start()` awaits all patch loads before resolving, badges will jump straight to `loaded`/`fallback`; to make `⏳ Loading…` observable, optionally set sample-mode badges to `loading` immediately before `await start(...)`.
 
-- [ ] **Step 4: Update playback status text**
+- [x] **Step 4: Update playback status text**
 
 In `togglePlay()`, replace the fixed `this.setStatus('Playing MIDI preview')` with an engine-aware summary computed from `getStatusMap()`:
 - Oscillator engine: `'Playing (oscillator synth)'`.
 - Sample engine: count `loaded` vs `fallback` across the map, e.g. `Playing SoundFont — 2/2 patches loaded` or `Playing SoundFont — 1 track using synth fallback`. If the map is empty (no audible sample tracks) fall back to a generic `'Playing MIDI preview'`.
 
-- [ ] **Step 5: Run full validation**
+- [x] **Step 5: Run full validation**
 
 Run: `npm run validate`
 Expected: PASS (tests, type-check, and vite build all succeed).
 
-- [ ] **Step 6: Manual visual verification (per the spec's verification strategy)**
+- [x] **Step 6: Manual visual verification (per the spec's verification strategy)**
 
 Use the `run` skill (or `npm run dev`) to confirm: switching Engine swaps the per-row control between GM instrument and waveform selects; selecting a GM instrument then pressing Play changes the sounding instrument; badges show Loaded/Synth Fallback; a CDN-fetched patch survives a page reload (CacheStorage).
 
-- [ ] **Step 7: Commit Task 4**
+- [x] **Step 7: Commit Task 4**
 
 ```bash
 git add src/ui/app.ts
@@ -430,10 +432,10 @@ git commit -m "feat(ui): engine-aware voice controls with soundfont status badge
 
 **Files:** `CHANGELOG.md`, `dev-docs/TO_DO.md`, and `dev-docs/ARCHITECTURE.md` / `dev-docs/DESIGN.md` if they describe the audio pipeline (match the pattern in recent commit `a33b395`).
 
-- [ ] **Step 1:** Add a CHANGELOG entry for engine-aware voice controls, persistent SoundFont caching, and patch status reporting.
-- [ ] **Step 2:** Check off / update the relevant item(s) in `dev-docs/TO_DO.md`.
-- [ ] **Step 3:** If the architecture/design docs enumerate `VoiceRouter` / `SoundfontPlayer` responsibilities, note the new program-override and status-tracking behavior.
-- [ ] **Step 4:** Commit.
+- [x] **Step 1:** Add a CHANGELOG entry for engine-aware voice controls, persistent SoundFont caching, and patch status reporting.
+- [x] **Step 2:** Check off / update the relevant item(s) in `dev-docs/TO_DO.md`.
+- [x] **Step 3:** If the architecture/design docs enumerate `VoiceRouter` / `SoundfontPlayer` responsibilities, note the new program-override and status-tracking behavior.
+- [x] **Step 4:** Commit.
 
 ```bash
 git add CHANGELOG.md dev-docs/

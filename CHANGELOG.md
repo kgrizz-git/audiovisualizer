@@ -10,6 +10,10 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Engine-aware voice controls with dynamic per-track UI switching between General MIDI instrument selection (SoundFont mode) and oscillator waveform selection (Synth mode). SemVer: **MINOR**.
+- Per-track General MIDI instrument override support in `VoiceRouter` and `SoundfontPlayer`. SemVer: **MINOR**.
+- Persistent SoundFont patch caching via browser `CacheStorage` (`soundfonts-v1`) to accelerate audio loading and work offline after initial fetch. SemVer: **MINOR**.
+- Real-time patch load status badges (`✓ Loaded`, `⚡ Synth Fallback`, `⏳ Loading…`) and engine-aware status summary during audio playback. SemVer: **MINOR**.
 - Interactive canvas preview zoom and pan controls with mouse wheel, click-drag, touch pinch/pan, HUD overlay (`+`/`-`/`Reset`/`Auto`), keyboard shortcuts (`+`/`-`/`R`/`A`), and sidebar section 05. SemVer: **MINOR**.
 - Dynamic playback auto-zoom tracking active note / band bounding boxes during MIDI preview, with lerp-out during silence. SemVer: **MINOR**.
 - Viewport framing preservation across SVG, PNG, and pen-plotter exports with proportional pan resolution scaling. SemVer: **MINOR**.

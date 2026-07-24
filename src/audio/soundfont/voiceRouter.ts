@@ -6,6 +6,7 @@ import { VoiceRouteDefaults, VoiceRouteSettings } from './soundfontTypes.js';
 export class VoiceRouter {
   private defaults: VoiceRouteDefaults;
   private mix = new Map<number, VoicePlaybackSettings>();
+  private programs = new Map<number, number>();
 
   constructor(defaults: VoiceRouteDefaults) {
     this.defaults = { ...defaults };
@@ -23,6 +24,18 @@ export class VoiceRouter {
     this.mix.set(channel, { ...settings });
   }
 
+  setProgram(channel: number, program: number): void {
+    this.programs.set(channel, program);
+  }
+
+  getProgram(channel: number): number | undefined {
+    return this.programs.get(channel);
+  }
+
+  clearPrograms(): void {
+    this.programs.clear();
+  }
+
   syncFromVoicePlayback(map: Map<number, VoicePlaybackSettings>): void {
     this.mix = new Map([...map.entries()].map(([ch, s]) => [ch, { ...s }]));
   }
@@ -31,7 +44,7 @@ export class VoiceRouter {
     const mix = this.mix.get(track.channel) ?? defaultVoiceSettings(voiceIndex);
     return {
       channel: track.channel,
-      program: track.program,
+      program: this.programs.get(track.channel) ?? track.program,
       engine: this.defaults.engine,
       soundbank: this.defaults.soundbank,
       timbre: mix.timbre,

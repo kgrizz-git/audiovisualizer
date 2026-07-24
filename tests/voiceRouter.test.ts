@@ -52,4 +52,18 @@ describe('VoiceRouter', () => {
     router.setDefaults({ engine: 'oscillator', soundbank: 'FluidR3_GM' });
     expect(router.resolveTrackSettings(track(0, 0)).engine).toBe('oscillator');
   });
+
+  it('allows overriding a track GM program', () => {
+    const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+    router.setProgram(0, 40); // violin
+    expect(router.resolveTrackSettings(track(0, 0)).program).toBe(40);
+    expect(router.getProgram(0)).toBe(40);
+  });
+
+  it('clearPrograms drops overrides', () => {
+    const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+    router.setProgram(0, 40);
+    router.clearPrograms();
+    expect(router.resolveTrackSettings(track(0, 0)).program).toBe(0);
+  });
 });

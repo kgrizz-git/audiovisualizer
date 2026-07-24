@@ -85,8 +85,9 @@ export class SoundfontPlayer {
     const unique = new Map<string, { bank: SoundbankPreset; program: number; channels: number[] }>();
     for (const track of audible) {
       const bank = defaults.soundbank;
-      const key = `${bank}:${track.program}`;
-      const entry = unique.get(key) ?? { bank, program: track.program, channels: [] };
+      const program = opts.router.resolveTrackSettings(track).program;
+      const key = `${bank}:${program}`;
+      const entry = unique.get(key) ?? { bank, program, channels: [] };
       entry.channels.push(track.channel);
       unique.set(key, entry);
     }

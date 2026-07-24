@@ -81,6 +81,7 @@ export function calculateAutoZoomTransform(
   })() : { zoom: DEFAULT_VIEWPORT.zoom, panX: DEFAULT_VIEWPORT.panX, panY: DEFAULT_VIEWPORT.panY };
 
   return {
+    ...current,
     zoom: current.zoom + (targetTransform.zoom - current.zoom) * lerpFactor,
     panX: current.panX + (targetTransform.panX - current.panX) * lerpFactor,
     panY: current.panY + (targetTransform.panY - current.panY) * lerpFactor,

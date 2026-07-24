@@ -117,5 +117,5 @@ channel-10 drum kits; per-track engine/bank overrides; deterministic WAV export.
 
 ## 6. Implementation plan
 
-See [`plans/2026-07-22-soundfont-playback-plan.md`](../2026-07-22-soundfont-playback-plan.md)
+See [plans/archive/2026-07-22-soundfont-playback-plan.md](plans/archive/2026-07-22-soundfont-playback-plan.md)
 (weaker-model-ready: full test bodies, class skeletons, URL/GM-slug/HTML snippets).

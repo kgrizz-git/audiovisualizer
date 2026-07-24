@@ -1,6 +1,6 @@
 # SoundFont Playback Engine & Asset Bundling Implementation Plan
 
-Status: ready for implementation (weaker-model-ready revision 2026-07-23)
+Status: complete (completed on 2026-07-23)
 
 > **For agentic workers:** Implement **one task at a time**. Follow steps in order. Do not invent APIs that contradict the skeletons below. Do not claim mid-track program changes as shipped. Do **not** invent the 128 GM instrument names — copy them from the URL in Task 3.
 
@@ -64,7 +64,7 @@ Status: ready for implementation (weaker-model-ready revision 2026-07-23)
   (Tests below encode this.)
 - Open pedal at end of list → clamp `end` to `scoreEnd`. Never return `Infinity`.
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `tests/sustainWindows.test.ts` **exactly** (adapt imports only if path differs):
 
@@ -171,9 +171,9 @@ describe('MIDI parser sustain (CC64)', () => {
 });
 ```
 
-- [ ] **Step 2:** `npx vitest run tests/sustainWindows.test.ts tests/midiParserSustain.test.ts` — expect FAIL
+- [x] **Step 2:** `npx vitest run tests/sustainWindows.test.ts tests/midiParserSustain.test.ts` — expect FAIL
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `src/core/types.ts`, add to `TrackScore` and export:
 
@@ -255,8 +255,8 @@ export function sustainEventsForChannel(score: Score, channel: number): SustainE
 
 Also update `generateDemoScore()` tracks to include `sustainEvents: []` if TypeScript requires it (optional field — OK to omit).
 
-- [ ] **Step 4:** Tests PASS  
-- [ ] **Step 5:** Commit only if user requested
+- [x] **Step 4:** Tests PASS  
+- [x] **Step 5:** Commit only if user requested
 
 ---
 
@@ -268,7 +268,7 @@ Also update `generateDemoScore()` tracks to include `sustainEvents: []` if TypeS
 - Modify: `src/audio/midiPreviewPlayer.ts` only if needed to re-export `SynthTimbre` (already exported)
 - Test: `tests/voiceRouter.test.ts`
 
-- [ ] **Step 1: Write failing tests** — create `tests/voiceRouter.test.ts`:
+- [x] **Step 1: Write failing tests** — create `tests/voiceRouter.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -328,9 +328,9 @@ describe('VoiceRouter', () => {
 });
 ```
 
-- [ ] **Step 2:** `npx vitest run tests/voiceRouter.test.ts` — FAIL
+- [x] **Step 2:** `npx vitest run tests/voiceRouter.test.ts` — FAIL
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/audio/soundfont/soundfontTypes.ts`:
 
@@ -423,8 +423,8 @@ export class VoiceRouter {
 }
 ```
 
-- [ ] **Step 4:** Tests PASS  
-- [ ] **Step 5:** Commit if requested
+- [x] **Step 4:** Tests PASS  
+- [x] **Step 5:** Commit if requested
 
 ---
 
@@ -478,7 +478,7 @@ Local:  /soundfonts/{Bank}/{slug}-mp3.js
 CDN:    https://gleitz.github.io/midi-js-soundfonts/{Bank}/{slug}-mp3.js
 ```
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `tests/midiNoteName.test.ts`:
 
@@ -584,9 +584,9 @@ describe('SoundfontPatchLoader.loadPatch', () => {
 });
 ```
 
-- [ ] **Step 2:** Run the two test files — FAIL
+- [x] **Step 2:** Run the two test files — FAIL
 
-- [ ] **Step 3: Implement helpers + loader**
+- [x] **Step 3: Implement helpers + loader**
 
 `src/audio/soundfont/midiNoteName.ts`:
 
@@ -715,8 +715,8 @@ export class SoundfontPatchLoader {
 }
 ```
 
-- [ ] **Step 4:** Tests PASS  
-- [ ] **Step 5:** Commit if requested
+- [x] **Step 4:** Tests PASS  
+- [x] **Step 5:** Commit if requested
 
 ---
 
@@ -735,7 +735,7 @@ const volume = (0.035 + (note.velocity / 127) * 0.065) * route.gain;
 
 **Load strategy (lock):** bump generation → resolve audible tracks → if oscillator, fallback all → else `Promise.all` loads → if stale gen, return → schedule samples for ready → **one** fallback for miss channels.
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Replace/extend `tests/midiPreview.test.ts` with:
 
@@ -861,9 +861,9 @@ describe('SoundfontPlayer', () => {
 });
 ```
 
-- [ ] **Step 2:** Tests FAIL
+- [x] **Step 2:** Tests FAIL
 
-- [ ] **Step 3: Modify `MidiPreviewPlayer`**
+- [x] **Step 3: Modify `MidiPreviewPlayer`**
 
 Change constructor / fields to accept optional shared context, and use `selectAudibleTracks`:
 
@@ -912,7 +912,7 @@ export function selectAudibleTracks(
 }
 ```
 
-- [ ] **Step 3b: Implement `SoundfontPlayer`**
+- [x] **Step 3b: Implement `SoundfontPlayer`**
 
 ```typescript
 // src/audio/soundfont/soundfontPlayer.ts
@@ -1072,8 +1072,8 @@ this.soundfontPlayer ??= new SoundfontPlayer({
 });
 ```
 
-- [ ] **Step 4:** Tests PASS  
-- [ ] **Step 5:** Commit if requested
+- [x] **Step 4:** Tests PASS  
+- [x] **Step 5:** Commit if requested
 
 ---
 
@@ -1098,14 +1098,14 @@ const CORE_INSTRUMENT_SLUGS = [
 ];
 ```
 
-- [ ] **Step 1: `.gitignore`** — append:
+- [x] **Step 1: `.gitignore`** — append:
 ```gitignore
 # SoundFont sample blobs (regenerate with npm run bundle:soundfonts)
 public/soundfonts/**/*.js
 !public/soundfonts/**/.gitkeep
 ```
 
-- [ ] **Step 2: `public/soundfonts/LICENSE.txt`** — write attribution:
+- [x] **Step 2: `public/soundfonts/LICENSE.txt`** — write attribution:
 
 ```text
 FluidR3 GM samples via midi-js-soundfonts
@@ -1119,7 +1119,7 @@ MusyngKite and FatBoy banks are not bundled; when fetched from the CDN they are
 subject to their upstream Creative Commons licenses (see gleitz/midi-js-soundfonts).
 ```
 
-- [ ] **Step 3: Implement `scripts/bundle-soundfonts.mjs`** (Node ESM):
+- [x] **Step 3: Implement `scripts/bundle-soundfonts.mjs`** (Node ESM):
 
 ```javascript
 #!/usr/bin/env node
@@ -1203,13 +1203,13 @@ main().catch((err) => {
 });
 ```
 
-- [ ] **Step 4: `package.json` scripts**
+- [x] **Step 4: `package.json` scripts**
 ```json
 "bundle:soundfonts": "node scripts/bundle-soundfonts.mjs",
 "bundle:soundfonts:verify": "node scripts/bundle-soundfonts.mjs --verify"
 ```
 
-- [ ] **Step 5:** Locally run `npm run bundle:soundfonts` once (network). Do **not** add it to `validate`. Commit script/LICENSE/gitignore/package.json/`manifest.json` if present — **not** the `.js` blobs.
+- [x] **Step 5:** Locally run `npm run bundle:soundfonts` once (network). Do **not** add it to `validate`. Commit script/LICENSE/gitignore/package.json/`manifest.json` if present — **not** the `.js` blobs.
 
 ---
 
@@ -1219,7 +1219,7 @@ main().catch((err) => {
 - Modify: `index.html`, `src/ui/app.ts`, `src/ui/styles.css` (minimal if needed)
 - Modify: `ARCHITECTURE.md`, `CHANGELOG.md`, `CHANGELOG.dev.md`, `dev-docs/TO_DO.md`, `README.md`
 
-- [ ] **Step 1: Replace playback-bar label in `index.html`**
+- [x] **Step 1: Replace playback-bar label in `index.html`**
 
 Find:
 ```html
@@ -1247,7 +1247,7 @@ Replace with:
 
 Update legend text “Local synth voices” → “Mix / timbre” if present.
 
-- [ ] **Step 2: Wire `src/ui/app.ts`**
+- [x] **Step 2: Wire `src/ui/app.ts`**
 
 Imports — add:
 ```typescript
@@ -1317,17 +1317,17 @@ private pause(): void {
 
 Ensure scrubber `input` handler and `setScore` already call `pause()` (they do today).
 
-- [ ] **Step 3: Docs checklist**
-- [ ] `ARCHITECTURE.md` — rewrite “Playback and source boundaries” to describe sample + oscillator engines, VoiceRouter, `public/soundfonts/`, CDN fallback. Add stack row for SoundFont loader/player.
-- [ ] `CHANGELOG.md` Unreleased **Added**: Sample SoundFont playback with engine/bank controls and CC64 sustain; SemVer **MINOR**.
-- [ ] `CHANGELOG.dev.md` — bundler scripts, gitignore for `public/soundfonts/**/*.js`, tests.
-- [ ] `dev-docs/TO_DO.md` — **split** the playback item:
+- [x] **Step 3: Docs checklist**
+- [x] `ARCHITECTURE.md` — rewrite “Playback and source boundaries” to describe sample + oscillator engines, VoiceRouter, `public/soundfonts/`, CDN fallback. Add stack row for SoundFont loader/player.
+- [x] `CHANGELOG.md` Unreleased **Added**: Sample SoundFont playback with engine/bank controls and CC64 sustain; SemVer **MINOR**.
+- [x] `CHANGELOG.dev.md` — bundler scripts, gitignore for `public/soundfonts/**/*.js`, tests.
+- [x] `dev-docs/TO_DO.md` — **split** the playback item:
   - Done: selectable GM SoundFonts, CC64 sustain, engine/bank controls, mix through sample+oscillator
   - Deferred (new unchecked bullets): mid-track program changes; deterministic WAV export; per-track engine/bank; channel-10 drums; auto bank-by-name
-- [ ] `README.md` — short paragraph: sample preview, FluidR3 core via `npm run bundle:soundfonts`, other banks CDN.
+- [x] `README.md` — short paragraph: sample preview, FluidR3 core via `npm run bundle:soundfonts`, other banks CDN.
 
-- [ ] **Step 4:** `npm run validate` must PASS  
-- [ ] **Step 5:** Commit if requested
+- [x] **Step 4:** `npm run validate` must PASS  
+- [x] **Step 5:** Commit if requested
 
 ---
 

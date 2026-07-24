@@ -1,7 +1,9 @@
 import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom, RenderedGeometry, AutoZoomWindowMode } from '../types.js';
 
 export const AUTO_ZOOM_LERP = 0.15;
-
+export const AUTO_ZOOM_BAR_STEPS = [0.25, 0.5, 1, 1.5, 2, 3, 4, 8, 16, Infinity];
+export const AUTO_ZOOM_BAR_LABELS = ['¼ bar', '½ bar', '1 bar', '1½ bars', '2 bars', '3 bars', '4 bars', '8 bars', '16 bars', 'Full track'];
+export const AUTO_ZOOM_SECOND_STEPS = Array.from({ length: 31 }, (_, i) => i + 1).concat([Infinity]);
 export interface BoundingBox {
   minX: number;
   minY: number;

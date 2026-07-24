@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG, getAverageScoreBackground, mapScoreToGeometry } from '.
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
-import { ChordLayout, GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation, ViewportTransform } from '../core/types.js';
+import { AutoZoomWindowMode, ChordLayout, GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation, ViewportTransform } from '../core/types.js';
 import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
 import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js';
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
@@ -11,7 +11,7 @@ import { VoiceRouter } from '../audio/soundfont/voiceRouter.js';
 import { GM_INSTRUMENT_SLUGS } from '../audio/soundfont/gmInstrumentSlugs.js';
 import { clearSoundfontCache, getCacheStatus, prefetchBank } from '../audio/soundfont/soundfontLibrary.js';
 import { PatchStatus, PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
-import { ViewportController } from '../core/layout/viewportController.js';
+import { AUTO_ZOOM_BAR_LABELS, AUTO_ZOOM_BAR_STEPS, AUTO_ZOOM_SECOND_STEPS, ViewportController } from '../core/layout/viewportController.js';
 import { ViewportGestures } from './viewportGestures.js';
 
 const PREVIEW_SIZE = 900;
@@ -143,6 +143,31 @@ class AudioVisualizerApp {
       const zoom = Number((e.target as HTMLInputElement).value);
       this.viewportController.zoomAt(zoom, center, center, PREVIEW_SIZE, PREVIEW_SIZE);
       this.render();
+    });
+
+    const modeMusical = this.element<HTMLButtonElement>('btn-mode-musical');
+    const modeTime = this.element<HTMLButtonElement>('btn-mode-time');
+    
+    const setMode = (mode: AutoZoomWindowMode) => {
+      this.viewportController.setAutoZoomMode(mode);
+      this.viewportController.setAutoZoom(true);
+      this.render();
+    };
+
+    modeMusical.addEventListener('click', () => setMode('musical'));
+    modeTime.addEventListener('click', () => setMode('time'));
+
+    this.range('viewport-bars-range', 'val-viewport-bars', (val) => {
+      this.viewportController.setAutoZoomWindowBars(AUTO_ZOOM_BAR_STEPS[val]);
+      this.viewportController.setAutoZoom(true);
+    }, '', (val) => AUTO_ZOOM_BAR_LABELS[val]);
+
+    this.range('viewport-seconds-range', 'val-viewport-seconds', (val) => {
+      this.viewportController.setAutoZoomWindowSeconds(AUTO_ZOOM_SECOND_STEPS[val]);
+      this.viewportController.setAutoZoom(true);
+    }, '', (val) => {
+      const s = AUTO_ZOOM_SECOND_STEPS[val];
+      return s === Infinity ? 'Full track' : `${s}s`;
     });
 
     // SoundFont library management
@@ -468,12 +493,53 @@ class AudioVisualizerApp {
     const zoomRange = this.element<HTMLInputElement>('viewport-zoom-range');
     const zoomOut = this.element<HTMLOutputElement>('val-viewport-zoom');
     const hudAuto = this.element<HTMLInputElement>('hud-autozoom-toggle');
+    const hudAutoLabel = this.element<HTMLElement>('hud-autozoom-label');
     const panelAuto = this.element<HTMLInputElement>('viewport-autozoom-toggle');
 
     if (Number(zoomRange.value) !== vp.zoom) zoomRange.value = String(vp.zoom);
     zoomOut.value = `${Math.round(vp.zoom * 100)}%`;
     if (hudAuto.checked !== vp.autoZoom) hudAuto.checked = vp.autoZoom;
     if (panelAuto.checked !== vp.autoZoom) panelAuto.checked = vp.autoZoom;
+
+    const mode = vp.autoZoomMode ?? 'musical';
+    let badgeText = 'Auto';
+    
+    const modeMusical = this.element<HTMLButtonElement>('btn-mode-musical');
+    const modeTime = this.element<HTMLButtonElement>('btn-mode-time');
+    const wrapBars = this.element<HTMLElement>('wrapper-bars-range');
+    const wrapSecs = this.element<HTMLElement>('wrapper-seconds-range');
+
+    if (mode === 'musical') {
+      const bars = vp.autoZoomWindowBars ?? AUTO_ZOOM_BAR_STEPS[6];
+      let idx = AUTO_ZOOM_BAR_STEPS.indexOf(bars);
+      if (idx === -1) idx = AUTO_ZOOM_BAR_STEPS.length - 1; // fallback to Infinity
+      
+      this.element<HTMLInputElement>('viewport-bars-range').value = String(idx);
+      this.element<HTMLOutputElement>('val-viewport-bars').value = AUTO_ZOOM_BAR_LABELS[idx];
+      badgeText = `Auto · ${AUTO_ZOOM_BAR_LABELS[idx]}`;
+    } else {
+      const secs = vp.autoZoomWindowSeconds ?? AUTO_ZOOM_SECOND_STEPS[2];
+      let idx = AUTO_ZOOM_SECOND_STEPS.indexOf(secs);
+      if (idx === -1) idx = AUTO_ZOOM_SECOND_STEPS.length - 1;
+      
+      const s = AUTO_ZOOM_SECOND_STEPS[idx];
+      const label = s === Infinity ? 'Full track' : `${s}s`;
+      this.element<HTMLInputElement>('viewport-seconds-range').value = String(idx);
+      this.element<HTMLOutputElement>('val-viewport-seconds').value = label;
+      badgeText = s === Infinity ? 'Auto · Full' : `Auto · ${label}`;
+    }
+
+    if (!vp.autoZoom) badgeText = 'Auto';
+    if (hudAutoLabel.textContent !== badgeText) hudAutoLabel.textContent = badgeText;
+
+    if (modeMusical.classList.contains('is-active') !== (mode === 'musical')) {
+      modeMusical.classList.toggle('is-active', mode === 'musical');
+      modeMusical.setAttribute('aria-pressed', String(mode === 'musical'));
+      modeTime.classList.toggle('is-active', mode === 'time');
+      modeTime.setAttribute('aria-pressed', String(mode === 'time'));
+      wrapBars.classList.toggle('is-hidden', mode !== 'musical');
+      wrapSecs.classList.toggle('is-hidden', mode !== 'time');
+    }
   }
 
   private render(): void {

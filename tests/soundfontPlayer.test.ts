@@ -104,7 +104,7 @@ describe('SoundfontPlayer', () => {
   });
 
   it('loads the overridden program, not the track program', async () => {
-    const loadPatch = vi.fn<[string, number], Promise<null>>(async () => null);
+    const loadPatch = vi.fn<(bank: string, program: number) => Promise<null>>(async () => null);
     const player = new SoundfontPlayer({
       loader: { loadPatch } as never,
       createFallback: () => ({ start: vi.fn(async () => {}), stop: vi.fn() }) as never,

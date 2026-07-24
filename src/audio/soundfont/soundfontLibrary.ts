@@ -1,6 +1,6 @@
 import { GM_INSTRUMENT_SLUGS } from './gmInstrumentSlugs.js';
 import { SoundbankPreset } from './soundfontTypes.js';
-import { cdnSoundfontUrl, localSoundfontUrl, SOUNDFONT_CACHE_NAME } from './soundfontPatchLoader.js';
+import { cdnSoundfontUrl, localSoundfontUrl, looksLikeSoundfontScript, SOUNDFONT_CACHE_NAME } from './soundfontPatchLoader.js';
 
 export interface PrefetchProgress {
   done: number;
@@ -40,7 +40,7 @@ export async function getCacheStatus(bank: SoundbankPreset = 'FluidR3_GM'): Prom
   await Promise.all(
     GM_INSTRUMENT_SLUGS.map(async (slug) => {
       const match = await cache.match(cdnSoundfontUrl(bank, slug));
-      if (match) cached += 1;
+      if (match && looksLikeSoundfontScript(await match.text())) cached += 1;
     }),
   );
   return { available: true, cached, total };
@@ -80,23 +80,25 @@ export async function prefetchBank(
     const cacheKey = cdnSoundfontUrl(bank, slug);
     let succeeded = false;
     try {
-      if (cache && (await cache.match(cacheKey))) {
+      const cachedMatch = cache ? await cache.match(cacheKey) : undefined;
+      if (cachedMatch && looksLikeSoundfontScript(await cachedMatch.text())) {
         succeeded = true;
       } else {
         for (const url of [localSoundfontUrl(bank, slug), cdnSoundfontUrl(bank, slug)]) {
           const response = await fetch(url, signal ? { signal } : undefined);
-          if (response.ok) {
-            const text = await response.text();
-            if (cache) {
-              try {
-                await cache.put(cacheKey, new Response(text));
-              } catch {
-                /* ignore cache write error */
-              }
+          if (!response.ok) continue;
+          const text = await response.text();
+          // Skip non-scripts (e.g. an SPA index.html returned for a missing local asset).
+          if (!looksLikeSoundfontScript(text)) continue;
+          if (cache) {
+            try {
+              await cache.put(cacheKey, new Response(text));
+            } catch {
+              /* ignore cache write error */
             }
-            succeeded = true;
-            break;
           }
+          succeeded = true;
+          break;
         }
       }
     } catch {

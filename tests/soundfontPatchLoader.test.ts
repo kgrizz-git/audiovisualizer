@@ -87,6 +87,28 @@ describe('SoundfontPatchLoader.loadPatch', () => {
     vi.unstubAllGlobals();
   });
 
+  it('falls through to the CDN when the local asset returns SPA index.html (200)', async () => {
+    const decode = vi.fn(async () => ({ duration: 0.1 } as AudioBuffer));
+    const script = readFileSync(
+      new URL('./fixtures/midi-js-acoustic_grand_piano-snippet.js', import.meta.url),
+      'utf8',
+    );
+    const fetchMock = vi.fn(async (url: string) => {
+      if (String(url).startsWith('/soundfonts/')) {
+        // dev server / SPA host answers a missing asset with index.html + 200
+        return { ok: true, text: async () => '<!DOCTYPE html><html><body>app</body></html>' } as Response;
+      }
+      return { ok: true, text: async () => script } as Response;
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const loader = new SoundfontPatchLoader(decode);
+    const patch = await loader.loadPatch('FluidR3_GM', 0);
+    expect(patch).not.toBeNull();
+    expect(patch!.slug).toBe('acoustic_grand_piano');
+    expect(fetchMock).toHaveBeenCalledTimes(2); // local rejected, CDN accepted
+    vi.unstubAllGlobals();
+  });
+
   it('reads a cached script without fetching', async () => {
     const scriptText = readFileSync(
       new URL('./fixtures/midi-js-acoustic_grand_piano-snippet.js', import.meta.url),

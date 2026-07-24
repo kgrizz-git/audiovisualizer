@@ -3,6 +3,9 @@ import { InstrumentPatch, SoundbankPreset } from './soundfontTypes.js';
 
 export type AudioDecoder = (bytes: ArrayBuffer) => Promise<AudioBuffer>;
 
+/** CacheStorage bucket shared by the patch loader and the library prefetcher. */
+export const SOUNDFONT_CACHE_NAME = 'soundfonts-v1';
+
 export function localSoundfontUrl(bank: SoundbankPreset, slug: string): string {
   return `/soundfonts/${bank}/${slug}-mp3.js`;
 }
@@ -104,7 +107,7 @@ export class SoundfontPatchLoader {
   private async openCache(): Promise<Cache | null> {
     if (typeof caches === 'undefined') return null;
     try {
-      return await caches.open('soundfonts-v1');
+      return await caches.open(SOUNDFONT_CACHE_NAME);
     } catch {
       return null;
     }

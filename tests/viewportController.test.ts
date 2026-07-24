@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ViewportController, calculateActiveNotesBoundingBox, calculateAutoZoomTransform, AUTO_ZOOM_LERP } from '../src/core/layout/viewportController.js';
+import { ViewportController, calculateActiveNotesBoundingBox, calculateAutoZoomTransform, calculateWindowSeconds, AUTO_ZOOM_LERP } from '../src/core/layout/viewportController.js';
 import { RenderedGeometry, DEFAULT_VIEWPORT } from '../src/core/types.js';
 import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
@@ -162,3 +162,96 @@ describe('ViewportController & Auto-Zoom', () => {
     expect(next.autoZoom).toBe(true);
   });
 });
+
+describe('BPM-Aware Window Calculation & Symmetric Note Sampling', () => {
+  const mockGeometry: RenderedGeometry = {
+    width: 800,
+    height: 600,
+    bands: [],
+    config: DEFAULT_CONFIG,
+    bpm: 120,
+    voicePaths: [
+      {
+        voice: 0,
+        voiceName: 'Voice 0',
+        segments: [
+          {
+            start: { x: 100, y: 100 },
+            end: { x: 200, y: 200 },
+            color: '#ff0000',
+            width: 2,
+            opacity: 1,
+            note: { id: 'n1', pitch: 60, onset: 0, duration: 1, velocity: 80, voice: 0, pitchClass: 0 },
+          },
+          {
+            start: { x: 500, y: 500 },
+            end: { x: 600, y: 600 },
+            color: '#00ff00',
+            width: 2,
+            opacity: 1,
+            note: { id: 'n2', pitch: 64, onset: 3, duration: 1, velocity: 80, voice: 0, pitchClass: 4 },
+          },
+        ],
+        circles: [],
+      },
+    ],
+  };
+
+  it('calculates musical window seconds at 120 BPM and 60 BPM', () => {
+    const vp = { ...DEFAULT_VIEWPORT, autoZoomMode: 'musical' as const, autoZoomWindowBars: 4 };
+    // 120 BPM → 0.5s/beat → 2s/bar → 4 bars = 8s
+    expect(calculateWindowSeconds(mockGeometry, vp)).toBe(8);
+    expect(calculateWindowSeconds({ ...mockGeometry, bpm: 60 }, vp)).toBe(16);
+  });
+
+  it('returns time-mode seconds and Infinity for full-track musical window', () => {
+    expect(calculateWindowSeconds(mockGeometry, {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'time',
+      autoZoomWindowSeconds: 3,
+    })).toBe(3);
+    expect(calculateWindowSeconds(mockGeometry, {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'musical',
+      autoZoomWindowBars: Infinity,
+    })).toBe(Infinity);
+  });
+
+  it('samples notes within a symmetric window around currentTime', () => {
+    // currentTime=2, W=5 → [-0.5, 4.5]; both n1 and n2 overlap
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 2, 5)).toEqual({
+      minX: 100, minY: 100, maxX: 600, maxY: 600,
+    });
+  });
+
+  it('uses instantaneous active-note semantics when windowSeconds is 0 or omitted', () => {
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0.5, 0)).toEqual({
+      minX: 100, minY: 100, maxX: 200, maxY: 200,
+    });
+    // Default third arg = 0 preserves pre-windowing tests / callers
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0.5)).toEqual({
+      minX: 100, minY: 100, maxX: 200, maxY: 200,
+    });
+  });
+
+  it('includes all notes when windowSeconds is Infinity', () => {
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0, Infinity)).toEqual({
+      minX: 100, minY: 100, maxX: 600, maxY: 600,
+    });
+  });
+
+  it('preserves window fields through calculateAutoZoomTransform', () => {
+    const current = {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'time' as const,
+      autoZoomWindowSeconds: 7,
+      autoZoomWindowBars: 2,
+    };
+    const next = calculateAutoZoomTransform(current, null, 800, 600, 1);
+    expect(next.autoZoomMode).toBe('time');
+    expect(next.autoZoomWindowSeconds).toBe(7);
+    expect(next.autoZoomWindowBars).toBe(2);
+    expect(next.autoZoom).toBe(true);
+  });
+});
+

@@ -1,4 +1,4 @@
-import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom, RenderedGeometry } from '../types.js';
+import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom, RenderedGeometry, AutoZoomWindowMode } from '../types.js';
 
 export const AUTO_ZOOM_LERP = 0.15;
 
@@ -9,19 +9,49 @@ export interface BoundingBox {
   maxY: number;
 }
 
-export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, currentTime: number): BoundingBox | null {
+export function calculateWindowSeconds(
+  geometry: RenderedGeometry,
+  viewport: ViewportTransform
+): number {
+  if (viewport.autoZoomMode === 'time') {
+    return viewport.autoZoomWindowSeconds;
+  }
+
+  if (!Number.isFinite(viewport.autoZoomWindowBars)) {
+    return Infinity;
+  }
+
+  const bpm = geometry.bpm > 0 ? geometry.bpm : 120;
+  const beatsPerBar = 4; // v1: fixed 4/4
+  const barSeconds = (beatsPerBar * 60) / bpm;
+  return viewport.autoZoomWindowBars * barSeconds;
+}
+
+export function calculateActiveNotesBoundingBox(
+  geometry: RenderedGeometry,
+  currentTime: number,
+  windowSeconds = 0
+): BoundingBox | null {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
   let found = false;
 
+  const halfWindow = Math.max(0, windowSeconds) / 2;
+  const windowStart = currentTime - halfWindow;
+  const windowEnd = currentTime + halfWindow;
+
   for (const voice of geometry.voicePaths) {
     for (const seg of voice.segments) {
       if (seg.role === 'gap') continue;
       const onset = seg.note.onset;
       const endTime = onset + seg.note.duration;
-      if (currentTime >= onset && currentTime <= endTime) {
+      const overlaps = windowSeconds === 0
+        ? (currentTime >= onset && currentTime <= endTime)
+        : (windowSeconds === Infinity || (onset <= windowEnd && endTime >= windowStart));
+
+      if (overlaps) {
         found = true;
         minX = Math.min(minX, seg.start.x, seg.end.x);
         maxX = Math.max(maxX, seg.start.x, seg.end.x);
@@ -32,7 +62,11 @@ export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, curr
     for (const circle of voice.circles) {
       const onset = circle.note.onset;
       const endTime = onset + circle.note.duration;
-      if (currentTime >= onset && currentTime <= endTime) {
+      const overlaps = windowSeconds === 0
+        ? (currentTime >= onset && currentTime <= endTime)
+        : (windowSeconds === Infinity || (onset <= windowEnd && endTime >= windowStart));
+
+      if (overlaps) {
         found = true;
         minX = Math.min(minX, circle.center.x - circle.radius);
         maxX = Math.max(maxX, circle.center.x + circle.radius);
@@ -46,7 +80,13 @@ export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, curr
   if (!found && geometry.bands.length > 0) {
     for (const band of geometry.bands) {
       if (band.silent) continue;
-      if (currentTime >= band.onset && currentTime <= band.onset + band.duration) {
+      const onset = band.onset;
+      const endTime = onset + band.duration;
+      const overlaps = windowSeconds === 0
+        ? (currentTime >= onset && currentTime <= endTime)
+        : (windowSeconds === Infinity || (onset <= windowEnd && endTime >= windowStart));
+
+      if (overlaps) {
         found = true;
         minX = 0;
         maxX = geometry.width;
@@ -122,6 +162,18 @@ export class ViewportController {
     this.viewport.autoZoom = enabled;
   }
 
+  public setAutoZoomMode(mode: AutoZoomWindowMode): void {
+    this.viewport.autoZoomMode = mode;
+  }
+
+  public setAutoZoomWindowBars(bars: number): void {
+    this.viewport.autoZoomWindowBars = bars;
+  }
+
+  public setAutoZoomWindowSeconds(seconds: number): void {
+    this.viewport.autoZoomWindowSeconds = seconds;
+  }
+
   public panBy(deltaX: number, deltaY: number): void {
     this.viewport.panX += deltaX;
     this.viewport.panY += deltaY;
@@ -152,7 +204,9 @@ export class ViewportController {
 
   public stepAutoZoom(geometry: RenderedGeometry, currentTime: number, width: number, height: number): void {
     if (!this.viewport.autoZoom) return;
-    const bounds = calculateActiveNotesBoundingBox(geometry, currentTime);
+    const windowSec = calculateWindowSeconds(geometry, this.viewport);
+    const bounds = calculateActiveNotesBoundingBox(geometry, currentTime, windowSec);
     this.viewport = calculateAutoZoomTransform(this.viewport, bounds, width, height);
   }
 }
+

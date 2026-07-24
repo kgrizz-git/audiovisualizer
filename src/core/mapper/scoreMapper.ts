@@ -77,6 +77,7 @@ export function mapScoreToGeometry(
       voicePaths: [],
       bands: mapTonalTimeBands(score, config, targetHeight),
       config,
+      bpm: score.bpm,
     };
   }
 
@@ -194,6 +195,7 @@ export function mapScoreToGeometry(
     voicePaths,
     bands: [],
     config,
+    bpm: score.bpm,
   };
 }
 

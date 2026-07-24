@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { ViewportController, calculateActiveNotesBoundingBox, calculateAutoZoomTransform, AUTO_ZOOM_LERP } from '../src/core/layout/viewportController.js';
-import { RenderedGeometry } from '../src/core/types.js';
+import { ViewportController, calculateActiveNotesBoundingBox, calculateAutoZoomTransform, calculateWindowSeconds, AUTO_ZOOM_LERP } from '../src/core/layout/viewportController.js';
+import { RenderedGeometry, DEFAULT_VIEWPORT } from '../src/core/types.js';
 import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
 describe('ViewportController & Auto-Zoom', () => {
   it('starts with default viewport', () => {
     expect(AUTO_ZOOM_LERP).toBe(0.15);
     const controller = new ViewportController();
-    expect(controller.getViewport()).toEqual({ zoom: 1, panX: 0, panY: 0, autoZoom: true });
+    expect(controller.getViewport()).toEqual(DEFAULT_VIEWPORT);
   });
 
   it('pans by delta and disables autoZoom', () => {
     const controller = new ViewportController();
     controller.panBy(50, -20);
-    expect(controller.getViewport()).toEqual({ zoom: 1, panX: 50, panY: -20, autoZoom: false });
+    expect(controller.getViewport()).toEqual({ ...DEFAULT_VIEWPORT, zoom: 1, panX: 50, panY: -20, autoZoom: false });
   });
 
   it('zooms anchored at coordinate, preserves world point, and disables autoZoom even if clamped', () => {
@@ -45,7 +45,7 @@ describe('ViewportController & Auto-Zoom', () => {
     const controller = new ViewportController();
     controller.panBy(100, 100);
     controller.resetView();
-    expect(controller.getViewport()).toEqual({ zoom: 1, panX: 0, panY: 0, autoZoom: true });
+    expect(controller.getViewport()).toEqual(DEFAULT_VIEWPORT);
   });
 
   it('calculates bounding box of active notes from RenderedGeometry excluding gap segments', () => {
@@ -54,6 +54,7 @@ describe('ViewportController & Auto-Zoom', () => {
       height: 600,
       bands: [],
       config: DEFAULT_CONFIG,
+      bpm: 120,
       voicePaths: [
         {
           voice: 0,
@@ -94,7 +95,8 @@ describe('ViewportController & Auto-Zoom', () => {
         { y: 400, height: 50, color: '#cccccc', opacity: 0.3, onset: 1, duration: 4, silent: true }
       ],
       voicePaths: [],
-      config: { ...DEFAULT_CONFIG, variation: 'tonal_time_lines' }
+      config: { ...DEFAULT_CONFIG, variation: 'tonal_time_lines' },
+      bpm: 120,
     };
     const bounds = calculateActiveNotesBoundingBox(mockGeometry, 2.0);
     // Silent band excluded; active band → full width × band y-extent
@@ -107,6 +109,7 @@ describe('ViewportController & Auto-Zoom', () => {
       height: 600,
       bands: [],
       config: DEFAULT_CONFIG,
+      bpm: 120,
       voicePaths: [
         {
           voice: 0,
@@ -146,7 +149,7 @@ describe('ViewportController & Auto-Zoom', () => {
   it('calculateAutoZoomTransform with lerpFactor=1 reaches exact active target', () => {
     const bounds = { minX: 200, minY: 200, maxX: 400, maxY: 400 };
     const next = calculateAutoZoomTransform(
-      { zoom: 1, panX: 0, panY: 0, autoZoom: true },
+      DEFAULT_VIEWPORT,
       bounds,
       800,
       600,
@@ -159,3 +162,96 @@ describe('ViewportController & Auto-Zoom', () => {
     expect(next.autoZoom).toBe(true);
   });
 });
+
+describe('BPM-Aware Window Calculation & Symmetric Note Sampling', () => {
+  const mockGeometry: RenderedGeometry = {
+    width: 800,
+    height: 600,
+    bands: [],
+    config: DEFAULT_CONFIG,
+    bpm: 120,
+    voicePaths: [
+      {
+        voice: 0,
+        voiceName: 'Voice 0',
+        segments: [
+          {
+            start: { x: 100, y: 100 },
+            end: { x: 200, y: 200 },
+            color: '#ff0000',
+            width: 2,
+            opacity: 1,
+            note: { id: 'n1', pitch: 60, onset: 0, duration: 1, velocity: 80, voice: 0, pitchClass: 0 },
+          },
+          {
+            start: { x: 500, y: 500 },
+            end: { x: 600, y: 600 },
+            color: '#00ff00',
+            width: 2,
+            opacity: 1,
+            note: { id: 'n2', pitch: 64, onset: 3, duration: 1, velocity: 80, voice: 0, pitchClass: 4 },
+          },
+        ],
+        circles: [],
+      },
+    ],
+  };
+
+  it('calculates musical window seconds at 120 BPM and 60 BPM', () => {
+    const vp = { ...DEFAULT_VIEWPORT, autoZoomMode: 'musical' as const, autoZoomWindowBars: 4 };
+    // 120 BPM → 0.5s/beat → 2s/bar → 4 bars = 8s
+    expect(calculateWindowSeconds(mockGeometry, vp)).toBe(8);
+    expect(calculateWindowSeconds({ ...mockGeometry, bpm: 60 }, vp)).toBe(16);
+  });
+
+  it('returns time-mode seconds and Infinity for full-track musical window', () => {
+    expect(calculateWindowSeconds(mockGeometry, {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'time',
+      autoZoomWindowSeconds: 3,
+    })).toBe(3);
+    expect(calculateWindowSeconds(mockGeometry, {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'musical',
+      autoZoomWindowBars: Infinity,
+    })).toBe(Infinity);
+  });
+
+  it('samples notes within a symmetric window around currentTime', () => {
+    // currentTime=2, W=5 → [-0.5, 4.5]; both n1 and n2 overlap
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 2, 5)).toEqual({
+      minX: 100, minY: 100, maxX: 600, maxY: 600,
+    });
+  });
+
+  it('uses instantaneous active-note semantics when windowSeconds is 0 or omitted', () => {
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0.5, 0)).toEqual({
+      minX: 100, minY: 100, maxX: 200, maxY: 200,
+    });
+    // Default third arg = 0 preserves pre-windowing tests / callers
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0.5)).toEqual({
+      minX: 100, minY: 100, maxX: 200, maxY: 200,
+    });
+  });
+
+  it('includes all notes when windowSeconds is Infinity', () => {
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0, Infinity)).toEqual({
+      minX: 100, minY: 100, maxX: 600, maxY: 600,
+    });
+  });
+
+  it('preserves window fields through calculateAutoZoomTransform', () => {
+    const current = {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'time' as const,
+      autoZoomWindowSeconds: 7,
+      autoZoomWindowBars: 2,
+    };
+    const next = calculateAutoZoomTransform(current, null, 800, 600, 1);
+    expect(next.autoZoomMode).toBe('time');
+    expect(next.autoZoomWindowSeconds).toBe(7);
+    expect(next.autoZoomWindowBars).toBe(2);
+    expect(next.autoZoom).toBe(true);
+  });
+});
+

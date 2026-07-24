@@ -1,7 +1,16 @@
-import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom, RenderedGeometry } from '../types.js';
+import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom, RenderedGeometry, AutoZoomWindowMode } from '../types.js';
 
 export const AUTO_ZOOM_LERP = 0.15;
-
+export const AUTO_ZOOM_BAR_STEPS = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, Infinity] as const;
+export const AUTO_ZOOM_BAR_LABELS = [
+  '1/16 note', '1/8 note', '1/4 note', '1/2 note',
+  '1 bar', '2 bars', '4 bars', '8 bars', '16 bars', 'Full track',
+] as const;
+export const AUTO_ZOOM_SECOND_STEPS = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+  21, 22, 23, 24, 25, 26, 27, 28, 29, 30, Infinity,
+] as const;
 export interface BoundingBox {
   minX: number;
   minY: number;
@@ -9,19 +18,49 @@ export interface BoundingBox {
   maxY: number;
 }
 
-export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, currentTime: number): BoundingBox | null {
+export function calculateWindowSeconds(
+  geometry: RenderedGeometry,
+  viewport: ViewportTransform
+): number {
+  if (viewport.autoZoomMode === 'time') {
+    return viewport.autoZoomWindowSeconds;
+  }
+
+  if (!Number.isFinite(viewport.autoZoomWindowBars)) {
+    return Infinity;
+  }
+
+  const bpm = geometry.bpm > 0 ? geometry.bpm : 120;
+  const beatsPerBar = 4; // v1: fixed 4/4
+  const barSeconds = (beatsPerBar * 60) / bpm;
+  return viewport.autoZoomWindowBars * barSeconds;
+}
+
+export function calculateActiveNotesBoundingBox(
+  geometry: RenderedGeometry,
+  currentTime: number,
+  windowSeconds = 0
+): BoundingBox | null {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
   let found = false;
 
+  const halfWindow = Math.max(0, windowSeconds) / 2;
+  const windowStart = currentTime - halfWindow;
+  const windowEnd = currentTime + halfWindow;
+
   for (const voice of geometry.voicePaths) {
     for (const seg of voice.segments) {
       if (seg.role === 'gap') continue;
       const onset = seg.note.onset;
       const endTime = onset + seg.note.duration;
-      if (currentTime >= onset && currentTime <= endTime) {
+      const overlaps = windowSeconds === 0
+        ? (currentTime >= onset && currentTime <= endTime)
+        : (windowSeconds === Infinity || (onset <= windowEnd && endTime >= windowStart));
+
+      if (overlaps) {
         found = true;
         minX = Math.min(minX, seg.start.x, seg.end.x);
         maxX = Math.max(maxX, seg.start.x, seg.end.x);
@@ -32,7 +71,11 @@ export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, curr
     for (const circle of voice.circles) {
       const onset = circle.note.onset;
       const endTime = onset + circle.note.duration;
-      if (currentTime >= onset && currentTime <= endTime) {
+      const overlaps = windowSeconds === 0
+        ? (currentTime >= onset && currentTime <= endTime)
+        : (windowSeconds === Infinity || (onset <= windowEnd && endTime >= windowStart));
+
+      if (overlaps) {
         found = true;
         minX = Math.min(minX, circle.center.x - circle.radius);
         maxX = Math.max(maxX, circle.center.x + circle.radius);
@@ -46,7 +89,13 @@ export function calculateActiveNotesBoundingBox(geometry: RenderedGeometry, curr
   if (!found && geometry.bands.length > 0) {
     for (const band of geometry.bands) {
       if (band.silent) continue;
-      if (currentTime >= band.onset && currentTime <= band.onset + band.duration) {
+      const onset = band.onset;
+      const endTime = onset + band.duration;
+      const overlaps = windowSeconds === 0
+        ? (currentTime >= onset && currentTime <= endTime)
+        : (windowSeconds === Infinity || (onset <= windowEnd && endTime >= windowStart));
+
+      if (overlaps) {
         found = true;
         minX = 0;
         maxX = geometry.width;
@@ -81,6 +130,7 @@ export function calculateAutoZoomTransform(
   })() : { zoom: DEFAULT_VIEWPORT.zoom, panX: DEFAULT_VIEWPORT.panX, panY: DEFAULT_VIEWPORT.panY };
 
   return {
+    ...current,
     zoom: current.zoom + (targetTransform.zoom - current.zoom) * lerpFactor,
     panX: current.panX + (targetTransform.panX - current.panX) * lerpFactor,
     panY: current.panY + (targetTransform.panY - current.panY) * lerpFactor,
@@ -121,6 +171,18 @@ export class ViewportController {
     this.viewport.autoZoom = enabled;
   }
 
+  public setAutoZoomMode(mode: AutoZoomWindowMode): void {
+    this.viewport.autoZoomMode = mode;
+  }
+
+  public setAutoZoomWindowBars(bars: number): void {
+    this.viewport.autoZoomWindowBars = bars;
+  }
+
+  public setAutoZoomWindowSeconds(seconds: number): void {
+    this.viewport.autoZoomWindowSeconds = seconds;
+  }
+
   public panBy(deltaX: number, deltaY: number): void {
     this.viewport.panX += deltaX;
     this.viewport.panY += deltaY;
@@ -151,7 +213,9 @@ export class ViewportController {
 
   public stepAutoZoom(geometry: RenderedGeometry, currentTime: number, width: number, height: number): void {
     if (!this.viewport.autoZoom) return;
-    const bounds = calculateActiveNotesBoundingBox(geometry, currentTime);
+    const windowSec = calculateWindowSeconds(geometry, this.viewport);
+    const bounds = calculateActiveNotesBoundingBox(geometry, currentTime, windowSec);
     this.viewport = calculateAutoZoomTransform(this.viewport, bounds, width, height);
   }
 }
+

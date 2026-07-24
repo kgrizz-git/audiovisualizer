@@ -35,6 +35,17 @@ describe('parseMidiJsSoundfontScript', () => {
     expect(Object.keys(map).sort()).toEqual(['C4', 'D4', 'E4']);
     expect(map.C4.startsWith('data:')).toBe(true);
   });
+
+  it('tolerates the trailing comma present in real midi-js files', () => {
+    const text =
+      'MIDI.Soundfont.acoustic_grand_piano = {\n' +
+      '"C4": "data:audio/mp3;base64,AQID",\n' +
+      '"D4": "data:audio/mp3;base64,BAUG",\n' +
+      '}\n';
+    const map = parseMidiJsSoundfontScript(text, 'acoustic_grand_piano');
+    expect(Object.keys(map).sort()).toEqual(['C4', 'D4']);
+    expect(map.D4).toBe('data:audio/mp3;base64,BAUG');
+  });
 });
 
 describe('dataUriToArrayBuffer', () => {

@@ -26,3 +26,6 @@ export interface InstrumentPatch {
   /** midi-js note name → decoded buffer */
   buffers: Record<string, AudioBuffer>;
 }
+
+export type PatchStatus = 'loading' | 'loaded' | 'fallback';
+

@@ -1,7 +1,7 @@
 import { MidiPreviewPlayer } from '../midiPreviewPlayer.js';
 import { NoteEvent, Score } from '../../core/types.js';
 import { SoundfontPatchLoader } from './soundfontPatchLoader.js';
-import { InstrumentPatch, SoundbankPreset } from './soundfontTypes.js';
+import { InstrumentPatch, PatchStatus, SoundbankPreset } from './soundfontTypes.js';
 import { VoiceRouter } from './voiceRouter.js';
 import { buildSustainWindows, getSustainedDuration, sustainEventsForChannel } from './sustainWindows.js';
 import { midiFromNoteName, nearestSampleKey } from './midiNoteName.js';
@@ -41,6 +41,7 @@ export class SoundfontPlayer {
   private generation = 0;
   private activeSources: AudioBufferSourceNode[] = [];
   private fallback: MidiPreviewPlayer | null = null;
+  private status = new Map<number, PatchStatus>();
   private readonly loader: SoundfontPatchLoader;
   private readonly createFallback: (context: AudioContext) => MidiPreviewPlayer;
 
@@ -77,6 +78,10 @@ export class SoundfontPlayer {
       return !s.muted && (![...voices.values()].some((v) => v.solo) || s.solo);
     });
 
+    for (const track of audible) {
+      this.status.set(track.channel, 'loading');
+    }
+
     const unique = new Map<string, { bank: SoundbankPreset; program: number; channels: number[] }>();
     for (const track of audible) {
       const bank = defaults.soundbank;
@@ -104,6 +109,10 @@ export class SoundfontPlayer {
       }
     }
 
+    for (const ch of readyChannels) {
+      this.status.set(ch, 'loaded');
+    }
+
     const now = this.context.currentTime + 0.03;
     for (const track of audible) {
       const patch = patchByChannel.get(track.channel);
@@ -121,13 +130,21 @@ export class SoundfontPlayer {
     const missChannels = audible
       .map((t) => t.channel)
       .filter((ch) => !readyChannels.has(ch));
+    for (const ch of missChannels) {
+      this.status.set(ch, 'fallback');
+    }
     if (missChannels.length > 0) {
       await this.fallback.start(score, offsetSeconds, voices, { channels: missChannels });
     }
   }
 
+  getStatusMap(): Map<number, PatchStatus> {
+    return new Map(this.status);
+  }
+
   stop(): void {
     this.generation += 1;
+    this.status.clear();
     for (const source of this.activeSources) {
       try {
         source.stop();

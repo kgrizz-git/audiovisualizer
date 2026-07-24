@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Configurable auto-zoom windowing modes (Musical bars vs Time seconds vs Full track) with symmetric time/bar sampling window slider controls, HUD status mode indicator, and preset reset actions. SemVer: **MINOR**.
 - On-demand full SoundFont library download: a first-launch prompt and a "SoundFont library" panel (Refine section) let you cache all 128 FluidR3 GM instruments (~320 MB) for offline use, with live progress, cancel, cache-count status, and a clear-cache action. SemVer: **MINOR**.
 - Engine-aware voice controls with dynamic per-track UI switching between General MIDI instrument selection (SoundFont mode) and oscillator waveform selection (Synth mode). SemVer: **MINOR**.
 

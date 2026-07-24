@@ -103,6 +103,23 @@
             <input id="viewport-autozoom-toggle" type="checkbox" checked />
             <span>Auto-zoom active region</span>
           </label>
+          <div class="control-subgroup" id="autozoom-window-controls">
+            <span class="control-label" id="autozoom-mode-label">Window sampling mode</span>
+            <div class="segmented-control" role="group" aria-labelledby="autozoom-mode-label">
+              <button type="button" id="btn-mode-musical" class="is-active" aria-pressed="true">Musical</button>
+              <button type="button" id="btn-mode-time" aria-pressed="false">Time</button>
+            </div>
+            <div id="wrapper-bars-range">
+              <label for="viewport-bars-range">Window size</label>
+              <input id="viewport-bars-range" type="range" min="0" max="9" step="1" value="6" />
+              <output id="val-viewport-bars" for="viewport-bars-range">4 bars</output>
+            </div>
+            <div id="wrapper-seconds-range" class="is-hidden">
+              <label for="viewport-seconds-range">Window size</label>
+              <input id="viewport-seconds-range" type="range" min="0" max="31" step="1" value="3" />
+              <output id="val-viewport-seconds" for="viewport-seconds-range">3s</output>
+            </div>
+          </div>
           <div class="button-grid">
             <button type="button" class="btn" id="btn-reset-viewport">Reset framing</button>
           </div>
@@ -122,7 +139,7 @@
           <button type="button" id="hud-reset" class="hud-btn" title="Reset View (R)">Reset</button>
           <label class="hud-badge" title="Auto-zoom active region">
             <input type="checkbox" id="hud-autozoom-toggle" checked />
-            <span>Auto</span>
+            <span id="hud-autozoom-label">Auto</span>
           </label>
         </div>
       </div>

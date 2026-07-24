@@ -4,7 +4,7 @@ Last reviewed: 2026-07-22
 Date: 2026-07-22
 Author: Codex (initial implementation); Antigravity (review and gap analysis);
   Composer (plan hardening recommendations + Phase 2 execution, 2026-07-22)
-Status: completed (Phase 1 + Phase 2); Phase 3 optional polish remaining
+Status: complete (completed on 2026-07-23)
 Linked issue/PR: n/a
 
 ## Goal
@@ -166,8 +166,8 @@ AGENTS.md                                    — only if start-here / working ru
 
 ### Phase 3: Polish (nice to have — lowest priority)
 
-- [ ] Add SPDX license URL links alongside each inventory entry
-- [ ] Consider a committed allowlist file for rare Unknown entries that have been
+- [x] Add SPDX license URL links alongside each inventory entry
+- [x] Consider a committed allowlist file for rare Unknown entries that have been
   manually verified (only if needed after transitive scan)
 
 ## Verification

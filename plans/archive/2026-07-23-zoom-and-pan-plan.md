@@ -1,8 +1,8 @@
 # Interactive Zoom & Pan with Dynamic Auto-Zoom Implementation Plan
 
-Status: ready for implementation (revised after final architecture assessment + clarity pass)
+Status: complete (completed on 2026-07-23)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 >
 > **Commits:** Per-task `git commit` steps are optional checkpoints. Only commit when the user explicitly asks (AGENTS.md / project commit policy).
 
@@ -54,7 +54,7 @@ Status: ready for implementation (revised after final architecture assessment + 
 - Consumes: Existing score layout types in `src/core/types.ts`
 - Produces: `ViewportTransform`, `DEFAULT_VIEWPORT`, `clampZoom` helper
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/viewportTypes.test.ts`:
 ```typescript
@@ -80,12 +80,12 @@ describe('Viewport Domain Types', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/viewportTypes.test.ts`
 Expected: FAIL with "clampZoom / DEFAULT_VIEWPORT not defined"
 
-- [ ] **Step 3: Implement minimal domain types in `src/core/types.ts`**
+- [x] **Step 3: Implement minimal domain types in `src/core/types.ts`**
 
 Add to `src/core/types.ts`:
 ```typescript
@@ -109,12 +109,12 @@ export function clampZoom(zoom: number): number {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/viewportTypes.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit** (optional — only if user asked)
+- [x] **Step 5: Commit** (optional — only if user asked)
 
 ```bash
 git add src/core/types.ts tests/viewportTypes.test.ts
@@ -133,7 +133,7 @@ git commit -m "feat(core): add ViewportTransform domain types and guarded zoom c
 - Consumes: `ViewportTransform`, `DEFAULT_VIEWPORT`, `clampZoom`, `RenderedGeometry` from `src/core/types.ts`
 - Produces: `AUTO_ZOOM_LERP`, `calculateActiveNotesBoundingBox`, `calculateAutoZoomTransform`, `ViewportController` class
 
-- [ ] **Step 1: Write failing tests for ViewportController & Auto-Zoom**
+- [x] **Step 1: Write failing tests for ViewportController & Auto-Zoom**
 
 Create `tests/viewportController.test.ts`:
 ```typescript
@@ -299,12 +299,12 @@ describe('ViewportController & Auto-Zoom', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/viewportController.test.ts`
 Expected: FAIL with "Cannot find module '../src/core/layout/viewportController.js'"
 
-- [ ] **Step 3: Implement `ViewportController` in `src/core/layout/viewportController.ts`**
+- [x] **Step 3: Implement `ViewportController` in `src/core/layout/viewportController.ts`**
 
 Create `src/core/layout/viewportController.ts`:
 ```typescript
@@ -467,12 +467,12 @@ export class ViewportController {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/viewportController.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit** (optional — only if user asked)
+- [x] **Step 5: Commit** (optional — only if user asked)
 
 ```bash
 git add src/core/layout/viewportController.ts tests/viewportController.test.ts
@@ -492,7 +492,7 @@ git commit -m "feat(core): add ViewportController and RenderedGeometry active no
 - Consumes: `ViewportTransform` from `src/core/types.ts`
 - Produces: Updated `CanvasRenderer.render` and `buildSvg` taking optional `viewport?: ViewportTransform`
 
-- [ ] **Step 1: Write failing tests for renderer viewport transformations**
+- [x] **Step 1: Write failing tests for renderer viewport transformations**
 
 Create `tests/viewportRenderers.test.ts`:
 ```typescript
@@ -533,12 +533,12 @@ describe('Viewport Renderer Extensions', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/viewportRenderers.test.ts`
 Expected: FAIL (viewport option not recognized or transform missing)
 
-- [ ] **Step 3: Update `CanvasRenderer` in `src/renderers/canvas/canvasRenderer.ts`**
+- [x] **Step 3: Update `CanvasRenderer` in `src/renderers/canvas/canvasRenderer.ts`**
 
 Update `CanvasRenderOptions` in `canvasRenderer.ts` to include `viewport?: ViewportTransform`.
 In `render()`, keep clear canvas and `drawAtmosphere` outside the matrix block (still inside the existing DPR `ctx.save()` / `ctx.scale(dpr, dpr)`).
@@ -554,7 +554,7 @@ ctx.restore();
 ```
 Render fixed legend and title overlay **after** `ctx.restore()` (screen-fixed). Reset `globalAlpha = 1` before overlays as today.
 
-- [ ] **Step 4: Update `buildSvg` in `src/renderers/svg/svgBuilder.ts`**
+- [x] **Step 4: Update `buildSvg` in `src/renderers/svg/svgBuilder.ts`**
 
 Update `SvgOptions` in `svgBuilder.ts` to include `viewport?: ViewportTransform`.
 
@@ -572,12 +572,12 @@ If `options.viewport` is supplied and non-default (`zoom !== 1 || panX !== 0 || 
 ```
 Use the same three-step matrix as Canvas so preview and SVG framing match.
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `npx vitest run tests/viewportRenderers.test.ts tests/svg.test.ts`
 Expected: PASS
 
-- [ ] **Step 6: Commit** (optional — only if user asked)
+- [x] **Step 6: Commit** (optional — only if user asked)
 
 ```bash
 git add src/renderers/canvas/canvasRenderer.ts src/renderers/svg/svgBuilder.ts tests/viewportRenderers.test.ts
@@ -598,7 +598,7 @@ git commit -m "feat(renderers): support ViewportTransform in Canvas and SVG rend
 - Consumes: `ViewportController` from `src/core/layout/viewportController.ts`
 - Produces: `ViewportGestures` manager, canvas HUD overlay inside `.canvas-wrapper`, Section 05 sidebar controls (`max="10.0"`), live preview `render()` viewport passing, `tick()` auto-zoom, export scaling in `app.ts`
 
-- [ ] **Step 1: Update `index.html` with Canvas HUD inside `.canvas-wrapper` and Sidebar Section 05**
+- [x] **Step 1: Update `index.html` with Canvas HUD inside `.canvas-wrapper` and Sidebar Section 05**
 
 Keep the existing `.stage-corner` node. Insert `#viewport-hud` as a sibling of the canvas **inside** `.canvas-wrapper` (bottom-left so it does not cover `.stage-corner` at top-right):
 ```html
@@ -638,7 +638,7 @@ Insert Section 05 **after** the Export section (`04`) in the sidebar:
 </section>
 ```
 
-- [ ] **Step 2: Add CSS rules in `src/ui/styles/main.css`**
+- [x] **Step 2: Add CSS rules in `src/ui/styles/main.css`**
 
 ```css
 #visualizer-canvas { touch-action: none; }
@@ -678,7 +678,7 @@ Insert Section 05 **after** the Export section (`04`) in the sidebar:
 
 Keep `.canvas-wrapper::before` and `.stage-corner` at `pointer-events: none` so they do not steal clicks from the HUD/canvas.
 
-- [ ] **Step 3: Create `ViewportGestures` in `src/ui/viewportGestures.ts`**
+- [x] **Step 3: Create `ViewportGestures` in `src/ui/viewportGestures.ts`**
 
 Create `src/ui/viewportGestures.ts`. Coordinates are always **logical geometry pixels** (`previewSize × previewSize`), never DPR buffer pixels (`canvas.width`).
 
@@ -789,7 +789,7 @@ export class ViewportGestures {
 }
 ```
 
-- [ ] **Step 4: Update `src/ui/app.ts` to wire gestures, HUD/sidebar, live preview, tick auto-zoom, and export scaling**
+- [x] **Step 4: Update `src/ui/app.ts` to wire gestures, HUD/sidebar, live preview, tick auto-zoom, and export scaling**
 
 Add named constants near the top of the module (or as private statics on the class):
 ```typescript
@@ -958,12 +958,12 @@ window.addEventListener('keydown', (event) => {
 
 Also replace remaining `geometryFor(900)` / `geometryFor(1200)` call sites with `PREVIEW_SIZE` / `EXPORT_SIZE`.
 
-- [ ] **Step 5: Run `npm run validate` to test full application build**
+- [x] **Step 5: Run `npm run validate` to test full application build**
 
 Run: `npm run validate`
 Expected: PASS (all tests pass, type-check passes, vite build succeeds)
 
-- [ ] **Step 6: Commit** (optional — only if user asked)
+- [x] **Step 6: Commit** (optional — only if user asked)
 
 ```bash
 git add index.html src/ui/styles/main.css src/ui/viewportGestures.ts src/ui/app.ts
@@ -980,18 +980,18 @@ git commit -m "feat(ui): add interactive canvas gestures, HUD overlay, touch gua
 - Modify: `ARCHITECTURE.md`
 - Modify: `DESIGN.md`
 
-- [ ] **Step 1: Update `dev-docs/TO_DO.md`**
+- [x] **Step 1: Update `dev-docs/TO_DO.md`**
 
 Mark the zoom and pan items complete with completion date `2026-07-23`.
 
-- [ ] **Step 2: Update `CHANGELOG.md`**
+- [x] **Step 2: Update `CHANGELOG.md`**
 
 Add under `[Unreleased]` → `Added` (annotate MINOR SemVer impact per changelog conventions):
 - Interactive canvas preview zoom and pan with mouse wheel, click-drag, touch pinch/pan, HUD overlay, and keyboard shortcuts (`+`/`-`/`R`/`A`).
 - Dynamic playback auto-zoom tracking active note / band bounding boxes during MIDI preview, with lerp-out during silence.
 - Viewport framing preservation across SVG, PNG, and pen-plotter exports with proportional pan scaling (plotter exports inherit the same cropped framing).
 
-- [ ] **Step 3: Update `ARCHITECTURE.md` and `DESIGN.md`**
+- [x] **Step 3: Update `ARCHITECTURE.md` and `DESIGN.md`**
 
 `ARCHITECTURE.md`:
 - Document `ViewportTransform`, `ViewportController`, and pure helpers under domain/layout contracts.
@@ -1003,12 +1003,12 @@ Add under `[Unreleased]` → `Added` (annotate MINOR SemVer impact per changelog
 - Auto-zoom tracks the active region during playback and eases out during silence; manual gestures disable auto-zoom until Reset / `R` / new score.
 - Exports match the preview framing; plotter SVG receives the same transform (no legend/background as today).
 
-- [ ] **Step 4: Run complete validation suite**
+- [x] **Step 4: Run complete validation suite**
 
 Run: `npm run validate`
 Expected: PASS
 
-- [ ] **Step 5: Commit** (optional — only if user asked)
+- [x] **Step 5: Commit** (optional — only if user asked)
 
 ```bash
 git add CHANGELOG.md dev-docs/TO_DO.md ARCHITECTURE.md DESIGN.md

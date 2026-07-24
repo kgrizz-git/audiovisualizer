@@ -102,4 +102,18 @@ describe('SoundfontPlayer', () => {
     player.stop();
     expect(player.getStatusMap().size).toBe(0);
   });
+
+  it('loads the overridden program, not the track program', async () => {
+    const loadPatch = vi.fn<[string, number], Promise<null>>(async () => null);
+    const player = new SoundfontPlayer({
+      loader: { loadPatch } as never,
+      createFallback: () => ({ start: vi.fn(async () => {}), stop: vi.fn() }) as never,
+    });
+    const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+    router.setProgram(0, 40); // track 0's stored program is 0
+    await player.start(demoScore(), 0, { router });
+    const programs = loadPatch.mock.calls.map((c) => c[1]);
+    expect(programs).toContain(40);
+    expect(programs).not.toContain(0);
+  });
 });

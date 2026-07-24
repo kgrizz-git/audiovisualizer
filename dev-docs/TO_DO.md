@@ -32,6 +32,7 @@ Last updated: 2026-07-23
 - [ ] **Per-track engine and bank selection UI**: Allow override of playback engine and SoundFont bank per individual score track.
 - [ ] **Automatic bank-by-name selection**: Auto-select matching SoundFont bank based on score metadata or track names.
 - [ ] **Deterministic offline WAV audio export**: Render score audio directly to downloadable WAV file offline.
+- [ ] **SoundFont & Voice Timbre Controls & Caching**: Dynamic engine-aware voice controls (GM soundfont selector vs synth waveform selector), persistent CacheStorage for fetched soundfonts, and clear loading/fallback status badges. See [`plans/2026-07-23-voice-timbre-and-soundfont-controls.md`](../plans/2026-07-23-voice-timbre-and-soundfont-controls.md).
 - [x] **Extend the dynamic composition layout engine**: Current uniform bounds-fit, centering, safe padding, and overflow prevention apply to preview and exports. Added interactive zoom and pan controls with default dynamic auto-zoom that tracks active note regions during playback. Completed 2026-07-23. See [`plans/2026-07-23-zoom-and-pan-plan.md`](../plans/2026-07-23-zoom-and-pan-plan.md).
 - [x] **Allow zoom and pan on the plot**: Added interactive zoom and pan controls for canvas preview and vector/raster exports (SVG/PNG/Plotter) with preset HUD overlay, keyboard shortcuts, and synchronized sidebar section. Completed 2026-07-23. See [`plans/2026-07-23-zoom-and-pan-plan.md`](../plans/2026-07-23-zoom-and-pan-plan.md).
 

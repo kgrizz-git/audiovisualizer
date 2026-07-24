@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-24
 Date: 2026-07-24
 Author: Codex
-Status: draft
+Status: complete (2026-07-24)
 Linked issue/PR: n/a
 
 ## Goal
@@ -39,18 +39,18 @@ DESIGN.md, ARCHITECTURE.md, CHANGELOG.md     — rule semantics and user behavio
 
 ### Phase 1: Color sources and legend
 
-- [ ] Add pitch, register, and per-voice color sources with stable voice palette rules.
-- [ ] Add a compact active-palette legend for Canvas and SVG.
-- [ ] Use each track's mapped average color for black-background accents/highlights.
+- [x] Add pitch, register, and per-voice color sources with stable voice palette rules.
+- [x] Add a compact active-palette legend for Canvas and SVG.
+- [x] Use each track's mapped average color for black-background accents/highlights.
 
 ### Phase 2: Visual transposition
 
-- [ ] Add bounded semitone transpose control and deterministic color-aware remapping.
-- [ ] Preserve original note data while recording transpose in config/manifests.
-- [ ] Add CLI parity for the new configuration.
+- [x] Add bounded semitone transpose control and deterministic color-aware remapping.
+- [x] Preserve original note data while recording transpose in config/manifests.
+- [x] Add CLI parity for the new configuration.
 
 ## Verification
 
-- [ ] Same score/config yields byte-stable SVG and identical mapper results.
-- [ ] Legends accurately explain all color sources and transposition.
-- [ ] `npm run validate` passes.
+- [x] Same score/config yields byte-stable SVG and identical mapper results.
+- [x] Legends accurately explain all color sources and transposition.
+- [x] `npm run validate` passes (117 tests, strict type-check, production build).

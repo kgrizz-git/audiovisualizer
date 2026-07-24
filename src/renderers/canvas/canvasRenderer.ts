@@ -7,6 +7,7 @@ export interface CanvasRenderOptions {
   backgroundColor?: string;
   title?: string;
   viewport?: ViewportTransform;
+  atmosphereColors?: string[];
 }
 
 export class CanvasRenderer {
@@ -33,7 +34,7 @@ export class CanvasRenderer {
     this.ctx.scale(dpr, dpr);
     this.ctx.fillStyle = options.backgroundColor || '#000000';
     this.ctx.fillRect(0, 0, width, height);
-    if (geometry.bands.length === 0) this.drawAtmosphere(width, height);
+    if (geometry.bands.length === 0) this.drawAtmosphere(width, height, options.atmosphereColors);
 
     const viewport = options.viewport ?? DEFAULT_VIEWPORT;
     this.ctx.save();
@@ -113,18 +114,22 @@ export class CanvasRenderer {
     this.ctx.fillRect(0, band.y, width, band.height);
   }
 
-  private drawAtmosphere(width: number, height: number): void {
-    const glow = this.ctx.createRadialGradient(width * 0.68, height * 0.2, 0, width * 0.68, height * 0.2, width * 0.8);
-    glow.addColorStop(0, 'rgba(45, 212, 191, 0.12)');
-    glow.addColorStop(1, 'rgba(9, 17, 31, 0)');
-    this.ctx.fillStyle = glow;
-    this.ctx.fillRect(0, 0, width, height);
+  private drawAtmosphere(width: number, height: number, colors: string[] = ['hsl(168, 70%, 50%)']): void {
+    colors.slice(0, 4).forEach((color, index) => {
+      const x = width * (0.22 + index * 0.23);
+      const y = height * (0.2 + (index % 2) * 0.55);
+      const glow = this.ctx.createRadialGradient(x, y, 0, x, y, width * 0.48);
+      glow.addColorStop(0, color.replace('hsl(', 'hsla(').replace('%)', '%, 0.12)'));
+      glow.addColorStop(1, 'rgba(9, 17, 31, 0)');
+      this.ctx.fillStyle = glow;
+      this.ctx.fillRect(0, 0, width, height);
+    });
   }
 
   private drawCanvasLegend(_w: number, h: number, geometry: RenderedGeometry): void {
     const content = getLegendContent(geometry.config);
     const x = 24;
-    const legendH = 120;
+    const legendH = 145;
     const y = h - legendH - 24;
     this.ctx.fillStyle = 'rgba(9, 17, 31, 0.78)';
     this.ctx.strokeStyle = 'rgba(226, 232, 240, 0.18)';
@@ -139,6 +144,16 @@ export class CanvasRenderer {
     this.ctx.fillStyle = '#a5b4fc';
     this.ctx.font = '11px system-ui';
     content.lines.forEach((line, index) => this.ctx.fillText(line, x + 16, y + 45 + index * 16));
+    content.swatches.forEach((swatch, index) => {
+      const swatchX = x + 18 + index * 60;
+      this.ctx.fillStyle = swatch.color;
+      this.ctx.beginPath();
+      this.ctx.arc(swatchX, y + legendH - 17, 5, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.fillStyle = '#cbd5e1';
+      this.ctx.font = '10px system-ui';
+      this.ctx.fillText(swatch.label, swatchX + 9, y + legendH - 13);
+    });
   }
 
   private drawCanvasTitle(_width: number, title: string): void {

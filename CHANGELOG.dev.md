@@ -3,11 +3,13 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-24
 
 ## Unreleased
 
 ### Changed
+- Clarified agent workflow, plan, TODO, and changelog policies: completed backlog items are
+  removed from `dev-docs/TO_DO.md` after being recorded in the public or developer changelog.
 - Upgraded devDependencies `vite` to `^8.1.5` and `vitest` to `^4.1.10` to resolve high and critical dev-tooling security vulnerabilities.
 - Added `esbuild` (`^0.28.1`) explicitly to devDependencies to ensure offline CLI render builds execute reliably without relying on transitive hoisted binaries from Vite.
 - Updated `tests/soundfontPlayer.test.ts` types for compatibility with Vitest 4's `vi.fn` generics.

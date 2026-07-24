@@ -31,6 +31,12 @@ rainbow family while making independent parts easier to distinguish. The optiona
 average-color background is deliberately dark so it supports rather than competes with
 the score.
 
+The color source can instead be a stable per-voice palette, giving each channel one
+recognizable hue across the score. A visual transpose (`−24…+24` semitones) shifts pitch
+placement and pitch-derived hue without changing MIDI data or audio playback; the active
+legend records both choices. Canvas and standard SVG legends include compact palette
+swatches, while plotter SVG remains color-free.
+
 ## Variations and composition
 
 - `lines`: one directional segment per note. It is the primary, calligraphic mode.

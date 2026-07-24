@@ -1,6 +1,6 @@
 # Policy: Changelog Conventions (Public + Developer)
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-24
 Enforced by: convention + release hygiene (orchestrator / humans). See also
 [`VERSION`](../VERSION) and root [`CHANGELOG.md`](../CHANGELOG.md).
 
@@ -83,5 +83,8 @@ Example developer entry:
 1. When product behavior changes, update **public** changelog + `VERSION` in the same PR.
 2. When only harness/inventory/tests/CI change, update **developer** changelog (or
    Internal section); bump PATCH if you cut a release.
-3. Do not invent user-facing bullets for internal work.
-4. Link PRs/issues when helpful; keep bullets scannable (one idea each).
+3. When completing work tracked in `dev-docs/TO_DO.md`, first add the appropriate changelog
+   entry, then remove the completed item from that active backlog. Do not leave checked-off
+   completed items there.
+4. Do not invent user-facing bullets for internal work.
+5. Link PRs/issues when helpful; keep bullets scannable (one idea each).

@@ -1,6 +1,6 @@
 # Policy: Plans, TODOs, Archiving, and Completion
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-24
 Enforced by: convention + [`hooks/scripts/check_todo_limits.py`](../hooks/scripts/check_todo_limits.py)
 + [`prompts/todo-plan-audit.md`](../prompts/todo-plan-audit.md).
 
@@ -54,8 +54,10 @@ helps the harness.
 - Keep it short: prioritized bullets or a tiny table, not a novel.
 - Soft line cap: **150** (warn). Hard cap: **300** (block) — see hook env vars.
 - Each item should be actionable; link to a `plans/` file or issue when the work is large.
-- Prune done items into a short “Recently done” section (max ~10) or delete them after
-  they land in the changelog / git history.
+- Remove done items from the active backlog after they land in the appropriate changelog:
+  `CHANGELOG.md` for user-facing work and `CHANGELOG.dev.md` for developer-only work.
+  Do not retain a checked-off “Recently done” section; the changelog and git history are the
+  completed-work record.
 - Stale `TODO`/`FIXME` in **source** are audited via [`prompts/todo-plan-audit.md`](../prompts/todo-plan-audit.md)
   and [`policies/garbage-collection.md`](garbage-collection.md) — not the line-cap hook.
 

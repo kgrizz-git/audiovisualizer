@@ -15,6 +15,7 @@ export const DEFAULT_CONFIG: RuleConfig = {
   variation: 'lines',
   originMode: 'left_to_right',
   pitchHueMode: 'pitch_class',
+  transposeSemitones: 0,
   gapPolicy: 'lift_pen',
   chordLayout: 'polyphony',
   lengthScale: 40,
@@ -40,11 +41,23 @@ export function getNoteColor(note: NoteEvent, config: RuleConfig): string {
   return `hsl(${Math.round(hue)}, 85%, 60%)`;
 }
 
+/** Stable rainbow-adjacent hues used when a voice, rather than pitch, owns its color. */
+export const VOICE_PALETTE_HUES = Object.freeze([12, 196, 146, 282, 42, 326, 98, 234, 166, 8, 270, 62]);
+
+/** Pitch used for visual placement and pitch-derived color; MIDI source data remains intact. */
+export function getVisualPitch(note: NoteEvent, config: RuleConfig): number {
+  return Math.min(127, Math.max(0, note.pitch + config.transposeSemitones));
+}
+
 /** Returns the hue used consistently by note and aggregate-time visualizations. */
 export function getMappedHue(note: NoteEvent, config: RuleConfig): number {
+  if (config.pitchHueMode === 'voice_palette') {
+    return VOICE_PALETTE_HUES[Math.abs(note.voice) % VOICE_PALETTE_HUES.length];
+  }
+  const pitch = getVisualPitch(note, config);
   const sourceHue = config.pitchHueMode === 'pitch_class'
-    ? (note.pitchClass / 12) * 360
-    : (note.pitch * 7) % 360;
+    ? ((pitch % 12) / 12) * 360
+    : (pitch * 7) % 360;
   return (sourceHue + note.voice * config.hueOffsetPerVoice + 360) % 360;
 }
 
@@ -60,6 +73,22 @@ export function getAverageScoreBackground(score: Score, config: RuleConfig): str
   }, { x: 0, y: 0 });
   const hue = (Math.atan2(average.y, average.x) * 180 / Math.PI + 360) % 360;
   return `hsl(${Math.round(hue)}, 32%, 9%)`;
+}
+
+/** One bright mapped accent per visible track, for the dark Canvas atmosphere. */
+export function getTrackAverageAccents(score: Score, config: RuleConfig): string[] {
+  return score.tracks
+    .filter((track) => config.voiceFilter === null || config.voiceFilter.includes(track.channel))
+    .map((track) => {
+      if (track.notes.length === 0) return null;
+      const average = track.notes.reduce((sum, note) => {
+        const radians = getMappedHue(note, config) * Math.PI / 180;
+        return { x: sum.x + Math.cos(radians), y: sum.y + Math.sin(radians) };
+      }, { x: 0, y: 0 });
+      const hue = (Math.atan2(average.y, average.x) * 180 / Math.PI + 360) % 360;
+      return `hsl(${Math.round(hue)}, 85%, 60%)`;
+    })
+    .filter((color): color is string => color !== null);
 }
 
 /**
@@ -164,7 +193,7 @@ export function mapScoreToGeometry(
         // X = time onset, Y = pitch height (low pitch at bottom, high at top)
         const timeFraction = note.onset / (score.duration || 1);
         const x = 50 + timeFraction * (targetWidth - 100);
-        const y = targetHeight - 50 - ((note.pitch - 24) / 84) * (targetHeight - 100);
+        const y = targetHeight - 50 - ((getVisualPitch(note, config) - 24) / 84) * (targetHeight - 100);
 
         const endX = x + segmentLen;
 

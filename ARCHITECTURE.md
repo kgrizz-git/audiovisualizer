@@ -62,6 +62,10 @@ voice, and pitch class. `SustainEvent` records pedal state changes (`time` in se
 factor; total Z depth ≈ canvas width × `zScale`/100). Line-path polyphony
 is resolved in the mapper (`mapScoreToGeometry`), producing export-identical geometry
 for preview and SVG/PNG; the canvas scrubber does not recalculate joins or fans.
+Color configuration includes pitch-class, register-spiral, and stable per-voice palette
+sources plus a visual-only `transposeSemitones` shift. The mapper applies that shift only
+to pitch placement and pitch-derived hue, preserving source `NoteEvent` data and playback;
+CLI manifests serialize the full `RuleConfig` for reproducibility.
 `RenderedGeometry` contains per-voice segments/circles or full-width tonal bands, the
 score's initial tempo `bpm` (propagated from `Score.bpm` or 120 default; `RuleConfig` remains BPM-free), plus the configuration used to create them. Its public semantics are defined in
 [DESIGN.md](DESIGN.md).

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-24
 
 AudioVisualizer turns MIDI files into deterministic visual score art. This is the
 single source of truth for coding agents; tool-specific entrypoints point here.
@@ -34,7 +34,9 @@ For multi-session or complex work, create a plan in `plans/` using `templates/pl
 3. **Implement**: Follow the plan phases, marking items complete as you go
 4. **Complete plan**: When done, update plan status to "completed" with completion date
 5. **Archive plan**: Move completed plan to `plans/archive/YYYY-MM-DD-feature-name.md`
-6. **Update backlog**: Mark item complete in `dev-docs/TO_DO.md` and remove plan reference
+6. **Update backlog**: Remove the completed item from `dev-docs/TO_DO.md` (do not leave it
+   checked off in the active backlog), remove its plan reference, and record the completed
+   work in the appropriate changelog.
 
 For single-session tasks, skip the plan and work directly, updating relevant documentation and tests.
 
@@ -60,8 +62,9 @@ Apply [Semantic Versioning](https://semver.org/):
 
 Process:
 1. Before implementing, determine the SemVer impact
-2. After implementation, add entry to `CHANGELOG.md` "Unreleased" section with SemVer annotation
-3. For developer-only changes, use `CHANGELOG.dev.md` instead
+2. After implementation, remove any completed corresponding item from `dev-docs/TO_DO.md`
+3. Record user-facing work in `CHANGELOG.md`'s "Unreleased" section; record developer-only
+   harness, tooling, test, documentation, or refactor work in `CHANGELOG.dev.md` instead
 4. Update `VERSION` file when releasing (manual process, not automated)
 
 ## Project map

@@ -67,9 +67,14 @@ interface ActiveTip {
 }
 
 function getNoteColorLocal(note: NoteEvent, config: RuleConfig): string {
+  if (config.pitchHueMode === 'voice_palette') {
+    const hues = [12, 196, 146, 282, 42, 326, 98, 234, 166, 8, 270, 62];
+    return `hsl(${hues[Math.abs(note.voice) % hues.length]}, 85%, 60%)`;
+  }
+  const pitch = Math.min(127, Math.max(0, note.pitch + config.transposeSemitones));
   const sourceHue = config.pitchHueMode === 'pitch_class'
-    ? (note.pitchClass / 12) * 360
-    : (note.pitch * 7) % 360;
+    ? ((pitch % 12) / 12) * 360
+    : (pitch * 7) % 360;
   const hue = (sourceHue + note.voice * config.hueOffsetPerVoice + 360) % 360;
   return `hsl(${Math.round(hue)}, 85%, 60%)`;
 }

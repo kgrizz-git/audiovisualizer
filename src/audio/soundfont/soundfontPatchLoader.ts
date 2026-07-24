@@ -15,6 +15,15 @@ export function cdnSoundfontUrl(bank: SoundbankPreset, slug: string): string {
 }
 
 /**
+ * True when the text is actually a midi-js soundfont script (not, e.g., the SPA
+ * `index.html` some dev servers / static hosts return for a missing asset with a
+ * 200 status). Used to reject those so the loader falls through to the CDN.
+ */
+export function looksLikeSoundfontScript(text: string): boolean {
+  return text.includes('MIDI.Soundfont');
+}
+
+/**
  * Evaluate an allowlisted midi-js soundfont script.
  * Only call on bundled /soundfonts assets or gleitz CDN responses — never on user MIDI.
  */
@@ -77,7 +86,12 @@ export class SoundfontPatchLoader {
     if (cache) {
       try {
         const match = await cache.match(cacheKey);
-        if (match) return await match.text();
+        // Ignore poisoned cache entries (e.g. an SPA index.html cached under this key
+        // by an earlier buggy fetch) so we re-fetch a real script.
+        if (match) {
+          const cached = await match.text();
+          if (looksLikeSoundfontScript(cached)) return cached;
+        }
       } catch {
         /* ignore cache read error */
       }
@@ -86,17 +100,19 @@ export class SoundfontPatchLoader {
     for (const url of [localSoundfontUrl(bank, slug), cdnSoundfontUrl(bank, slug)]) {
       try {
         const response = await fetch(url);
-        if (response.ok) {
-          const text = await response.text();
-          if (cache) {
-            try {
-              await cache.put(cacheKey, new Response(text));
-            } catch {
-              /* ignore cache write error */
-            }
+        if (!response.ok) continue;
+        const text = await response.text();
+        // A missing local asset can return the SPA index.html with a 200 status;
+        // only accept genuine soundfont scripts, otherwise fall through to the CDN.
+        if (!looksLikeSoundfontScript(text)) continue;
+        if (cache) {
+          try {
+            await cache.put(cacheKey, new Response(text));
+          } catch {
+            /* ignore cache write error */
           }
-          return text;
         }
+        return text;
       } catch {
         /* try next */
       }

@@ -7,6 +7,8 @@ import {
 import { GM_INSTRUMENT_SLUGS } from '../src/audio/soundfont/gmInstrumentSlugs.js';
 import { cdnSoundfontUrl } from '../src/audio/soundfont/soundfontPatchLoader.js';
 
+const SCRIPT = 'MIDI.Soundfont.instrument = {"C4":"data:audio/mp3;base64,AQID"}';
+
 function stubCache(store: Map<string, string>) {
   const cache = {
     match: vi.fn(async (k: string) => (store.has(k) ? { text: async () => store.get(k)! } : undefined)),
@@ -31,8 +33,8 @@ describe('soundfontLibrary', () => {
 
   it('counts cached instruments', async () => {
     const store = new Map<string, string>([
-      [cdnSoundfontUrl('FluidR3_GM', 'violin'), 'x'],
-      [cdnSoundfontUrl('FluidR3_GM', 'flute'), 'y'],
+      [cdnSoundfontUrl('FluidR3_GM', 'violin'), SCRIPT],
+      [cdnSoundfontUrl('FluidR3_GM', 'flute'), SCRIPT],
     ]);
     stubCache(store);
     const status = await getCacheStatus('FluidR3_GM');
@@ -46,7 +48,7 @@ describe('soundfontLibrary', () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) =>
       String(url).startsWith('/soundfonts/')
         ? ({ ok: false, status: 404 } as Response)
-        : ({ ok: true, text: async () => 'script' } as Response)));
+        : ({ ok: true, text: async () => SCRIPT } as Response)));
 
     const progress: number[] = [];
     const result = await prefetchBank('FluidR3_GM', (p) => progress.push(p.done));
@@ -60,7 +62,7 @@ describe('soundfontLibrary', () => {
 
   it('stops early when aborted', async () => {
     stubCache(new Map());
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, text: async () => 'script' } as Response)));
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, text: async () => SCRIPT } as Response)));
     const controller = new AbortController();
     controller.abort();
     const result = await prefetchBank('FluidR3_GM', undefined, controller.signal);
@@ -69,7 +71,7 @@ describe('soundfontLibrary', () => {
   });
 
   it('clearSoundfontCache empties the cache', async () => {
-    const store = new Map<string, string>([[cdnSoundfontUrl('FluidR3_GM', 'violin'), 'x']]);
+    const store = new Map<string, string>([[cdnSoundfontUrl('FluidR3_GM', 'violin'), SCRIPT]]);
     stubCache(store);
     expect(await clearSoundfontCache()).toBe(true);
     expect(store.size).toBe(0);

@@ -15,9 +15,8 @@
 
       <section class="control-group input-group"><h2><span>01</span> Choose a score</h2>
         <div class="control-item"><label for="demo-midi-select">Included studies</label><select id="demo-midi-select">
-          <option value="synthetic" selected>Generative study · C major</option>
           <optgroup label="Classical">
-            <option value="./demo-midi/bach_prelude_c_full.mid">Bach Prelude in C · full score (2:20)</option>
+            <option value="./demo-midi/bach_prelude_c_full.mid" selected>Bach Prelude in C · full score (2:20)</option>
             <option value="./demo-midi/mozart_nachtmusik_mvt1_full.mid">Mozart Eine kleine Nachtmusik I · full movement (5:20)</option>
             <option value="./demo-midi/beethoven_fur_elise.mid">Beethoven Für Elise · theme study</option>
           </optgroup>
@@ -80,6 +79,15 @@
         <div class="control-item"><label for="time-line-density">Time-line density <output id="val-density">1×</output></label><input id="time-line-density" type="range" min="0.5" max="2" step="0.25" value="1" /></div>
         <fieldset class="voice-filter"><legend>Visible voices</legend><div id="voice-filter-options" class="voice-filter-options"></div></fieldset>
         <fieldset class="voice-filter"><legend>Mix / timbre</legend><div id="audio-voice-options" class="audio-voice-options"></div></fieldset>
+        <fieldset class="voice-filter soundfont-library"><legend>SoundFont library</legend>
+          <p class="sf-status" id="sf-cache-status">Checking cache…</p>
+          <div class="sf-progress" id="sf-progress" hidden><div class="sf-progress-bar"><span id="sf-progress-fill"></span></div><span class="sf-progress-label" id="sf-progress-label"></span></div>
+          <div class="button-grid">
+            <button type="button" class="btn" id="btn-download-library">Download full library</button>
+            <button type="button" class="btn" id="btn-cancel-download" hidden>Cancel</button>
+            <button type="button" class="btn" id="btn-clear-cache">Clear cache</button>
+          </div>
+        </fieldset>
       </section>
 
       <section class="control-group export-group"><h2><span>04</span> Export</h2><div class="export-title-field"><label for="export-title-input">Export title</label><input type="text" id="export-title-input" placeholder="Auto-filled from MIDI filename" maxlength="40" /></div><div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div></section>
@@ -121,6 +129,14 @@
       <div class="playback-bar"><button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button><output id="time-display">00:00 / 00:00</output><input id="progress-scrubber" type="range" min="0" max="1000" value="1000" aria-label="MIDI playback time" /><label class="audio-engine"><span class="audio-label">Engine</span><select id="playback-engine-select" aria-label="Playback engine"><option value="sample" selected>Sample SoundFont</option><option value="oscillator">Oscillator synth</option></select></label><label class="audio-engine"><span class="audio-label">Bank</span><select id="playback-bank-select" aria-label="SoundFont bank"><option value="FluidR3_GM" selected>FluidR3 GM (local+CDN)</option><option value="MusyngKite">MusyngKite (network)</option><option value="FatBoy">FatBoy (network)</option></select></label></div>
     </main>
   </div>
+  <dialog id="library-prompt" class="library-prompt">
+    <h2>Download the full SoundFont library?</h2>
+    <p>The included studies play instantly from bundled samples. To hear <strong>any</strong> General MIDI instrument offline, you can download the full FluidR3 GM library (128 instruments, ~320&nbsp;MB) into your browser cache. Otherwise, instruments beyond the bundled set stream from the network on first use.</p>
+    <div class="button-grid">
+      <button type="button" class="btn btn-primary" id="btn-prompt-download">Download now (~320 MB)</button>
+      <button type="button" class="btn" id="btn-prompt-dismiss">Not now</button>
+    </div>
+  </dialog>
   <script type="module" src="./src/ui/app.ts"></script>
 </body>
 </html>

@@ -9,12 +9,16 @@ import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
 import { VoiceRouter } from '../audio/soundfont/voiceRouter.js';
 import { GM_INSTRUMENT_SLUGS } from '../audio/soundfont/gmInstrumentSlugs.js';
+import { clearSoundfontCache, getCacheStatus, prefetchBank } from '../audio/soundfont/soundfontLibrary.js';
 import { PatchStatus, PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
 import { ViewportController } from '../core/layout/viewportController.js';
 import { ViewportGestures } from './viewportGestures.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
+const DEFAULT_DEMO_URL = './demo-midi/bach_prelude_c_full.mid';
+const DEFAULT_DEMO_TITLE = 'Bach Prelude in C · full score (2:20)';
+const LIBRARY_PROMPT_FLAG = 'av-soundfont-library-prompted';
 
 class AudioVisualizerApp {
   private currentScore: Score = generateDemoScore();
@@ -32,6 +36,7 @@ class AudioVisualizerApp {
   private voicePlayback = new Map<number, VoicePlaybackSettings>();
   private backgroundMode: 'black' | 'average' = 'black';
   private exportTitle: string = this.currentScore.title;
+  private downloadAbort: AbortController | null = null;
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
@@ -47,6 +52,10 @@ class AudioVisualizerApp {
     this.bindEvents();
     this.updateScoreUi();
     this.render();
+    // Boot with the Bach prelude rather than the generative study.
+    void this.loadUrl(DEFAULT_DEMO_URL, DEFAULT_DEMO_TITLE);
+    void this.refreshCacheStatus();
+    this.maybeShowLibraryPrompt();
   }
 
   private element<T extends HTMLElement>(id: string): T { return document.getElementById(id) as T; }
@@ -54,7 +63,6 @@ class AudioVisualizerApp {
   private bindEvents(): void {
     const demoSelect = this.element<HTMLSelectElement>('demo-midi-select');
     demoSelect.addEventListener('change', async () => {
-      if (demoSelect.value === 'synthetic') { this.setScore(generateDemoScore(), 'Generative study loaded'); return; }
       await this.loadUrl(demoSelect.value, demoSelect.selectedOptions[0].text);
     });
     const sourceSelect = this.element<HTMLSelectElement>('source-midi-select');
@@ -136,6 +144,16 @@ class AudioVisualizerApp {
       this.viewportController.zoomAt(zoom, center, center, PREVIEW_SIZE, PREVIEW_SIZE);
       this.render();
     });
+
+    // SoundFont library management
+    this.element<HTMLButtonElement>('btn-download-library').addEventListener('click', () => void this.downloadLibrary());
+    this.element<HTMLButtonElement>('btn-cancel-download').addEventListener('click', () => this.downloadAbort?.abort());
+    this.element<HTMLButtonElement>('btn-clear-cache').addEventListener('click', () => void this.clearLibraryCache());
+    this.element<HTMLButtonElement>('btn-prompt-download').addEventListener('click', () => {
+      this.dismissLibraryPrompt();
+      void this.downloadLibrary();
+    });
+    this.element<HTMLButtonElement>('btn-prompt-dismiss').addEventListener('click', () => this.dismissLibraryPrompt());
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (event) => {
@@ -358,6 +376,70 @@ class AudioVisualizerApp {
     } else {
       this.setStatus(`Playing SoundFont — ${loadedCount}/${statusMap.size} patches loaded`);
     }
+  }
+
+  private maybeShowLibraryPrompt(): void {
+    let alreadyPrompted = false;
+    try { alreadyPrompted = localStorage.getItem(LIBRARY_PROMPT_FLAG) === '1'; } catch { alreadyPrompted = false; }
+    if (alreadyPrompted) return;
+    const dialog = this.element<HTMLDialogElement>('library-prompt');
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+  }
+
+  private dismissLibraryPrompt(): void {
+    try { localStorage.setItem(LIBRARY_PROMPT_FLAG, '1'); } catch { /* storage unavailable */ }
+    const dialog = this.element<HTMLDialogElement>('library-prompt');
+    if (dialog.open) dialog.close();
+  }
+
+  private async refreshCacheStatus(): Promise<void> {
+    const label = this.element<HTMLElement>('sf-cache-status');
+    const status = await getCacheStatus('FluidR3_GM');
+    if (!status.available) {
+      label.textContent = 'Offline cache unavailable in this browser.';
+      return;
+    }
+    label.textContent = `SoundFont cache: ${status.cached}/${status.total} FluidR3 GM instruments stored.`;
+  }
+
+  private async downloadLibrary(): Promise<void> {
+    if (this.downloadAbort) return; // a download is already running
+    const downloadBtn = this.element<HTMLButtonElement>('btn-download-library');
+    const cancelBtn = this.element<HTMLButtonElement>('btn-cancel-download');
+    const clearBtn = this.element<HTMLButtonElement>('btn-clear-cache');
+    const progress = this.element<HTMLElement>('sf-progress');
+    const fill = this.element<HTMLElement>('sf-progress-fill');
+    const progressLabel = this.element<HTMLElement>('sf-progress-label');
+
+    this.downloadAbort = new AbortController();
+    downloadBtn.hidden = true;
+    cancelBtn.hidden = false;
+    clearBtn.disabled = true;
+    progress.hidden = false;
+
+    const result = await prefetchBank('FluidR3_GM', (p) => {
+      const pct = Math.round((p.done / p.total) * 100);
+      fill.style.width = `${pct}%`;
+      progressLabel.textContent = `${p.done}/${p.total} · ${p.slug.replace(/_/g, ' ')}`;
+    }, this.downloadAbort.signal);
+
+    this.downloadAbort = null;
+    downloadBtn.hidden = false;
+    cancelBtn.hidden = true;
+    clearBtn.disabled = false;
+    progress.hidden = true;
+    fill.style.width = '0%';
+
+    if (result.aborted) this.setStatus(`Library download cancelled (${result.ok} instruments cached).`);
+    else if (result.failed > 0) this.setStatus(`Library download finished — ${result.ok} cached, ${result.failed} unavailable.`, result.ok === 0);
+    else this.setStatus(`Full SoundFont library downloaded (${result.ok} instruments).`);
+    await this.refreshCacheStatus();
+  }
+
+  private async clearLibraryCache(): Promise<void> {
+    const cleared = await clearSoundfontCache();
+    this.setStatus(cleared ? 'SoundFont cache cleared.' : 'No SoundFont cache to clear.');
+    await this.refreshCacheStatus();
   }
 
   private pause(): void {

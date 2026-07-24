@@ -44,6 +44,19 @@
   font: 11px 'DM Mono', monospace;
 }
 .playback-bar { position:absolute;bottom:26px;display:flex;align-items:center;gap:14px;width:min(900px,calc(100% - 84px));padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(10,17,31,.74);backdrop-filter:blur(18px); }.play-pause-btn { width:34px;height:34px;border:0;border-radius:10px;background:var(--mint);color:#07111d;font-weight:800;cursor:pointer; }.playback-bar output { min-width:78px;color:var(--muted);font:10px 'DM Mono'; }.playback-bar input { accent-color:var(--mint); }.audio-engine { display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap; }.audio-engine select { width:auto;padding:4px 22px 4px 8px;font-size:11px; }
-.audio-voice-row { display:grid; grid-template-columns:1fr auto auto auto auto; gap:6px; align-items:center; margin:8px 0; font-size:11px; }
-.patch-badge { font:500 10px 'DM Mono',monospace; color:var(--muted); white-space:nowrap; }
+.audio-voice-row { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; margin:10px 0; font-size:11px; }
+.audio-voice-row > span:first-child { flex:1 1 100%; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#d9e2f1; font-weight:600; }
+.audio-voice-row select { flex:1 1 150px; min-width:0; }
+.audio-voice-row input[type=range] { flex:1 1 70px; min-width:0; }
+.patch-badge { flex:0 0 auto; font:500 10px 'DM Mono',monospace; color:var(--muted); white-space:nowrap; }
+.audio-voice-row .audio-toggle { flex:0 0 auto; }
+.soundfont-library .sf-status { margin:0 0 9px; color:var(--muted); font:500 10px 'DM Mono'; line-height:1.5; }
+.soundfont-library .sf-progress { margin:0 0 9px; display:grid; gap:5px; }
+.soundfont-library .sf-progress-bar { height:6px; border-radius:4px; background:rgba(147,161,255,.14); overflow:hidden; }
+.soundfont-library .sf-progress-bar span { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--mint),#71bfff); transition:width .15s ease; }
+.soundfont-library .sf-progress-label { color:var(--muted); font:500 9px 'DM Mono'; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.library-prompt { max-width:420px; padding:24px; border:1px solid var(--line); border-radius:16px; color:var(--ink); background:linear-gradient(150deg,#111d33,#0b1526); box-shadow:0 30px 80px rgba(0,0,0,.6); }
+.library-prompt::backdrop { background:rgba(4,8,16,.62); backdrop-filter:blur(3px); }
+.library-prompt h2 { margin:0 0 12px; font-size:16px; letter-spacing:-.02em; }
+.library-prompt p { margin:0 0 18px; color:var(--muted); font-size:12px; line-height:1.6; }
 @media (max-width:900px) { body { overflow:auto; } #app-container { grid-template-columns:1fr; }.sidebar { height:auto;overflow:visible; }.viewport-container { min-height:760px;padding:45px 20px 84px; }.canvas-wrapper { width:min(100%,640px); }.playback-bar { width:calc(100% - 40px); } }

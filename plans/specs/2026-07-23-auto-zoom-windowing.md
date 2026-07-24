@@ -1,22 +1,22 @@
 # Design Spec: Configurable Auto-Zoom Musical & Time Windowing
 
 Date: 2026-07-23
-Status: Approved (Revised from Technical Audit)
+Status: Approved (Revised 2026-07-23 — plan review)
 
 ## Overview
 
-This specification defines configurable musical (bars/notes) and time-based (seconds) sampling windowing for dynamic playback auto-zoom in AudioVisualizer.
+This specification defines configurable musical (bars/notes) and time-based (seconds) sampling windows for dynamic playback auto-zoom in AudioVisualizer.
 
 ## Requirements & Goals
 
 1. **Dual Sampling Modes**: Allow users to configure auto-zoom sampling either in **Musical Units** (notes and bars: $1/16$, $1/8$, $1/4$, $1/2$, $1\text{ bar}$, $2\text{ bars}$, $4\text{ bars}$, $8\text{ bars}$, $16\text{ bars}$, $\text{Full Track}$) or **Time Units** ($0\text{s}$ to $30\text{s}$, plus $\text{Full Track}$).
-2. **BPM-Aware Musical Conversion**: Dynamically convert musical bars/notes to seconds using score BPM (`geometry.config.bpm` or `score.bpm`) and time signature so auto-zoom framing remains musically consistent across different tempos.
-3. **Symmetric Window Sampling**: Sample active notes/bands within a symmetric window $[t - W/2, t + W/2]$ around current playback time $t$ to provide balanced leading (upcoming) and trailing (recent) note context.
-4. **UI Integration**: Provide a mode toggle switch `[ Musical | Time ]`, step sliders, and canvas HUD integration in Section 05 ("Viewport & Framing").
+2. **BPM-Aware Musical Conversion**: Convert musical bars/notes to seconds using score BPM on `RenderedGeometry.bpm` (copied from `Score.bpm`). **v1 assumes 4/4** (4 beats per bar). Note-value labels are fractions of a 4/4 bar. Mid-score tempo maps and time-signature changes are out of scope.
+3. **Symmetric Window Sampling**: Sample active notes/bands within a symmetric window $[t - W/2, t + W/2]$ around current playback time $t$ to provide balanced leading (upcoming) and trailing (recent) note context. $W = 0$ keeps instantaneous “currently sounding” semantics.
+4. **UI Integration**: Provide a mode toggle `[ Musical | Time ]`, discrete step sliders, and canvas HUD label sync in Section 05 ("Viewport & Framing"). HUD copy stays plain text (no emoji), e.g. `Auto · 4 bars`.
 
 ## Data Model & Domain Types
 
-Extend `RuleConfig`, `RenderedGeometry`, `ViewportTransform`, and `DEFAULT_VIEWPORT` in `src/core/types.ts`:
+Extend `ViewportTransform` / `DEFAULT_VIEWPORT` and `RenderedGeometry` in `src/core/types.ts`. Do **not** put BPM on `RuleConfig` (tempo is score metadata, not a mapping rule).
 
 ```typescript
 export type AutoZoomWindowMode = 'musical' | 'time';
@@ -28,7 +28,7 @@ export interface ViewportTransform {
   autoZoom: boolean;
   autoZoomMode: AutoZoomWindowMode;
   autoZoomWindowBars: number;       // Range: [0.0625, Infinity] (default: 4)
-  autoZoomWindowSeconds: number;    // Range: [0, Infinity] (default: 3.0)
+  autoZoomWindowSeconds: number;    // Range: [0, Infinity] (default: 3)
 }
 
 export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
@@ -40,9 +40,16 @@ export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
   autoZoomWindowBars: 4,
   autoZoomWindowSeconds: 3,
 });
-```
 
-Update `mapScoreToGeometry` in `src/core/mapper/scoreMapper.ts` to copy `bpm: score.bpm` onto `config` or `RenderedGeometry`.
+export interface RenderedGeometry {
+  width: number;
+  height: number;
+  voicePaths: GeometryVoicePath[];
+  bands: GeometryBand[];
+  config: RuleConfig;
+  bpm: number; // from Score.bpm via mapScoreToGeometry
+}
+```
 
 ## Architecture & Components
 
@@ -61,8 +68,8 @@ export function calculateWindowSeconds(
     return Infinity;
   }
 
-  const bpm = geometry.config.bpm || 120;
-  const beatsPerBar = 4; // Standard 4/4 meter default
+  const bpm = geometry.bpm > 0 ? geometry.bpm : 120;
+  const beatsPerBar = 4; // v1: fixed 4/4
   const barSeconds = (beatsPerBar * 60) / bpm;
   return viewport.autoZoomWindowBars * barSeconds;
 }
@@ -70,27 +77,33 @@ export function calculateWindowSeconds(
 
 ### 2. Symmetric Window Note Sampler (`src/core/layout/viewportController.ts`)
 
-Update `calculateActiveNotesBoundingBox(geometry: RenderedGeometry, currentTime: number, windowSeconds: number)`:
-- If `windowSeconds === 0`: Check `currentTime >= onset && currentTime <= onset + duration` (instantaneous).
-- If `windowSeconds === Infinity`: Include all non-gap notes/bands in score.
-- Otherwise (`windowSeconds > 0`): Check `onset <= tMax && (onset + duration) >= tMin`, where $tMin = currentTime - windowSeconds / 2$ and $tMax = currentTime + windowSeconds / 2$.
+Update `calculateActiveNotesBoundingBox(geometry, currentTime, windowSeconds = 0)`:
+- If `windowSeconds === 0` (default): `currentTime` inside `[onset, onset + duration]` (legacy instantaneous behavior).
+- If `windowSeconds === Infinity`: Include all non-gap notes/bands eligible today.
+- Otherwise (`windowSeconds > 0`): Overlap test `onset <= tMax && (onset + duration) >= tMin`, where $tMin = currentTime - windowSeconds / 2$ and $tMax = currentTime + windowSeconds / 2$.
+
+`stepAutoZoom` always passes `calculateWindowSeconds(...)` as `windowSeconds`.
+
+`calculateAutoZoomTransform` must spread `...current` so mode/window fields are not wiped each lerp frame.
 
 ### 3. UI Layer Integration (`src/ui/app.ts`, `index.html`, `src/ui/styles/main.css`)
 
 - **Sidebar Section 05**:
-  - Mode toggle: `<div class="segmented-control"><button id="btn-mode-musical">Musical (Bars)</button><button id="btn-mode-time">Time (Sec)</button></div>`.
-  - Musical slider (`#viewport-bars-range`): Steps for 1/16 (0.0625), 1/8 (0.125), 1/4 (0.25), 1/2 (0.5), 1 bar (1), 2 bars (2), 4 bars (4, default), 8 bars (8), 16 bars (16), Full Track (Infinity).
-  - Time slider (`#viewport-seconds-range`): 0s to 30s + Full Track (Infinity).
+  - Mode toggle: segmented control (`#btn-mode-musical` / `#btn-mode-time`) with `type="button"` and `aria-pressed`.
+  - Musical slider (`#viewport-bars-range`): integer indices → `[0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, Infinity]` (default index 6 → 4 bars).
+  - Time slider (`#viewport-seconds-range`): integer indices → `0..30` plus `Infinity` Full Track (default index 3 → 3s).
 - **Canvas HUD Badge**:
-  - Displays mode readout e.g. `🎯 Auto (4 bars)` or `🎯 Auto (3s)`.
+  - Plain-text readout e.g. `Auto · 4 bars`, `Auto · 3s`, `Auto · full`.
 - **Bidirectional UI Synchronization**:
-  - `updateViewportUi()` in `app.ts` synchronizes mode buttons (`.is-active`), slider wrappers (`.is-hidden`), slider output labels, and HUD badge text on reset or MIDI load.
+  - `updateViewportUi()` projects controller state to mode buttons, slider wrappers (`.is-hidden`), outputs, and HUD label on render / reset / MIDI load.
+  - Changing window settings must not clear `autoZoom`.
 
 ## Testing & Verification
 
-1. **Unit Tests (`tests/viewportController.test.ts`)**:
-   - Test `calculateWindowSeconds` conversion at various BPM values (e.g. 120 BPM: 4 bars = 8s; 60 BPM: 4 bars = 16s).
-   - Test symmetric window bounding box sampling with 4 bars vs 0s instantaneous vs Infinity.
-   - Test mode toggle state updates in `ViewportController`.
+1. **Unit Tests (`tests/viewportController.test.ts`, `tests/viewportTypes.test.ts`)**:
+   - `calculateWindowSeconds` at 120 BPM (4 bars = 8s) and 60 BPM (4 bars = 16s); time mode; Infinity.
+   - Symmetric window, W=0 / omitted default, Infinity.
+   - `calculateAutoZoomTransform` preserves mode/window fields.
+   - Existing instantaneous bounding-box tests remain valid with default `windowSeconds = 0`.
 2. **Local Validation**:
-   - Run `npm run validate` to pass all tests, type-checking, and production build.
+   - Run `npm run validate` (tests, type-check, production build).

@@ -1,12 +1,15 @@
 # Configurable Auto-Zoom Musical & Time Windowing Implementation Plan
 
-Status: ready for implementation (revised after auditor subagent technical review)
+Status: ready for implementation (revised after plan review 2026-07-23)
+Last reviewed: 2026-07-23
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Commits:** Per-task `git commit` steps are optional checkpoints. Only commit when the user explicitly asks (project commit policy).
 
-**Goal:** Add configurable musical (bars/notes: 1/16 to 16 bars, default 4 bars) and time-based (0s to 30s, default 3s) windowing options with BPM-aware conversion and symmetric sampling to playback auto-zoom.
+**Goal:** Let users configure how wide a temporal region auto-zoom frames during playback — either in musical units (1/16 note through 16 bars, plus Full Track; default 4 bars) or wall-clock seconds (0s–30s, plus Full Track; default 3s) — with BPM-aware conversion and symmetric sampling around the playhead.
 
-**Architecture:** Extend `ViewportTransform` with `autoZoomMode`, `autoZoomWindowBars`, and `autoZoomWindowSeconds`. Add `bpm?: number;` to `RuleConfig` in `src/core/types.ts` and populate it in `mapScoreToGeometry`. Add `calculateWindowSeconds` in `src/core/layout/viewportController.ts` to convert musical bars/notes to seconds using score BPM. Update `calculateActiveNotesBoundingBox` to sample active notes within a symmetric time window $[t - W/2, t + W/2]$. Update sidebar Section 05 and canvas HUD in `app.ts` with a mode toggle and synchronized sliders.
+**Architecture:** Extend `ViewportTransform` with `autoZoomMode`, `autoZoomWindowBars`, and `autoZoomWindowSeconds`. Put score tempo on `RenderedGeometry.bpm` (not `RuleConfig` — tempo is score metadata, not a mapping rule). Add `calculateWindowSeconds` in `viewportController.ts`. Broaden `calculateActiveNotesBoundingBox` to optional symmetric window sampling. Preserve window fields through `calculateAutoZoomTransform` via `...current`. Wire Section 05 mode toggle + discrete sliders and sync the HUD badge text.
 
 **Tech Stack:** TypeScript, HTML5 Canvas, Vitest, Vite.
 
@@ -19,22 +22,80 @@ Status: ready for implementation (revised after auditor subagent technical revie
 - Must pass `npm run validate` (type-checking, Vitest tests, production build).
 - Update `ARCHITECTURE.md`, `DESIGN.md`, `CHANGELOG.md` (MINOR), and `dev-docs/TO_DO.md`.
 
+## Out of scope
+
+- Parsing / applying MIDI time-signature changes (v1 assumes **4/4**: 4 beats per bar). Note-value labels (1/16, 1/8, …) are fractions of a 4/4 bar.
+- Mid-score tempo map / multiple tempos (v1 uses the single `Score.bpm` already produced by the parser — first tempo, else 120).
+- Time-indexed acceleration of bounds scans (O(N) per frame remains acceptable).
+- Changing when auto-zoom runs (still only while playing, inside `tick()`; scrubber seeks still do not call `stepAutoZoom`).
+- CLI viewport framing (CLI stays full-score fit).
+
+## Behavior decisions (explicit)
+
+| Topic | Decision |
+|---|---|
+| Default mode | `musical`, `autoZoomWindowBars = 4`, `autoZoomWindowSeconds = 3` (seconds value kept for when user switches to time mode). |
+| Meter | Hardcoded 4 beats/bar. Musical duration: `bars * (4 * 60 / bpm)`. |
+| BPM source | `geometry.bpm` from `mapScoreToGeometry(score)` (`score.bpm`). Fallback `120` only if missing/non-positive. |
+| Window geometry | Symmetric $[t - W/2,\ t + W/2]$. Overlap if `onset <= tMax && end >= tMin`. |
+| `W === 0` | Instantaneous: note must contain `currentTime` (legacy “currently sounding” behavior). Time-mode slider includes 0s. |
+| `W === Infinity` (Full Track) | Include all non-gap notes/circles (and band fallback as today). |
+| Mode switch | Keep both stored values; only `autoZoomMode` changes which slider is active / which duration is used. |
+| Manual override | Unchanged: pan/zoom clears `autoZoom`; window controls do **not** clear it. |
+| Lerp return shape | `calculateAutoZoomTransform` **must** `...current` so mode/window fields are not wiped every frame. |
+| HUD copy | Plain text, no emoji — e.g. `Auto · 4 bars` / `Auto · 3s` / `Auto · full` (match existing HUD tone). |
+| Inactive auto-zoom | Window controls remain editable so the next enable/reset uses the chosen window. |
+
+## Discrete slider maps
+
+```typescript
+export const AUTO_ZOOM_BAR_STEPS = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, Infinity] as const;
+export const AUTO_ZOOM_BAR_LABELS = [
+  '1/16 note', '1/8 note', '1/4 note', '1/2 note',
+  '1 bar', '2 bars', '4 bars', '8 bars', '16 bars', 'Full track',
+] as const;
+// index 6 → 4 bars (default)
+
+export const AUTO_ZOOM_SECOND_STEPS = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+  21, 22, 23, 24, 25, 26, 27, 28, 29, 30, Infinity,
+] as const;
+// index 3 → 3s (default); index 31 → Full track
+```
+
+HTML ranges use integer indices (`bars` min=0 max=9; `seconds` min=0 max=31), never raw `Infinity` in the DOM.
+
+## Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| `calculateAutoZoomTransform` drops new fields each lerp | high if missed | window settings reset every frame | Spread `...current`; unit-test field preservation |
+| Putting BPM on `RuleConfig` pollutes mapping rules | med | confusing contracts / accidental equality churn | Prefer `RenderedGeometry.bpm` |
+| Incomplete `ViewportTransform` literals fail typecheck | high | validate fails | Spread `DEFAULT_VIEWPORT` in tests/render fixtures |
+| 4/4 assumption wrong for waltzes etc. | med | musical window length off | Document in UI/docs; defer time-sig to a follow-up |
+| Existing bounding-box tests assume instantaneous window | high | false failures if default window ≠ 0 | Third arg default `0`; `stepAutoZoom` always passes computed `W` |
+
 ---
 
-### Task 1: Domain Types Extension for Windowing Settings & BPM Propagation
+### Task 1: Domain Types — Window Settings & Geometry BPM
 
 **Files:**
 - Modify: `src/core/types.ts`
-- Modify: `src/core/mapper/scoreMapper.ts`
+- Modify: `src/core/mapper/scoreMapper.ts` (both return paths: path geometry + tonal time-lines)
 - Test: `tests/viewportTypes.test.ts`
+- Also update type-literal fixtures that construct `ViewportTransform` / `RenderedGeometry`:
+  - `tests/viewportController.test.ts` (equality expectations + `bpm` on mocks)
+  - `tests/viewportRenderers.test.ts` (spread `DEFAULT_VIEWPORT` into viewport options)
+  - `tests/layout.test.ts` if it builds `RenderedGeometry` without `bpm`
 
 **Interfaces:**
-- Consumes: Existing `ViewportTransform`, `DEFAULT_VIEWPORT`, `RuleConfig`, and `mapScoreToGeometry`
-- Produces: `AutoZoomWindowMode`, updated `ViewportTransform`, updated `DEFAULT_VIEWPORT`, `RuleConfig.bpm`
+- Consumes: Existing `ViewportTransform`, `DEFAULT_VIEWPORT`, `RenderedGeometry`, `mapScoreToGeometry`
+- Produces: `AutoZoomWindowMode`, extended `ViewportTransform` / `DEFAULT_VIEWPORT`, `RenderedGeometry.bpm`
 
 - [ ] **Step 1: Write the failing test**
 
-Update `tests/viewportTypes.test.ts`:
+Extend `tests/viewportTypes.test.ts` (keep existing clampZoom coverage):
 ```typescript
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_VIEWPORT, ViewportTransform, clampZoom } from '../src/core/types.js';
@@ -49,10 +110,10 @@ describe('Viewport Domain Types Extension', () => {
     expect(vp.autoZoomWindowSeconds).toBe(3);
   });
 
-  it('propagates bpm from score onto geometry.config', () => {
+  it('propagates bpm from score onto RenderedGeometry.bpm', () => {
     const score = generateDemoScore();
     const geometry = mapScoreToGeometry(score, DEFAULT_CONFIG, 900, 900);
-    expect(geometry.config.bpm).toBe(score.bpm);
+    expect(geometry.bpm).toBe(score.bpm);
   });
 });
 ```
@@ -60,11 +121,11 @@ describe('Viewport Domain Types Extension', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/viewportTypes.test.ts`
-Expected: FAIL with "autoZoomMode / autoZoomWindowBars undefined"
+Expected: FAIL (`autoZoomMode` / `geometry.bpm` undefined)
 
-- [ ] **Step 3: Implement domain types in `src/core/types.ts` and `src/core/mapper/scoreMapper.ts`**
+- [ ] **Step 3: Implement domain types**
 
-Update `src/core/types.ts`:
+In `src/core/types.ts`:
 ```typescript
 export type AutoZoomWindowMode = 'musical' | 'time';
 
@@ -74,7 +135,9 @@ export interface ViewportTransform {
   panY: number;
   autoZoom: boolean;
   autoZoomMode: AutoZoomWindowMode;
+  /** Musical window in bars (4/4). Use Infinity for full track. */
   autoZoomWindowBars: number;
+  /** Wall-clock window in seconds. Use Infinity for full track. */
   autoZoomWindowSeconds: number;
 }
 
@@ -87,21 +150,44 @@ export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
   autoZoomWindowBars: 4,
   autoZoomWindowSeconds: 3,
 });
+
+export interface RenderedGeometry {
+  width: number;
+  height: number;
+  voicePaths: GeometryVoicePath[];
+  bands: GeometryBand[];
+  config: RuleConfig;
+  /** Score tempo used for musical window conversion (beats per minute). */
+  bpm: number;
+}
 ```
 
-Update `RuleConfig` in `src/core/types.ts` to include `bpm?: number;`.
-Update `mapScoreToGeometry` in `src/core/mapper/scoreMapper.ts` to set `config: { ...config, bpm: score.bpm }`.
+Do **not** add `bpm` to `RuleConfig`.
 
-- [ ] **Step 4: Run test to verify it passes**
+In `mapScoreToGeometry`, both return sites:
+```typescript
+return {
+  width: targetWidth,
+  height: targetHeight,
+  voicePaths: /* ... */,
+  bands: /* ... */,
+  config,
+  bpm: score.bpm,
+};
+```
 
-Run: `npx vitest run tests/viewportTypes.test.ts`
-Expected: PASS
+Update existing tests that assert `getViewport()` / `DEFAULT_VIEWPORT` equality to include the new fields, and add `bpm` to hand-built geometries (typically `bpm: 120`).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Run tests**
+
+Run: `npx vitest run tests/viewportTypes.test.ts tests/viewportController.test.ts tests/viewportRenderers.test.ts tests/layout.test.ts`
+Expected: PASS (after fixture updates)
+
+- [ ] **Step 5: Commit (optional — only if user asks)**
 
 ```bash
-git add src/core/types.ts src/core/mapper/scoreMapper.ts tests/viewportTypes.test.ts
-git commit -m "feat(core): extend ViewportTransform with window fields and propagate score bpm onto geometry"
+git add src/core/types.ts src/core/mapper/scoreMapper.ts tests/viewportTypes.test.ts tests/viewportController.test.ts tests/viewportRenderers.test.ts tests/layout.test.ts
+git commit -m "feat(core): add auto-zoom window fields and RenderedGeometry.bpm"
 ```
 
 ---
@@ -114,23 +200,19 @@ git commit -m "feat(core): extend ViewportTransform with window fields and propa
 
 **Interfaces:**
 - Consumes: `ViewportTransform`, `RenderedGeometry`
-- Produces: `calculateWindowSeconds`, updated `calculateActiveNotesBoundingBox`, updated `ViewportController`
+- Produces: `calculateWindowSeconds`, updated `calculateActiveNotesBoundingBox`, fixed `calculateAutoZoomTransform`, updated `stepAutoZoom`
 
-- [ ] **Step 1: Write failing tests for window calculation and symmetric sampling**
+- [ ] **Step 1: Write failing tests**
 
-Update `tests/viewportController.test.ts`:
+Add (do not replace) coverage in `tests/viewportController.test.ts`:
 ```typescript
-import { describe, expect, it } from 'vitest';
-import { ViewportController, calculateActiveNotesBoundingBox, calculateWindowSeconds } from '../src/core/layout/viewportController.js';
-import { RenderedGeometry, DEFAULT_VIEWPORT } from '../src/core/types.js';
-import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
-
 describe('BPM-Aware Window Calculation & Symmetric Note Sampling', () => {
   const mockGeometry: RenderedGeometry = {
     width: 800,
     height: 600,
     bands: [],
-    config: { ...DEFAULT_CONFIG, bpm: 120 },
+    config: DEFAULT_CONFIG,
+    bpm: 120,
     voicePaths: [
       {
         voice: 0,
@@ -142,7 +224,7 @@ describe('BPM-Aware Window Calculation & Symmetric Note Sampling', () => {
             color: '#ff0000',
             width: 2,
             opacity: 1,
-            note: { id: 'n1', pitch: 60, onset: 0, duration: 1, velocity: 80, voice: 0, pitchClass: 0 }
+            note: { id: 'n1', pitch: 60, onset: 0, duration: 1, velocity: 80, voice: 0, pitchClass: 0 },
           },
           {
             start: { x: 500, y: 500 },
@@ -150,31 +232,69 @@ describe('BPM-Aware Window Calculation & Symmetric Note Sampling', () => {
             color: '#00ff00',
             width: 2,
             opacity: 1,
-            note: { id: 'n2', pitch: 64, onset: 3, duration: 1, velocity: 80, voice: 0, pitchClass: 4 }
-          }
+            note: { id: 'n2', pitch: 64, onset: 3, duration: 1, velocity: 80, voice: 0, pitchClass: 4 },
+          },
         ],
-        circles: []
-      }
-    ]
+        circles: [],
+      },
+    ],
   };
 
-  it('calculates window duration in seconds for musical bars at 120 BPM', () => {
+  it('calculates musical window seconds at 120 BPM and 60 BPM', () => {
     const vp = { ...DEFAULT_VIEWPORT, autoZoomMode: 'musical' as const, autoZoomWindowBars: 4 };
-    // 120 BPM = 0.5s per beat; 4 beats per bar = 2s per bar; 4 bars = 8s
+    // 120 BPM → 0.5s/beat → 2s/bar → 4 bars = 8s
     expect(calculateWindowSeconds(mockGeometry, vp)).toBe(8);
+    expect(calculateWindowSeconds({ ...mockGeometry, bpm: 60 }, vp)).toBe(16);
   });
 
-  it('samples active notes within symmetric time window around currentTime', () => {
-    // At currentTime = 2 with windowSeconds = 5 (range [-0.5, 4.5]):
-    // n1 (0-1s) and n2 (3-4s) both fall inside the window
-    const bounds = calculateActiveNotesBoundingBox(mockGeometry, 2, 5);
-    expect(bounds).toEqual({ minX: 100, minY: 100, maxX: 600, maxY: 600 });
+  it('returns time-mode seconds and Infinity for full-track musical window', () => {
+    expect(calculateWindowSeconds(mockGeometry, {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'time',
+      autoZoomWindowSeconds: 3,
+    })).toBe(3);
+    expect(calculateWindowSeconds(mockGeometry, {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'musical',
+      autoZoomWindowBars: Infinity,
+    })).toBe(Infinity);
   });
 
-  it('samples only currently sounding note when windowSeconds = 0', () => {
-    // At currentTime = 0.5 with windowSeconds = 0: only n1 (0-1s) is active
-    const bounds = calculateActiveNotesBoundingBox(mockGeometry, 0.5, 0);
-    expect(bounds).toEqual({ minX: 100, minY: 100, maxX: 200, maxY: 200 });
+  it('samples notes within a symmetric window around currentTime', () => {
+    // currentTime=2, W=5 → [-0.5, 4.5]; both n1 and n2 overlap
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 2, 5)).toEqual({
+      minX: 100, minY: 100, maxX: 600, maxY: 600,
+    });
+  });
+
+  it('uses instantaneous active-note semantics when windowSeconds is 0 or omitted', () => {
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0.5, 0)).toEqual({
+      minX: 100, minY: 100, maxX: 200, maxY: 200,
+    });
+    // Default third arg = 0 preserves pre-windowing tests / callers
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0.5)).toEqual({
+      minX: 100, minY: 100, maxX: 200, maxY: 200,
+    });
+  });
+
+  it('includes all notes when windowSeconds is Infinity', () => {
+    expect(calculateActiveNotesBoundingBox(mockGeometry, 0, Infinity)).toEqual({
+      minX: 100, minY: 100, maxX: 600, maxY: 600,
+    });
+  });
+
+  it('preserves window fields through calculateAutoZoomTransform', () => {
+    const current = {
+      ...DEFAULT_VIEWPORT,
+      autoZoomMode: 'time' as const,
+      autoZoomWindowSeconds: 7,
+      autoZoomWindowBars: 2,
+    };
+    const next = calculateAutoZoomTransform(current, null, 800, 600, 1);
+    expect(next.autoZoomMode).toBe('time');
+    expect(next.autoZoomWindowSeconds).toBe(7);
+    expect(next.autoZoomWindowBars).toBe(2);
+    expect(next.autoZoom).toBe(true);
   });
 });
 ```
@@ -182,11 +302,10 @@ describe('BPM-Aware Window Calculation & Symmetric Note Sampling', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/viewportController.test.ts`
-Expected: FAIL with "calculateWindowSeconds not defined"
+Expected: FAIL (`calculateWindowSeconds` not exported / field wipe)
 
-- [ ] **Step 3: Implement `calculateWindowSeconds` and update `calculateActiveNotesBoundingBox` in `src/core/layout/viewportController.ts`**
+- [ ] **Step 3: Implement helpers**
 
-Update `src/core/layout/viewportController.ts`:
 ```typescript
 export function calculateWindowSeconds(
   geometry: RenderedGeometry,
@@ -200,8 +319,8 @@ export function calculateWindowSeconds(
     return Infinity;
   }
 
-  const bpm = geometry.config.bpm || 120;
-  const beatsPerBar = 4;
+  const bpm = geometry.bpm > 0 ? geometry.bpm : 120;
+  const beatsPerBar = 4; // v1: fixed 4/4
   const barSeconds = (beatsPerBar * 60) / bpm;
   return viewport.autoZoomWindowBars * barSeconds;
 }
@@ -209,77 +328,28 @@ export function calculateWindowSeconds(
 export function calculateActiveNotesBoundingBox(
   geometry: RenderedGeometry,
   currentTime: number,
-  windowSeconds = 3.0
+  windowSeconds = 0
 ): BoundingBox | null {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let found = false;
-
-  const tMin = windowSeconds === 0 ? currentTime : (windowSeconds === Infinity ? -Infinity : currentTime - windowSeconds / 2);
-  const tMax = windowSeconds === 0 ? currentTime : (windowSeconds === Infinity ? Infinity : currentTime + windowSeconds / 2);
-
-  for (const voice of geometry.voicePaths) {
-    for (const seg of voice.segments) {
-      if (seg.role === 'gap') continue;
-      const onset = seg.note.onset;
-      const endTime = onset + seg.note.duration;
-      const isOverlap = windowSeconds === 0
-        ? (currentTime >= onset && currentTime <= endTime)
-        : (onset <= tMax && endTime >= tMin);
-
-      if (isOverlap) {
-        found = true;
-        minX = Math.min(minX, seg.start.x, seg.end.x);
-        maxX = Math.max(maxX, seg.start.x, seg.end.x);
-        minY = Math.min(minY, seg.start.y, seg.end.y);
-        maxY = Math.max(maxY, seg.start.y, seg.end.y);
-      }
-    }
-    for (const circle of voice.circles) {
-      const onset = circle.note.onset;
-      const endTime = onset + circle.note.duration;
-      const isOverlap = windowSeconds === 0
-        ? (currentTime >= onset && currentTime <= endTime)
-        : (onset <= tMax && endTime >= tMin);
-
-      if (isOverlap) {
-        found = true;
-        minX = Math.min(minX, circle.center.x - circle.radius);
-        maxX = Math.max(maxX, circle.center.x + circle.radius);
-        minY = Math.min(minY, circle.center.y - circle.radius);
-        maxY = Math.max(maxY, circle.center.y + circle.radius);
-      }
-    }
-  }
-
-  if (!found && geometry.bands.length > 0) {
-    for (const band of geometry.bands) {
-      if (band.silent) continue;
-      const onset = band.onset ?? 0;
-      const endTime = onset + (band.duration ?? 0);
-      const isOverlap = windowSeconds === 0
-        ? (currentTime >= onset && currentTime <= endTime)
-        : (onset <= tMax && endTime >= tMin);
-
-      if (isOverlap) {
-        found = true;
-        minX = 0;
-        maxX = geometry.width;
-        minY = Math.min(minY, band.y);
-        maxY = Math.max(maxY, band.y + band.height);
-      }
-    }
-  }
-
-  if (!found) return null;
-  return { minX, minY, maxX, maxY };
+  // windowSeconds === 0 → instantaneous (currentTime inside [onset, end])
+  // windowSeconds === Infinity → all non-gap geometry
+  // else → overlap with [currentTime - W/2, currentTime + W/2]
+  //
+  // Keep existing gap exclusion, circle bounds, and tonal-band fallback
+  // (bands only when no voice-path hits).
 }
-```
 
-Update `stepAutoZoom` in `ViewportController`:
-```typescript
+export function calculateAutoZoomTransform(/* ... */): ViewportTransform {
+  // ... existing target zoom/pan math ...
+  return {
+    ...current, // CRITICAL: preserve mode + window fields
+    zoom: current.zoom + (targetTransform.zoom - current.zoom) * lerpFactor,
+    panX: current.panX + (targetTransform.panX - current.panX) * lerpFactor,
+    panY: current.panY + (targetTransform.panY - current.panY) * lerpFactor,
+    autoZoom: true,
+  };
+}
+
+// ViewportController.stepAutoZoom:
 public stepAutoZoom(geometry: RenderedGeometry, currentTime: number, width: number, height: number): void {
   if (!this.viewport.autoZoom) return;
   const windowSec = calculateWindowSeconds(geometry, this.viewport);
@@ -288,94 +358,82 @@ public stepAutoZoom(geometry: RenderedGeometry, currentTime: number, width: numb
 }
 ```
 
+Optional but recommended: thin setters that do not clear `autoZoom`:
+`setAutoZoomMode`, `setAutoZoomWindowBars`, `setAutoZoomWindowSeconds` (or document that `setViewport({ autoZoomMode / … })` already leaves `autoZoom` alone when zoom/pan unchanged).
+
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/viewportController.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Commit (optional — only if user asks)**
 
 ```bash
 git add src/core/layout/viewportController.ts tests/viewportController.test.ts
-git commit -m "feat(core): add BPM-aware calculateWindowSeconds and symmetric window active note sampling"
+git commit -m "feat(core): BPM-aware auto-zoom windows with symmetric sampling"
 ```
 
 ---
 
-### Task 3: UI Integration (Sidebar Mode Toggle, Sliders & Canvas HUD Badge)
+### Task 3: UI Integration (Sidebar Mode Toggle, Sliders & HUD Badge)
 
 **Files:**
-- Modify: `index.html`
+- Modify: `index.html` (insert into existing Section 05; do not rewrite unrelated controls)
 - Modify: `src/ui/styles/main.css`
 - Modify: `src/ui/app.ts`
 
 **Interfaces:**
-- Consumes: Updated `ViewportController` from `src/core/layout/viewportController.ts`
-- Produces: Sidebar Mode Toggle `[ Musical | Time ]`, Bars Slider, Seconds Slider, HUD Mode Badge
+- Consumes: Updated `ViewportController`
+- Produces: Mode toggle, bars/seconds sliders, HUD badge text sync
 
-- [ ] **Step 1: Update `index.html` Section 05 & HUD**
+- [ ] **Step 1: Extend Section 05 & HUD in `index.html`**
 
-Add Mode Toggle and Sliders to Section 05 in `index.html`:
+Insert window controls **after** the auto-zoom toggle and **before** Reset framing. Keep existing zoom range + toggle IDs.
+
 ```html
-<section class="control-group">
-  <h2><span>05</span> Viewport & Framing</h2>
-  <div class="control-grid">
-    <label>
-      Zoom level
-      <input id="viewport-zoom-range" type="range" min="0.25" max="10.0" step="0.05" value="1.0" />
-      <output id="val-viewport-zoom">100%</output>
-    </label>
-    <label class="toggle">
-      <input id="viewport-autozoom-toggle" type="checkbox" checked />
-      <span>Auto-zoom active region</span>
-    </label>
-    <div class="control-subgroup" id="autozoom-window-controls">
-      <label>Window sampling mode</label>
-      <div class="segmented-control">
-        <button id="btn-mode-musical" class="is-active">Musical (Bars)</button>
-        <button id="btn-mode-time">Time (Sec)</button>
-      </div>
-      <div id="wrapper-bars-range">
-        <label for="viewport-bars-range">Window size (bars)</label>
-        <input id="viewport-bars-range" type="range" min="0" max="9" step="1" value="6" />
-        <output id="val-viewport-bars">4 bars</output>
-      </div>
-      <div id="wrapper-seconds-range" class="is-hidden">
-        <label for="viewport-seconds-range">Window size (seconds)</label>
-        <input id="viewport-seconds-range" type="range" min="0" max="31" step="1" value="3" />
-        <output id="val-viewport-seconds">3s</output>
-      </div>
-    </div>
-    <div class="button-grid">
-      <button class="btn" id="btn-reset-viewport">Reset framing</button>
-    </div>
+<div class="control-subgroup" id="autozoom-window-controls">
+  <span class="control-label" id="autozoom-mode-label">Window sampling mode</span>
+  <div class="segmented-control" role="group" aria-labelledby="autozoom-mode-label">
+    <button type="button" id="btn-mode-musical" class="is-active" aria-pressed="true">Musical</button>
+    <button type="button" id="btn-mode-time" aria-pressed="false">Time</button>
   </div>
-</section>
+  <div id="wrapper-bars-range">
+    <label for="viewport-bars-range">Window size</label>
+    <input id="viewport-bars-range" type="range" min="0" max="9" step="1" value="6" />
+    <output id="val-viewport-bars" for="viewport-bars-range">4 bars</output>
+  </div>
+  <div id="wrapper-seconds-range" class="is-hidden">
+    <label for="viewport-seconds-range">Window size</label>
+    <input id="viewport-seconds-range" type="range" min="0" max="31" step="1" value="3" />
+    <output id="val-viewport-seconds" for="viewport-seconds-range">3s</output>
+  </div>
+</div>
 ```
 
-- [ ] **Step 2: Add CSS rules in `src/ui/styles/main.css`**
+Update HUD badge label span (keep checkbox) so `updateViewportUi` can set text, e.g. wrap copy in `<span id="hud-autozoom-label">Auto</span>`.
 
-Add styling for `.segmented-control`, `.control-subgroup`, and `.is-hidden`.
+- [ ] **Step 2: CSS for `.segmented-control`, `.control-subgroup`, `.is-hidden`**
 
-- [ ] **Step 3: Connect mode toggle and sliders in `src/ui/app.ts`**
+Match existing sidebar density (no new card chrome). `.is-hidden { display: none; }`. Segmented buttons should look like compact peer toggles, not primary CTAs.
 
-Map discrete slider index to bar values:
-`const BAR_STEPS = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, Infinity];`
-`const BAR_LABELS = ['1/16 note', '1/8 note', '1/4 note', '1/2 note', '1 bar', '2 bars', '4 bars', '8 bars', '16 bars', 'Full Track'];`
+- [ ] **Step 3: Wire controls in `src/ui/app.ts`**
 
-Wire event listeners for mode buttons (`btn-mode-musical`, `btn-mode-time`), `#viewport-bars-range`, and `#viewport-seconds-range`.
-Update `updateViewportUi()` to sync HUD badge text (e.g. `Auto (4 bars)` or `Auto (3s)`), toggle buttons `.is-active` state, and wrapper `.is-hidden` visibility.
+- Import or locally define `AUTO_ZOOM_BAR_STEPS` / `AUTO_ZOOM_BAR_LABELS` / `AUTO_ZOOM_SECOND_STEPS` (prefer exporting constants from `viewportController.ts` or a tiny `src/core/layout/autoZoomWindow.ts` if `app.ts` would otherwise duplicate magic arrays).
+- Mode buttons: set `autoZoomMode`, toggle `.is-active` + `aria-pressed`, show/hide wrappers.
+- Bars slider: index → `AUTO_ZOOM_BAR_STEPS[i]`; label from `AUTO_ZOOM_BAR_LABELS[i]`.
+- Seconds slider: index → `AUTO_ZOOM_SECOND_STEPS[i]`; label `Full track` or `${n}s`.
+- `updateViewportUi()`: project controller → HUD label (`Auto · 4 bars` / `Auto · 3s` / `Auto · full`), slider indices (findIndex; treat non-finite as last step), mode button state, wrapper visibility.
+- Changing window settings must not disable auto-zoom.
 
-- [ ] **Step 4: Run `npm run validate` to test full application build**
+- [ ] **Step 4: Run `npm run validate`**
 
-Run: `npm run validate`
-Expected: PASS (all tests pass, type-check passes, vite build succeeds)
+Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Commit (optional — only if user asks)**
 
 ```bash
-git add index.html src/ui/styles/main.css src/ui/app.ts
-git commit -m "feat(ui): add auto-zoom musical vs time window mode toggle and sliders"
+git add index.html src/ui/styles/main.css src/ui/app.ts src/core/layout/viewportController.ts
+git commit -m "feat(ui): musical vs time auto-zoom window controls"
 ```
 
 ---
@@ -383,23 +441,36 @@ git commit -m "feat(ui): add auto-zoom musical vs time window mode toggle and sl
 ### Task 4: Documentation & Validation
 
 **Files:**
-- Modify: `CHANGELOG.md`
-- Modify: `dev-docs/TO_DO.md`
-- Modify: `ARCHITECTURE.md`
-- Modify: `DESIGN.md`
+- Modify: `CHANGELOG.md` (Unreleased **Added**, SemVer **MINOR**)
+- Modify: `dev-docs/TO_DO.md` (add/complete backlog item linking this plan)
+- Modify: `ARCHITECTURE.md` (ViewportTransform fields, `RenderedGeometry.bpm`, window helper)
+- Modify: `DESIGN.md` (auto-zoom window modes, 4/4 assumption, HUD copy)
 
-- [ ] **Step 1: Update documentation files**
+- [ ] **Step 1: Update docs**
 
-Update `CHANGELOG.md`, `ARCHITECTURE.md`, `DESIGN.md`, and `dev-docs/TO_DO.md`.
+Call out: configurable musical/time windows; default 4 bars musical; symmetric sampling; v1 fixed 4/4 + single BPM; no RuleConfig BPM.
 
-- [ ] **Step 2: Run complete validation suite**
+- [ ] **Step 2: Run `npm run validate`**
 
-Run: `npm run validate`
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Commit (optional — only if user asks)**
 
 ```bash
-git add CHANGELOG.md dev-docs/TO_DO.md ARCHITECTURE.md DESIGN.md
-git commit -m "docs: update documentation for configurable musical and time auto-zoom windowing"
+git add CHANGELOG.md CHANGELOG.dev.md dev-docs/TO_DO.md ARCHITECTURE.md DESIGN.md plans/specs/2026-07-23-auto-zoom-windowing.md
+git commit -m "docs: document configurable auto-zoom musical and time windowing"
 ```
+
+## Verification
+
+- [ ] Unit: musical conversion at 120 and 60 BPM; time mode; Infinity full-track
+- [ ] Unit: symmetric overlap, W=0 instantaneous, omitted W defaults to 0
+- [ ] Unit: lerp preserves mode/window fields
+- [ ] Manual: playback with default 4-bar window frames leading + trailing notes
+- [ ] Manual: switch to time 0s ≈ old instantaneous framing; Full track ≈ whole score bounds
+- [ ] Manual: HUD + sidebar stay in sync on reset / MIDI load
+- [ ] `npm run validate` passes
+
+## Open questions
+
+None blocking. Follow-ups (not this plan): MIDI time-signature awareness; tempo-map aware windows.

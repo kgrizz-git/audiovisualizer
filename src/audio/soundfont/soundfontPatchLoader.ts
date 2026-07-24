@@ -65,14 +65,46 @@ export class SoundfontPatchLoader {
   }
 
   private async fetchScript(bank: SoundbankPreset, slug: string): Promise<string | null> {
+    const cacheKey = cdnSoundfontUrl(bank, slug); // stable https key for both read + write
+    const cache = await this.openCache();
+
+    if (cache) {
+      try {
+        const match = await cache.match(cacheKey);
+        if (match) return await match.text();
+      } catch {
+        /* ignore cache read error */
+      }
+    }
+
     for (const url of [localSoundfontUrl(bank, slug), cdnSoundfontUrl(bank, slug)]) {
       try {
         const response = await fetch(url);
-        if (response.ok) return await response.text();
+        if (response.ok) {
+          const text = await response.text();
+          if (cache) {
+            try {
+              await cache.put(cacheKey, new Response(text));
+            } catch {
+              /* ignore cache write error */
+            }
+          }
+          return text;
+        }
       } catch {
         /* try next */
       }
     }
     return null;
   }
+
+  private async openCache(): Promise<Cache | null> {
+    if (typeof caches === 'undefined') return null;
+    try {
+      return await caches.open('soundfonts-v1');
+    } catch {
+      return null;
+    }
+  }
 }
+

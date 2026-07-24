@@ -75,4 +75,55 @@ describe('SoundfontPatchLoader.loadPatch', () => {
     expect(await loader.loadPatch('FluidR3_GM', 0)).toBeNull();
     vi.unstubAllGlobals();
   });
+
+  it('reads a cached script without fetching', async () => {
+    const scriptText = readFileSync(
+      new URL('./fixtures/midi-js-acoustic_grand_piano-snippet.js', import.meta.url),
+      'utf8',
+    );
+    const cacheKey = cdnSoundfontUrl('FluidR3_GM', 'acoustic_grand_piano');
+    const store = new Map<string, string>([[cacheKey, scriptText]]);
+    const cache = {
+      match: vi.fn(async (k: string) => (store.has(k) ? ({ text: async () => store.get(k)! } as unknown as Response) : undefined)),
+      put: vi.fn(async (k: string, resp: Response) => { store.set(k, await resp.text()); }),
+    };
+    vi.stubGlobal('caches', { open: vi.fn(async () => cache) });
+    const fetchMock = vi.fn(async () => { throw new Error('network should not be hit'); });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const loader = new SoundfontPatchLoader(async () => ({ duration: 0.1 } as AudioBuffer));
+    const patch = await loader.loadPatch('FluidR3_GM', 0);
+
+    expect(patch).not.toBeNull();
+    expect(cache.match).toHaveBeenCalledWith(cacheKey);
+    expect(fetchMock).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it('writes a freshly fetched script into the cache', async () => {
+    const scriptText = readFileSync(
+      new URL('./fixtures/midi-js-acoustic_grand_piano-snippet.js', import.meta.url),
+      'utf8',
+    );
+    const cacheKey = cdnSoundfontUrl('FluidR3_GM', 'acoustic_grand_piano');
+    const store = new Map<string, string>();
+    const cache = {
+      match: vi.fn(async (k: string) => (store.has(k) ? ({ text: async () => store.get(k)! } as unknown as Response) : undefined)),
+      put: vi.fn(async (k: string, resp: Response) => { store.set(k, await resp.text()); }),
+    };
+    vi.stubGlobal('caches', { open: vi.fn(async () => cache) });
+    // local 404, CDN ok
+    vi.stubGlobal('fetch', vi.fn(async (url: string) =>
+      String(url).startsWith('/soundfonts/')
+        ? ({ ok: false, status: 404 } as Response)
+        : ({ ok: true, text: async () => scriptText } as Response)));
+
+    const loader = new SoundfontPatchLoader(async () => ({ duration: 0.1 } as AudioBuffer));
+    await loader.loadPatch('FluidR3_GM', 0);
+
+    expect(cache.put).toHaveBeenCalledWith(cacheKey, expect.anything());
+    expect(store.get(cacheKey)).toBe(scriptText);
+    vi.unstubAllGlobals();
+  });
 });
+

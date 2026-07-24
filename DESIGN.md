@@ -53,6 +53,17 @@ the score.
 - `tonal_time_lines`: time runs from top to bottom as full-width bands. Each band is the
   circular, velocity- and overlap-weighted average of active pitch colors; it is not a
   detected key or chord. Silent time is a low-contrast neutral band.
+- `3d_lines` / `3d_note_halos`: the `lines` and `circles` geometry lifted into three
+  dimensions. X/Y are identical to their 2D counterparts (so the Front camera reproduces
+  the 2D image); musical time advances along the positive Z axis, turning a path into a
+  calligraphic ribbon and note halos into discs threading into depth. Total Z depth is
+  normalized to the canvas (≈ width × `zScale`/100) so a long piece stays a legible solid
+  rather than an unviewable tunnel. Rendered with Three.js: pitch-hued geometry glows via
+  bloom against a graded dark field with exponential depth fog, a translucent "now-plane"
+  sweeps forward at the current playback moment, and the camera uses fixed preset angles
+  (Isometric, Front, Side, Bird's eye). These modes export to PNG only; SVG/plotter and
+  free-orbit navigation are planned follow-ups. See
+  [`plans/specs/2026-07-23-3d-time-slice-modes.md`](plans/specs/2026-07-23-3d-time-slice-modes.md).
 
 Origins for path-based modes are left-to-right, center-outward, and outside-inward.
 Line and circle paths share Interval turns: ascending intervals always turn one way and

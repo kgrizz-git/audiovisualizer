@@ -154,6 +154,41 @@
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/synth_strings_1-mp3.js",
       "sha256": "48b2ac1aefd3d83d24e7b6ce50fa9284cdbdd5dc7ad8472a6db103f791afcda2",
       "bytes": 2897125
+    },
+    {
+      "slug": "clavinet",
+      "file": "clavinet-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/clavinet-mp3.js",
+      "sha256": "0b0e01046b78ed8bfb535da823f31fa5f4bcc64f3e54bdd78688e1e6e547e916",
+      "bytes": 2423394
+    },
+    {
+      "slug": "electric_guitar_jazz",
+      "file": "electric_guitar_jazz-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_guitar_jazz-mp3.js",
+      "sha256": "94807d392bf39488354684713f946c729a65d6e43f6be1263079b4e43791d183",
+      "bytes": 2330622
+    },
+    {
+      "slug": "lead_2_sawtooth",
+      "file": "lead_2_sawtooth-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/lead_2_sawtooth-mp3.js",
+      "sha256": "de64fdc423efeac7aba38edaf8f47198b5d80f532993b6ebf184b653ac92b6a2",
+      "bytes": 2999673
+    },
+    {
+      "slug": "pad_2_warm",
+      "file": "pad_2_warm-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/pad_2_warm-mp3.js",
+      "sha256": "c688aeeb3d42d1630086cec28125bd3281aa78ff798ac0fa77083d14628ef221",
+      "bytes": 2906336
+    },
+    {
+      "slug": "synth_bass_1",
+      "file": "synth_bass_1-mp3.js",
+      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/synth_bass_1-mp3.js",
+      "sha256": "bc26d7c27eb9e62f58875a7f7eff0123b03b40ef0eaf526bb93c38142028b7d5",
+      "bytes": 2037954
     }
   ]
 }

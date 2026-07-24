@@ -47,7 +47,10 @@ mapper, fitter, and SVG builder rather than copying browser behavior.
 
 ## Domain contracts
 
-`Score` contains title, duration, first tempo, and tracks. `TrackScore` contains display
+`Score` contains title, duration, first tempo, and tracks. Title resolution prefers the
+MIDI sequence/header name, then the caller-supplied fallback (included-study label or
+filename); blank names and known placeholders such as MuseScore's `"control track"` are
+ignored so the fallback is used. `TrackScore` contains display
 name, channel, MIDI program metadata, onset-sorted notes, and optional CC64 sustain pedal events (`sustainEvents`).
 `NoteEvent` has a stable parser-local id, MIDI pitch `0..127`, onset/duration in seconds, velocity `0..127`,
 voice, and pitch class. `SustainEvent` records pedal state changes (`time` in seconds, CC64 `value` `0..127`, where values >= 64 indicate pedal down). Empty tracks are omitted and zero durations are clamped to

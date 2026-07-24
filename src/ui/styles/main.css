@@ -44,4 +44,6 @@
   font: 11px 'DM Mono', monospace;
 }
 .playback-bar { position:absolute;bottom:26px;display:flex;align-items:center;gap:14px;width:min(900px,calc(100% - 84px));padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(10,17,31,.74);backdrop-filter:blur(18px); }.play-pause-btn { width:34px;height:34px;border:0;border-radius:10px;background:var(--mint);color:#07111d;font-weight:800;cursor:pointer; }.playback-bar output { min-width:78px;color:var(--muted);font:10px 'DM Mono'; }.playback-bar input { accent-color:var(--mint); }.audio-engine { display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap; }.audio-engine select { width:auto;padding:4px 22px 4px 8px;font-size:11px; }
+.audio-voice-row { display:grid; grid-template-columns:1fr auto auto auto auto; gap:6px; align-items:center; margin:8px 0; font-size:11px; }
+.patch-badge { font:500 10px 'DM Mono',monospace; color:var(--muted); white-space:nowrap; }
 @media (max-width:900px) { body { overflow:auto; } #app-container { grid-template-columns:1fr; }.sidebar { height:auto;overflow:visible; }.viewport-container { min-height:760px;padding:45px 20px 84px; }.canvas-wrapper { width:min(100%,640px); }.playback-bar { width:calc(100% - 40px); } }

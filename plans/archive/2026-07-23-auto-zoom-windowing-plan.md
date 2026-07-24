@@ -1,9 +1,9 @@
 # Configurable Auto-Zoom Musical & Time Windowing Implementation Plan
 
-Status: approved (revised after plan review 2026-07-23)
+Status: complete (completed on 2026-07-23)
 Last reviewed: 2026-07-23
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 >
 > **Commits:** Per-task `git commit` steps are optional checkpoints. Only commit when the user explicitly asks (project commit policy).
 
@@ -93,7 +93,7 @@ HTML ranges use integer indices (`bars` min=0 max=9; `seconds` min=0 max=31), ne
 - Consumes: Existing `ViewportTransform`, `DEFAULT_VIEWPORT`, `RenderedGeometry`, `mapScoreToGeometry`
 - Produces: `AutoZoomWindowMode`, extended `ViewportTransform` / `DEFAULT_VIEWPORT`, `RenderedGeometry.bpm`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Extend `tests/viewportTypes.test.ts` (keep existing clampZoom coverage):
 ```typescript
@@ -118,12 +118,12 @@ describe('Viewport Domain Types Extension', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/viewportTypes.test.ts`
 Expected: FAIL (`autoZoomMode` / `geometry.bpm` undefined)
 
-- [ ] **Step 3: Implement domain types**
+- [x] **Step 3: Implement domain types**
 
 In `src/core/types.ts`:
 ```typescript
@@ -178,12 +178,12 @@ return {
 
 Update existing tests that assert `getViewport()` / `DEFAULT_VIEWPORT` equality to include the new fields, and add `bpm` to hand-built geometries (typically `bpm: 120`). **Crucial:** Do not forget to update the `mockGeometry` inside `tests/viewportController.test.ts` (around line 105) which is used in `stepAutoZoom` tests; it will need `bpm: 120` to compile.
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `npx vitest run tests/viewportTypes.test.ts tests/viewportController.test.ts tests/viewportRenderers.test.ts tests/layout.test.ts`
 Expected: PASS (after fixture updates)
 
-- [ ] **Step 5: Commit (optional — only if user asks)**
+- [x] **Step 5: Commit (optional — only if user asks)**
 
 ```bash
 git add src/core/types.ts src/core/mapper/scoreMapper.ts tests/viewportTypes.test.ts tests/viewportController.test.ts tests/viewportRenderers.test.ts tests/layout.test.ts
@@ -202,7 +202,7 @@ git commit -m "feat(core): add auto-zoom window fields and RenderedGeometry.bpm"
 - Consumes: `ViewportTransform`, `RenderedGeometry`
 - Produces: `calculateWindowSeconds`, updated `calculateActiveNotesBoundingBox`, fixed `calculateAutoZoomTransform`, updated `stepAutoZoom`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Add (do not replace) coverage in `tests/viewportController.test.ts`:
 ```typescript
@@ -299,12 +299,12 @@ describe('BPM-Aware Window Calculation & Symmetric Note Sampling', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run tests/viewportController.test.ts`
 Expected: FAIL (`calculateWindowSeconds` not exported / field wipe)
 
-- [ ] **Step 3: Implement helpers**
+- [x] **Step 3: Implement helpers**
 
 ```typescript
 export function calculateWindowSeconds(
@@ -361,12 +361,12 @@ public stepAutoZoom(geometry: RenderedGeometry, currentTime: number, width: numb
 Optional but recommended: thin setters that do not clear `autoZoom`:
 `setAutoZoomMode`, `setAutoZoomWindowBars`, `setAutoZoomWindowSeconds` (or document that `setViewport({ autoZoomMode / … })` already leaves `autoZoom` alone when zoom/pan unchanged).
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/viewportController.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit (optional — only if user asks)**
+- [x] **Step 5: Commit (optional — only if user asks)**
 
 ```bash
 git add src/core/layout/viewportController.ts tests/viewportController.test.ts
@@ -386,7 +386,7 @@ git commit -m "feat(core): BPM-aware auto-zoom windows with symmetric sampling"
 - Consumes: Updated `ViewportController`
 - Produces: Mode toggle, bars/seconds sliders, HUD badge text sync
 
-- [ ] **Step 1: Extend Section 05 & HUD in `index.html`**
+- [x] **Step 1: Extend Section 05 & HUD in `index.html`**
 
 Insert window controls **after** the auto-zoom toggle and **before** Reset framing. Keep existing zoom range + toggle IDs.
 
@@ -412,11 +412,11 @@ Insert window controls **after** the auto-zoom toggle and **before** Reset frami
 
 Update HUD badge label span (keep checkbox) so `updateViewportUi` can set text, e.g. wrap copy in `<span id="hud-autozoom-label">Auto</span>`. (Currently, the text "Auto" in `index.html` is inside a generic `<span>`, so you must add the `id="hud-autozoom-label"` attribute to it).
 
-- [ ] **Step 2: CSS for `.segmented-control`, `.control-subgroup`, `.is-hidden`**
+- [x] **Step 2: CSS for `.segmented-control`, `.control-subgroup`, `.is-hidden`**
 
 Match existing sidebar density (no new card chrome). `.is-hidden { display: none; }`. Segmented buttons should look like compact peer toggles, not primary CTAs.
 
-- [ ] **Step 3: Wire controls in `src/ui/app.ts`**
+- [x] **Step 3: Wire controls in `src/ui/app.ts`**
 
 - Import or locally define `AUTO_ZOOM_BAR_STEPS` / `AUTO_ZOOM_BAR_LABELS` / `AUTO_ZOOM_SECOND_STEPS` (prefer exporting constants from `viewportController.ts` or a tiny `src/core/layout/autoZoomWindow.ts` if `app.ts` would otherwise duplicate magic arrays).
 - Mode buttons: set `autoZoomMode`, toggle `.is-active` + `aria-pressed`, show/hide wrappers.
@@ -425,11 +425,11 @@ Match existing sidebar density (no new card chrome). `.is-hidden { display: none
 - `updateViewportUi()`: project controller → HUD label (`Auto · 4 bars` / `Auto · 3s` / `Auto · full`), slider indices (findIndex; treat non-finite as last step), mode button state, wrapper visibility.
 - Changing window settings must not disable auto-zoom.
 
-- [ ] **Step 4: Run `npm run validate`**
+- [x] **Step 4: Run `npm run validate`**
 
 Expected: PASS
 
-- [ ] **Step 5: Commit (optional — only if user asks)**
+- [x] **Step 5: Commit (optional — only if user asks)**
 
 ```bash
 git add index.html src/ui/styles/main.css src/ui/app.ts src/core/layout/viewportController.ts
@@ -446,15 +446,15 @@ git commit -m "feat(ui): musical vs time auto-zoom window controls"
 - Modify: `ARCHITECTURE.md` (ViewportTransform fields, `RenderedGeometry.bpm`, window helper)
 - Modify: `DESIGN.md` (auto-zoom window modes, 4/4 assumption, HUD copy)
 
-- [ ] **Step 1: Update docs**
+- [x] **Step 1: Update docs**
 
 Call out: configurable musical/time windows; default 4 bars musical; symmetric sampling; v1 fixed 4/4 + single BPM; no RuleConfig BPM.
 
-- [ ] **Step 2: Run `npm run validate`**
+- [x] **Step 2: Run `npm run validate`**
 
 Expected: PASS
 
-- [ ] **Step 3: Commit (optional — only if user asks)**
+- [x] **Step 3: Commit (optional — only if user asks)**
 
 ```bash
 git add CHANGELOG.md CHANGELOG.dev.md dev-docs/TO_DO.md ARCHITECTURE.md DESIGN.md plans/specs/2026-07-23-auto-zoom-windowing.md
@@ -463,13 +463,13 @@ git commit -m "docs: document configurable auto-zoom musical and time windowing"
 
 ## Verification
 
-- [ ] Unit: musical conversion at 120 and 60 BPM; time mode; Infinity full-track
-- [ ] Unit: symmetric overlap, W=0 instantaneous, omitted W defaults to 0
-- [ ] Unit: lerp preserves mode/window fields
-- [ ] Manual: playback with default 4-bar window frames leading + trailing notes
-- [ ] Manual: switch to time 0s ≈ old instantaneous framing; Full track ≈ whole score bounds
-- [ ] Manual: HUD + sidebar stay in sync on reset / MIDI load
-- [ ] `npm run validate` passes
+- [x] Unit: musical conversion at 120 and 60 BPM; time mode; Infinity full-track
+- [x] Unit: symmetric overlap, W=0 instantaneous, omitted W defaults to 0
+- [x] Unit: lerp preserves mode/window fields
+- [x] Manual: playback with default 4-bar window frames leading + trailing notes
+- [x] Manual: switch to time 0s ≈ old instantaneous framing; Full track ≈ whole score bounds
+- [x] Manual: HUD + sidebar stay in sync on reset / MIDI load
+- [x] `npm run validate` passes
 
 ## Open questions
 

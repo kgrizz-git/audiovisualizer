@@ -3,7 +3,9 @@ import { DEFAULT_CONFIG, getAverageScoreBackground, mapScoreToGeometry } from '.
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
-import { AutoZoomWindowMode, ChordLayout, GapPolicy, OriginMode, PitchHueMode, RuleConfig, Score, Variation, ViewportTransform } from '../core/types.js';
+import { AutoZoomWindowMode, CameraPreset3D, ChordLayout, DEFAULT_VIEWPORT_3D, GapPolicy, is3DVariation, OriginMode, PitchHueMode, PlaybackCue3D, RuleConfig, Score, Variation, ViewportTransform, ViewportTransform3D } from '../core/types.js';
+import { map3DGeometry } from '../core/mapper/map3d.js';
+import type { I3DRenderer } from '../renderers/three/I3DRenderer.js';
 import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
 import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js';
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
@@ -37,6 +39,8 @@ class AudioVisualizerApp {
   private backgroundMode: 'black' | 'average' = 'black';
   private exportTitle: string = this.currentScore.title;
   private downloadAbort: AbortController | null = null;
+  private threeRenderer: I3DRenderer | null = null;
+  private viewport3d: ViewportTransform3D = { ...DEFAULT_VIEWPORT_3D };
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
@@ -76,7 +80,24 @@ class AudioVisualizerApp {
     dropzone.addEventListener('drop', (event) => { const file = event.dataTransfer?.files[0]; if (file) void this.loadFile(file); });
     dropzone.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') fileInput.click(); });
 
-    this.select<Variation>('variation-select', (value) => { this.currentConfig.variation = value; });
+    this.select<Variation>('variation-select', (value) => { this.currentConfig.variation = value; this.updateCanvasMode(); });
+
+    this.select<CameraPreset3D>('camera-preset-select', (value) => { this.viewport3d = { ...this.viewport3d, preset: value }; });
+    this.range('zscale-range', 'val-zscale', (value) => { this.currentConfig.zScale = value; }, '');
+    this.range('bloom-range', 'val-bloom', (value) => { this.viewport3d = { ...this.viewport3d, bloom: value }; }, '');
+    this.select<PlaybackCue3D>('playback-cue-select', (value) => { this.viewport3d = { ...this.viewport3d, playbackCue: value }; });
+    this.element<HTMLInputElement>('threed-autofollow-toggle').addEventListener('change', (event) => {
+      this.viewport3d = { ...this.viewport3d, autoFollow: (event.target as HTMLInputElement).checked };
+      this.render();
+    });
+    this.element<HTMLInputElement>('threed-chase-toggle').addEventListener('change', (event) => {
+      this.viewport3d = { ...this.viewport3d, chaseCamera: (event.target as HTMLInputElement).checked };
+      this.render();
+    });
+    this.element<HTMLInputElement>('threed-rotate-toggle').addEventListener('change', (event) => {
+      this.viewport3d = { ...this.viewport3d, autoRotate: (event.target as HTMLInputElement).checked };
+      this.render();
+    });
     this.select<OriginMode>('origin-select', (value) => { this.currentConfig.originMode = value; });
     this.select<PitchHueMode>('hue-mode-select', (value) => { this.currentConfig.pitchHueMode = value; });
     this.select<'black' | 'average'>('background-select', (value) => { this.backgroundMode = value; });
@@ -109,6 +130,7 @@ class AudioVisualizerApp {
     this.element<HTMLButtonElement>('btn-export-svg').addEventListener('click', () => this.downloadSvg(false));
     this.element<HTMLButtonElement>('btn-export-plotter').addEventListener('click', () => this.downloadSvg(true));
     this.element<HTMLButtonElement>('btn-export-png').addEventListener('click', () => this.downloadPng());
+    this.element<HTMLButtonElement>('btn-export-webm').addEventListener('click', () => void this.downloadWebM3D());
 
     const titleInput = this.element<HTMLInputElement>('export-title-input');
     titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateCanvasAriaLabel(); this.render(); });
@@ -481,9 +503,19 @@ class AudioVisualizerApp {
       this.currentScore.duration,
       this.playbackOffset + (performance.now() - this.playbackStart) / 1000
     );
-    const geometry = this.geometryFor(PREVIEW_SIZE);
-    this.viewportController.stepAutoZoom(geometry, this.currentTime, PREVIEW_SIZE, PREVIEW_SIZE);
-    this.render();
+    if (is3DVariation(this.currentConfig.variation)) {
+      // Geometry is static during playback; only the sweeping now-plane moves.
+      this.threeRenderer?.stepPlayhead(this.currentTime);
+      this.element<HTMLInputElement>('progress-scrubber').value = String(
+        Math.round(this.currentTime / Math.max(this.currentScore.duration, 0.01) * 1000)
+      );
+      this.element<HTMLOutputElement>('time-display').value =
+        `${formatTime(this.currentTime)} / ${formatTime(this.currentScore.duration)}`;
+    } else {
+      const geometry = this.geometryFor(PREVIEW_SIZE);
+      this.viewportController.stepAutoZoom(geometry, this.currentTime, PREVIEW_SIZE, PREVIEW_SIZE);
+      this.render();
+    }
     if (this.currentTime >= this.currentScore.duration) this.pause();
     else this.animationFrameId = requestAnimationFrame(this.tick);
   };
@@ -543,6 +575,15 @@ class AudioVisualizerApp {
   }
 
   private render(): void {
+    if (is3DVariation(this.currentConfig.variation)) {
+      void this.render3D();
+      this.element<HTMLInputElement>('progress-scrubber').value = String(
+        Math.round(this.currentTime / Math.max(this.currentScore.duration, 0.01) * 1000)
+      );
+      this.element<HTMLOutputElement>('time-display').value =
+        `${formatTime(this.currentTime)} / ${formatTime(this.currentScore.duration)}`;
+      return;
+    }
     const geometry = this.geometryFor(PREVIEW_SIZE);
     this.canvasRenderer.render(geometry, {
       time: this.currentTime,
@@ -559,6 +600,42 @@ class AudioVisualizerApp {
     this.updateViewportUi();
   }
 
+  /** Shows the 3D canvas (and its controls) or the 2D canvas depending on the variation. */
+  private updateCanvasMode(): void {
+    const is3D = is3DVariation(this.currentConfig.variation);
+    this.element<HTMLCanvasElement>('visualizer-canvas').classList.toggle('is-hidden', is3D);
+    this.element<HTMLCanvasElement>('visualizer-canvas-3d').classList.toggle('is-hidden', !is3D);
+    this.element<HTMLElement>('viewport-hud').classList.toggle('is-hidden', is3D);
+    this.element<HTMLElement>('threed-controls').classList.toggle('is-hidden', !is3D);
+  }
+
+  private async ensureThreeRenderer(): Promise<I3DRenderer> {
+    if (!this.threeRenderer) {
+      const { ThreeDRenderer } = await import('../renderers/three/ThreeDRenderer.js');
+      const renderer = new ThreeDRenderer();
+      renderer.mount(this.element<HTMLCanvasElement>('visualizer-canvas-3d'), PREVIEW_SIZE, PREVIEW_SIZE, (viewport) => {
+        this.viewport3d = viewport;
+        this.element<HTMLSelectElement>('camera-preset-select').value = viewport.preset;
+        this.element<HTMLInputElement>('threed-autofollow-toggle').checked = viewport.autoFollow;
+        this.element<HTMLInputElement>('threed-chase-toggle').checked = viewport.chaseCamera;
+      });
+      this.threeRenderer = renderer;
+    }
+    return this.threeRenderer;
+  }
+
+  private async render3D(): Promise<void> {
+    try {
+      const renderer = await this.ensureThreeRenderer();
+      if (!is3DVariation(this.currentConfig.variation)) return; // variation changed while loading
+      renderer.setGeometry(map3DGeometry(this.currentScore, this.currentConfig, PREVIEW_SIZE, PREVIEW_SIZE));
+      renderer.setViewport(this.viewport3d);
+      renderer.stepPlayhead(this.currentTime < this.currentScore.duration ? this.currentTime : null);
+    } catch {
+      this.setStatus('3D rendering could not start (WebGL unavailable).', true);
+    }
+  }
+
   private getExportViewport(size: number): ViewportTransform {
     const vp = this.viewportController.getViewport();
     const scale = size / PREVIEW_SIZE;
@@ -566,6 +643,10 @@ class AudioVisualizerApp {
   }
 
   private downloadSvg(plotter: boolean): void {
+    if (is3DVariation(this.currentConfig.variation)) {
+      this.setStatus('SVG export is not available for 3D modes yet — use PNG.', true);
+      return;
+    }
     const geometry = this.geometryFor(EXPORT_SIZE);
     this.download(
       new Blob([buildSvg(geometry, {
@@ -581,6 +662,10 @@ class AudioVisualizerApp {
   }
 
   private downloadPng(): void {
+    if (is3DVariation(this.currentConfig.variation)) {
+      void this.downloadPng3D();
+      return;
+    }
     const geometry = this.geometryFor(EXPORT_SIZE);
     this.canvasRenderer.render(geometry, {
       showLegend: true,
@@ -590,6 +675,32 @@ class AudioVisualizerApp {
     });
     this.canvasRenderer.downloadPng(`${this.filename()}.png`);
     this.render();
+  }
+
+  private async downloadPng3D(): Promise<void> {
+    const renderer = this.threeRenderer;
+    if (!renderer) return;
+    try {
+      const blob = await renderer.capturePNG();
+      this.download(blob, `${this.filename()}.png`);
+    } catch {
+      this.setStatus('3D PNG export failed.', true);
+    }
+  }
+
+  private async downloadWebM3D(): Promise<void> {
+    if (!is3DVariation(this.currentConfig.variation)) {
+      this.setStatus('WebM capture is available for 3D modes only.', true);
+      return;
+    }
+    try {
+      const renderer = await this.ensureThreeRenderer();
+      this.setStatus('Recording a 6-second 3D capture…');
+      this.download(await renderer.captureWebM(6), `${this.filename()}.webm`);
+      this.setStatus('3D WebM capture saved.');
+    } catch {
+      this.setStatus('WebM capture is not supported in this browser.', true);
+    }
   }
 
   private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }

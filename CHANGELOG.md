@@ -10,6 +10,14 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Stronger default 3D bloom and color-matched Canvas glow for 2D line paths and note halos.
+  SemVer: **MINOR**.
+- A 3D Playback Cue selector: retain the now-plane or cumulatively reveal score geometry
+  through the playhead without rebuilding WebGL buffers. SemVer: **MINOR**.
+- 3D piano-roll slab mode plus free orbit/pan/zoom navigation, deterministic depth grid and
+  particle field, onset pulses, playback auto-follow/chase camera, idle turntable, and
+  six-second WebM capture for all 3D score modes. SemVer: **MINOR**.
+- 3D score modes (`3D line paths`, `3D note halos`): the existing line-path and note-halo geometry threads through depth, with musical time mapped to the Z axis. Rendered with Three.js — glowing bloom, atmospheric depth fog, a sweeping "now-plane" that marks the current playback moment, and fixed camera angles (Isometric / Front / Side / Bird's eye). New "Time depth", "Glow", and "Camera angle" controls. PNG export is supported; SVG/plotter export is not yet available for 3D. Three.js loads on demand, so 2D-only sessions are unaffected. SemVer: **MINOR**.
 - Configurable auto-zoom windowing modes (Musical bars vs Time seconds vs Full track) with symmetric time/bar sampling window slider controls, HUD status mode indicator, and preset reset actions. SemVer: **MINOR**.
 - On-demand full SoundFont library download: a first-launch prompt and a "SoundFont library" panel (Refine section) let you cache all 128 FluidR3 GM instruments (~320 MB) for offline use, with live progress, cancel, cache-count status, and a clear-cache action. SemVer: **MINOR**.
 - Engine-aware voice controls with dynamic per-track UI switching between General MIDI instrument selection (SoundFont mode) and oscillator waveform selection (Synth mode). SemVer: **MINOR**.

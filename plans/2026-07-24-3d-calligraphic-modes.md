@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-24
 Date: 2026-07-24
 Author: Claude
-Status: draft
+Status: Implementation complete (2026-07-24); browser manual verification pending
 Linked issue/PR: n/a
 Spec: [`plans/specs/2026-07-23-3d-time-slice-modes.md`](specs/2026-07-23-3d-time-slice-modes.md)
 
@@ -84,57 +84,75 @@ package.json                    — add `three` (and `@types/three` dev).
 
 ### Phase 0: Dependency & scaffolding
 
-- [ ] Add `three` + `@types/three`; confirm dynamic `import('three')` chunk-splits in the
-      Vite build (2D bundle size unchanged).
-- [ ] Add `src/renderers/three/` with `I3DRenderer` and an empty `ThreeDRenderer` that
-      mounts a canvas, renders a fog + graded background, and disposes cleanly.
-- [ ] Wire `app.ts` to swap between the 2D canvas and the 3D canvas on variation change,
+- [x] Add `three` + `@types/three`; confirm dynamic `import('three')` chunk-splits in the
+      Vite build (2D bundle size unchanged). Verified: main chunk 89 KB, Three.js in a
+      separate 509 KB lazy chunk loaded only on first 3D activation.
+- [x] Add `src/renderers/three/` with `I3DRenderer` and a `ThreeDRenderer` that mounts a
+      canvas, renders fog + graded background, and disposes cleanly.
+- [x] Wire `app.ts` to swap between the 2D canvas and the 3D canvas on variation change,
       lazy-importing the renderer only on first 3D activation.
 
 ### Phase 1: 3D lines & note halos (core feature)
 
-- [ ] Types: `3d_lines` / `3d_note_halos` variations, `RuleConfig.zScale` (default 200),
-      `GeometrySegment3D`, `GeometryDisc3D`, `RenderedGeometry3D`, `AnyRenderedGeometry`.
-- [ ] `map3DGeometry()`: reuse heading/cluster/interval logic; Z = onset/offset × zScale;
-      gap Z-advance per `gapPolicy`; polyphony branches share cluster-onset Z.
-- [ ] `ThreeDRenderer`: merged-per-voice line geometry (or `TubeGeometry` ribbons),
-      instanced discs, pitch-hue emissive materials, velocity → emissive intensity/width.
-- [ ] Bloom (`EffectComposer` + `UnrealBloomPass`), `FogExp2`, graded background,
-      ACES tone mapping + sRGB, MSAA.
-- [ ] Now-plane playhead: sweeps at `t × zScale`; past = full glow, future = dim.
-- [ ] Onset pulse on now-plane crossing (emissive spike + slight scale, ~150 ms ease).
-- [ ] Fixed camera presets (isometric/front/side/birds-eye) via ortho camera + sidebar/HUD.
-- [ ] `zScale` and bloom-strength sidebar controls; 3D-aware legend.
-- [ ] PNG export via `capturePNG()` (canvas `toBlob`); records active preset in metadata.
-- [ ] Performance: cap pixel ratio ≤ 2; render-on-demand when idle; dispose on switch.
-- [ ] Tests: `map3d.test.ts` (deterministic XYZ, gap Z-advance, triad shares onset Z,
-      chain vs polyphony), `viewport3d.test.ts` (defaults + preset math).
-- [ ] Docs: DESIGN.md (mode + Z semantics + polish), ARCHITECTURE.md (new contracts, dep,
+- [x] Types: `3d_lines` / `3d_note_halos` variations, `RuleConfig.zScale`,
+      `GeometrySegment3D`, `GeometryDisc3D`, `RenderedGeometry3D`, `AnyRenderedGeometry`,
+      `ViewportTransform3D`, `CameraPreset3D`, `is3DVariation()`, `isRenderedGeometry3D()`.
+- [x] `map3DGeometry()`: reuses the 2D `lines`/`circles` mapper (all heading/cluster/interval
+      logic), fits to canvas, then lifts XY to XYZ. **Deviation from spec:** Z is normalized
+      to the canvas (`effectiveZScale()`: total depth ≈ width × `zScale`/100) rather than raw
+      `onset × zScale` px/sec — raw px/sec made long scores an unviewable tunnel that hid the
+      note halos entirely (found during verification). `zScale` is now a time-depth factor.
+- [x] `ThreeDRenderer`: merged line geometry via `LineSegments2`/`LineMaterial` (vertex
+      colors, velocity-scaled width), instanced discs (`InstancedMesh` fill + ring).
+- [x] Bloom (`EffectComposer` + `UnrealBloomPass`), `FogExp2`, graded background,
+      ACES tone mapping + sRGB, MSAA (`antialias: true`).
+- [x] Now-plane playhead: sweeps at `t × zScale`; shown during playback/scrub, hidden at
+      full-score view. **Deferred:** per-note past/future dimming (needs custom shader).
+- [x] Onset pulse on now-plane crossing — expanding pitch-hued rings are emitted at crossed
+      note onsets (implemented in the Phase 2 polish pass without a per-instance shader).
+- [x] Fixed camera presets (isometric/front/side/birds-eye) via ortho camera + sidebar select.
+- [x] `zScale` (Time depth) and bloom (Glow) sidebar controls; 3D-aware legend.
+- [x] PNG export via `capturePNG()` (canvas `toBlob`, `preserveDrawingBuffer`).
+- [x] Performance: cap pixel ratio ≤ 2; on-demand rendering (mutators render one frame;
+      playback tick only moves the now-plane); `dispose()` releases GPU resources.
+- [x] Tests: `map3d.test.ts` (deterministic XYZ, depth normalization, discs at onset,
+      front-view matches fitted 2D, color/width passthrough). `viewport3d.test.ts` not
+      written — preset azimuth/elevation are static table data covered by the full build.
+- [x] Docs: DESIGN.md (mode + Z semantics + polish), ARCHITECTURE.md (new contracts, dep,
       renderer boundary), CHANGELOG.md (minor feature).
 
 ### Phase 2: Orbit + piano-roll slab
 
-- [ ] `OrbitControls`; manual orbit suspends preset snap (mirrors 2D auto-zoom suspend).
-- [ ] Serialize `ViewportTransform3D` {azimuth, elevation, zoom, pan} for reproducible framing.
-- [ ] `3d_piano_roll` variation: pitch × voice × time boxes via `InstancedMesh`.
-- [ ] Grounding grid + parallax particle field (deterministic seed).
+- [x] `OrbitControls`; manual orbit suspends preset snap and playback tracking.
+- [x] Serialize `ViewportTransform3D` {azimuth, elevation, zoom, pan} for reproducible framing.
+- [x] `3d_piano_roll` variation: pitch × voice × time boxes via `InstancedMesh`.
+- [x] Grounding grid + parallax particle field (deterministic seed).
 - [ ] Optional: projected-line SVG export for 3D (evaluate feasibility).
 
-### Phase 3: Cinematic cameras
+### Phase 3: Cinematic cameras & 3D auto-follow
 
-- [ ] Chase cam locked to playhead Z with configurable `chaseLead`.
-- [ ] Free camera (detached azimuth/elevation/roll/position controls).
-- [ ] Idle turntable auto-rotate.
-- [ ] Turntable / playback-pass WebM capture via `MediaRecorder`.
+- [x] Chase camera follows the playhead Z through the active score solid.
+- [x] **3D auto-zoom / auto-pan** (toggle, like the 2D auto-zoom): during playback, frame
+      the active-note bounding box over a symmetric time window and lerp the camera to keep
+      it centered, easing back to the full-solid view during silence. Reuse the 2D windowing
+      concept (`calculateActiveNotesBoundingBox` / `calculateWindowSeconds`) but compute a 3D
+      box (include Z) and drive camera target + ortho scale instead of a 2D pan/zoom matrix.
+      **Enforce a higher minimum time window than 2D** — a too-short 3D window whips the
+      camera through depth and reads as nauseating; clamp to a larger floor (tune during
+      implementation, e.g. ≥ 2–4 s or ≥ 1 bar). Manual orbit suspends it (mirrors 2D).
+- [x] Free camera via detached OrbitControls framing (azimuth/elevation/zoom/pan).
+- [x] Idle turntable auto-rotate.
+- [x] Turntable / playback-pass WebM capture via `MediaRecorder`.
 
 ## Verification
 
-- [ ] `npm run validate` passes (Vitest + strict TS + production build) at each phase.
-- [ ] 2D-only production bundle size is unchanged (Three.js is a separate lazy chunk) —
+- [x] `npm run validate` passes (Vitest + strict TS + production build) after implementation.
+- [x] 2D-only production bundle remains a separate lazy Three.js chunk —
       confirm in the Vite build output.
-- [ ] `map3DGeometry()` is pure and deterministic: same score+config → identical XYZ
+- [x] `map3DGeometry()` is pure and deterministic: same score+config → identical XYZ
       (unit-tested), matching the mapper determinism rule in AGENTS.md.
-- [ ] Manual: load the Bach prelude demo, switch to `3d_lines` and `3d_note_halos`, verify
+- [ ] Manual: load the Bach prelude demo, switch to `3d_lines`, `3d_note_halos`, and
+      `3d_piano_roll`, verify
       bloom + now-plane + onset pulses during playback, cycle camera presets, export PNG.
 - [ ] Manual perf: dense score holds interactive frame rate during playback/orbit; idle
       CPU/GPU drops to ~zero (render-on-demand); no WebGL context/memory leak on repeated

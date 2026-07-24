@@ -17,9 +17,11 @@
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
-    "@tonejs/midi": "^2.0.28"
+    "@tonejs/midi": "^2.0.28",
+    "three": "^0.160.1"
   },
   "devDependencies": {
+    "@types/three": "^0.160.0",
     "esbuild": "^0.28.1",
     "typescript": "^5.4.5",
     "vite": "^8.1.5",

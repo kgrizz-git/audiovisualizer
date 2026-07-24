@@ -1,4 +1,15 @@
-export type Variation = 'lines' | 'circles' | 'vertical_tone' | 'tonal_time_lines';
+export type Variation =
+  | 'lines'
+  | 'circles'
+  | 'vertical_tone'
+  | 'tonal_time_lines'
+  | '3d_lines'
+  | '3d_note_halos';
+
+/** True when the variation is rendered by the Three.js 3D renderer rather than Canvas/SVG. */
+export function is3DVariation(variation: Variation): boolean {
+  return variation === '3d_lines' || variation === '3d_note_halos';
+}
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
 export type PitchHueMode = 'pitch_class' | 'register_spiral';
 export type GapPolicy = 'lift_pen' | 'faint_line' | 'ghost';
@@ -53,6 +64,7 @@ export interface RuleConfig {
   quantizeSubdivision: number;
   voiceFilter: number[] | null; // null means include every voice
   timeLineDensity: number; // sampled bands per output pixel row
+  zScale: number; // 3D time-depth factor: total Z depth ≈ canvas width × zScale / 100
 }
 
 export interface Point2D {
@@ -111,6 +123,61 @@ export interface RenderedGeometry {
   bpm: number;
 }
 
+/** A line segment in 3D space (X/Y from the interval path, Z from musical time). */
+export interface GeometrySegment3D {
+  startX: number;
+  startY: number;
+  startZ: number;
+  endX: number;
+  endY: number;
+  endZ: number;
+  color: string;
+  width: number;
+  opacity: number;
+  note: NoteEvent;
+  role?: 'note' | 'gap';
+  dashArray?: string;
+}
+
+/** A flat disc (note halo) floating at a Z depth given by its onset time. */
+export interface GeometryDisc3D {
+  cx: number;
+  cy: number;
+  cz: number;
+  radius: number;
+  fillColor: string;
+  strokeColor: string;
+  strokeWidth: number;
+  opacity: number;
+  note: NoteEvent;
+}
+
+/**
+ * Geometry for the Three.js 3D visualization family. The X/Y coordinates come from the
+ * existing 2D interval/path algorithms; Z is musical time (seconds × zScale). Consumers
+ * discriminate against RenderedGeometry with the `kind` field.
+ */
+export interface RenderedGeometry3D {
+  kind: '3d';
+  width: number;
+  height: number;
+  /** Total depth of the score along Z (world units). */
+  depth: number;
+  /** Effective seconds → world-unit scale actually applied (for playhead placement). */
+  zScale: number;
+  segments: GeometrySegment3D[]; // populated for 3d_lines
+  discs: GeometryDisc3D[];       // populated for 3d_note_halos
+  config: RuleConfig;
+  bpm: number;
+}
+
+export type AnyRenderedGeometry = RenderedGeometry | RenderedGeometry3D;
+
+/** Narrows AnyRenderedGeometry to the 3D variant. */
+export function isRenderedGeometry3D(geometry: AnyRenderedGeometry): geometry is RenderedGeometry3D {
+  return (geometry as RenderedGeometry3D).kind === '3d';
+}
+
 export interface LegendItem {
   label: string;
   color?: string;
@@ -150,4 +217,31 @@ export function clampZoom(zoom: number): number {
   if (Number.isNaN(zoom)) return 1;
   return Math.min(10.0, Math.max(0.25, zoom));
 }
+
+export type CameraPreset3D = '3d_isometric' | '3d_front' | '3d_side' | '3d_birds_eye';
+
+/** Orbit angles (degrees) for each fixed camera preset. */
+export const CAMERA_PRESETS_3D: Readonly<Record<CameraPreset3D, { azimuth: number; elevation: number }>> = Object.freeze({
+  '3d_isometric': { azimuth: 45, elevation: 30 },
+  '3d_front': { azimuth: 0, elevation: 0 },
+  '3d_side': { azimuth: 90, elevation: 0 },
+  '3d_birds_eye': { azimuth: 45, elevation: 80 },
+});
+
+export const CAMERA_PRESET_LABELS_3D: Readonly<Record<CameraPreset3D, string>> = Object.freeze({
+  '3d_isometric': 'Isometric',
+  '3d_front': 'Front',
+  '3d_side': 'Side',
+  '3d_birds_eye': "Bird's eye",
+});
+
+export interface ViewportTransform3D {
+  preset: CameraPreset3D;
+  bloom: number; // 0 = off, ~1.5 = neon
+}
+
+export const DEFAULT_VIEWPORT_3D: Readonly<ViewportTransform3D> = Object.freeze({
+  preset: '3d_isometric',
+  bloom: 0.9,
+});
 

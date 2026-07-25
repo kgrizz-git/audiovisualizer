@@ -3,192 +3,355 @@
   "files": [
     {
       "slug": "acoustic_grand_piano",
+      "kind": "script",
       "file": "acoustic_grand_piano-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3.js",
       "sha256": "00eebe0214c12ff8f32c47c2f7ac92ef352800e868ab0f883b80854486ac4ca6",
       "bytes": 2631954
     },
     {
+      "slug": "yamaha_grand_piano",
+      "kind": "loop",
+      "file": "yamaha_grand_piano-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/yamaha_grand_piano-loop.json",
+      "sha256": "569ae955bbabab519f7ef904ead4ed8eb946ae508eeeaa1deed322f31a9ce469",
+      "bytes": 1769
+    },
+    {
       "slug": "bright_acoustic_piano",
+      "kind": "script",
       "file": "bright_acoustic_piano-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/bright_acoustic_piano-mp3.js",
       "sha256": "17fe637f5868899a4c1a777c62ad0c3816c1852cb90f6e477b5a6f945a5722d8",
       "bytes": 2632311
     },
     {
+      "slug": "bright_yamaha_grand",
+      "kind": "loop",
+      "file": "bright_yamaha_grand-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/bright_yamaha_grand-loop.json",
+      "sha256": "569ae955bbabab519f7ef904ead4ed8eb946ae508eeeaa1deed322f31a9ce469",
+      "bytes": 1769
+    },
+    {
       "slug": "electric_piano_1",
+      "kind": "script",
       "file": "electric_piano_1-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_piano_1-mp3.js",
       "sha256": "19041530232e66f8d9b00f43ede2fa50f59a55b1a27a81daf864c54d371426b2",
       "bytes": 2232690
     },
     {
+      "slug": "rhodes_ep",
+      "kind": "loop",
+      "file": "rhodes_ep-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/rhodes_ep-loop.json",
+      "sha256": "4a675ccc88020261075a9a14a2a49f5028dc16a2f2bbbee187b4c6dbecdc7ee2",
+      "bytes": 1747
+    },
+    {
       "slug": "harpsichord",
+      "kind": "script",
       "file": "harpsichord-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/harpsichord-mp3.js",
       "sha256": "d3f214640a2373e362adc236a2e2adc7868fa7b2602cd51baab96321b4382a09",
       "bytes": 2332057
     },
     {
+      "slug": "harpsichord",
+      "kind": "loop",
+      "file": "harpsichord-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/harpsichord-loop.json",
+      "sha256": "cc23f636edcb93494999ef4f217dcdfc2189db231e954701044efa124b81ceeb",
+      "bytes": 2120
+    },
+    {
       "slug": "vibraphone",
+      "kind": "script",
       "file": "vibraphone-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/vibraphone-mp3.js",
       "sha256": "263bf866f7facd9652d39d4f7f499e8f883bc40adbdee75d8c5caf11403132f5",
       "bytes": 2020776
     },
     {
+      "slug": "vibraphone",
+      "kind": "loop",
+      "file": "vibraphone-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/vibraphone-loop.json",
+      "sha256": "c3f9e1f869975782e5a529225e10d2513b53797c9fde6c4710540e4e8aea3058",
+      "bytes": 1607
+    },
+    {
       "slug": "acoustic_guitar_nylon",
+      "kind": "script",
       "file": "acoustic_guitar_nylon-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_nylon-mp3.js",
       "sha256": "5375fa9e0408d960e12b6e4ec120c42bce824d80b18e982b27ddaece146a4f64",
       "bytes": 1837439
     },
     {
+      "slug": "nylon_string_guitar",
+      "kind": "loop",
+      "file": "nylon_string_guitar-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/nylon_string_guitar-loop.json",
+      "sha256": "9421270bcca1c82ee206f30ef6378ff677741c1baef6ff55987161ce0ea77991",
+      "bytes": 2144
+    },
+    {
       "slug": "acoustic_guitar_steel",
+      "kind": "script",
       "file": "acoustic_guitar_steel-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_steel-mp3.js",
       "sha256": "cb3caa60a5dfe49734c07f8c069df48ab2d0ddca4b38260d8562d8af477db456",
       "bytes": 1984415
     },
     {
+      "slug": "steel_string_guitar",
+      "kind": "loop",
+      "file": "steel_string_guitar-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/steel_string_guitar-loop.json",
+      "sha256": "4864d8e04e6513a9907238f18f1b4646b24a357541735b04f2e22ce14560601b",
+      "bytes": 2162
+    },
+    {
       "slug": "overdriven_guitar",
+      "kind": "script",
       "file": "overdriven_guitar-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/overdriven_guitar-mp3.js",
       "sha256": "038f84e0ddfa5ae7a3c677379a4a166cb12646abbf922657f9419158accb7557",
       "bytes": 2929907
     },
     {
+      "slug": "overdrive_guitar",
+      "kind": "loop",
+      "file": "overdrive_guitar-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/overdrive_guitar-loop.json",
+      "sha256": "7b7ad07551ef774f0f96d5cfb06750be839de5f9fb9a76057326f6d19592ac76",
+      "bytes": 1789
+    },
+    {
       "slug": "acoustic_bass",
+      "kind": "script",
       "file": "acoustic_bass-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_bass-mp3.js",
       "sha256": "7b6d656613f2b8e2e73526317543a491c630bd5dab4426c54dae55f67dfd1e91",
       "bytes": 1958275
     },
     {
+      "slug": "acoustic_bass",
+      "kind": "loop",
+      "file": "acoustic_bass-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/acoustic_bass-loop.json",
+      "sha256": "8aeb42921ea9337c1cf93f2e5330611ceafb9d535af18f5d1ea90f9df8c30d1e",
+      "bytes": 2078
+    },
+    {
       "slug": "electric_bass_finger",
+      "kind": "script",
       "file": "electric_bass_finger-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_bass_finger-mp3.js",
       "sha256": "4b45ce5222c73a849fb6dcdf96e5cd489866a120d7cbf13498ac53a3a81e57e5",
       "bytes": 1991634
     },
     {
+      "slug": "fingered_bass",
+      "kind": "loop",
+      "file": "fingered_bass-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/fingered_bass-loop.json",
+      "sha256": "62e7561e30d9dae98588ae798261d41720c9f76a55af09acb7a49951d5824233",
+      "bytes": 1243
+    },
+    {
       "slug": "violin",
+      "kind": "script",
       "file": "violin-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/violin-mp3.js",
       "sha256": "3c169ac4c7781fe145e545e909993371188aa6bad617bc3a5f0692b7678995f8",
       "bytes": 2870964
     },
     {
+      "slug": "violin",
+      "kind": "loop",
+      "file": "violin-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/violin-loop.json",
+      "sha256": "84ae09eabb59cec23678b49b7b66c534d9d001ddb072437d2ec1940e171edb7b",
+      "bytes": 1553
+    },
+    {
       "slug": "viola",
+      "kind": "script",
       "file": "viola-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/viola-mp3.js",
       "sha256": "0aabb7733ddb5852cb41a5e4881ca2a96781009243ba31d62e3e114c642d9051",
       "bytes": 2803843
     },
     {
+      "slug": "viola",
+      "kind": "loop",
+      "file": "viola-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/viola-loop.json",
+      "sha256": "3d0d2aee41ad146ffe2d752db573dcd89c82adbc9380d3c5322ecd032f88bb71",
+      "bytes": 1476
+    },
+    {
       "slug": "cello",
+      "kind": "script",
       "file": "cello-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/cello-mp3.js",
       "sha256": "fc72c9351e0dda586802f97a1b890e415640f54dc6cc397bd5dc32b078f6ce4c",
       "bytes": 3005203
     },
     {
+      "slug": "cello",
+      "kind": "loop",
+      "file": "cello-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/cello-loop.json",
+      "sha256": "59b1954d24de1cab33768eff21cb179d10bf922e62a2a99056fd27c946faf96b",
+      "bytes": 1884
+    },
+    {
       "slug": "string_ensemble_1",
+      "kind": "script",
       "file": "string_ensemble_1-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/string_ensemble_1-mp3.js",
       "sha256": "8571395f4c42a989a63e0aed48ad9d79f0ac1a822ff2afd7cb356191be8fd4a2",
       "bytes": 2803855
     },
     {
+      "slug": "strings",
+      "kind": "loop",
+      "file": "strings-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/strings-loop.json",
+      "sha256": "d7e2e401ae9b94c23a220dd586e4b677ad122d48f3ebcd9754eaf3433d65ecc1",
+      "bytes": 1504
+    },
+    {
       "slug": "choir_aahs",
+      "kind": "script",
       "file": "choir_aahs-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/choir_aahs-mp3.js",
       "sha256": "45586b4abdfc7595af8ae1784dee9bf8b7da73fc4f967cd0333f460297f1eb7a",
       "bytes": 2803848
     },
     {
+      "slug": "ahh_choir",
+      "kind": "loop",
+      "file": "ahh_choir-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/ahh_choir-loop.json",
+      "sha256": "bcbe5885da149360ee5a36297a35fb46ab5e0d0a2b03b2214f94a020caacfe02",
+      "bytes": 1479
+    },
+    {
       "slug": "trumpet",
+      "kind": "script",
       "file": "trumpet-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/trumpet-mp3.js",
       "sha256": "7f37e0b8fbbfbf67a1183c746d83c85c11790283e2ea9994bdcdb9055bb0e67c",
       "bytes": 2937749
     },
     {
+      "slug": "trumpet",
+      "kind": "loop",
+      "file": "trumpet-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/trumpet-loop.json",
+      "sha256": "42b993c9ec09011fc4283458d6fca1d4ef7de261c288ceb8b8a81ddd8643fb9b",
+      "bytes": 1640
+    },
+    {
       "slug": "trombone",
+      "kind": "script",
       "file": "trombone-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/trombone-mp3.js",
       "sha256": "670c03635d7147847d029f09d9bb2d8c8e902852192713dce3750d16d7265abd",
       "bytes": 2621806
     },
     {
+      "slug": "trombone",
+      "kind": "loop",
+      "file": "trombone-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/trombone-loop.json",
+      "sha256": "9f8eda1f8520735a4e0109b646adf37fa2739b55f753b1b5b1e99c7ce0fb5490",
+      "bytes": 1418
+    },
+    {
       "slug": "french_horn",
+      "kind": "script",
       "file": "french_horn-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/french_horn-mp3.js",
       "sha256": "02ab9a746f2f43c9867d67735e52d100996a0d194f06da5e3c4844528869928e",
       "bytes": 2803849
     },
     {
+      "slug": "french_horns",
+      "kind": "loop",
+      "file": "french_horns-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/french_horns-loop.json",
+      "sha256": "5e619e7f60199300a41bb18712b2c8572d42bcc853a937c3e25964cd0e539d57",
+      "bytes": 1488
+    },
+    {
       "slug": "alto_sax",
+      "kind": "script",
       "file": "alto_sax-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/alto_sax-mp3.js",
       "sha256": "18ec57c02f27c7e8dc4620f57fa9b94e32babf4ebae7d1f2205e053d3287abce",
       "bytes": 2602486
     },
     {
+      "slug": "alto_sax",
+      "kind": "loop",
+      "file": "alto_sax-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/alto_sax-loop.json",
+      "sha256": "aa24cfe72a2a2a0d783941dd05e1c65f46cdfe181599b634d328a04bf61706bb",
+      "bytes": 1243
+    },
+    {
       "slug": "tenor_sax",
+      "kind": "script",
       "file": "tenor_sax-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/tenor_sax-mp3.js",
       "sha256": "6e4d21071902042d98b3538138c547d6c71924d2ccb9c33ecbf3d772b82555df",
       "bytes": 3005207
     },
     {
+      "slug": "tenor_sax",
+      "kind": "loop",
+      "file": "tenor_sax-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/tenor_sax-loop.json",
+      "sha256": "5bf623fbf359f7f6f3c80734c3dea32014b4d60db89ebfe5903174fe3978eb7f",
+      "bytes": 2078
+    },
+    {
       "slug": "flute",
+      "kind": "script",
       "file": "flute-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/flute-mp3.js",
       "sha256": "e2e35283876eec60b919beeb8bfa49f46f12dddf5b8c6025e7a45c5d2a24bda5",
       "bytes": 2969583
     },
     {
+      "slug": "flute",
+      "kind": "loop",
+      "file": "flute-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/flute-loop.json",
+      "sha256": "e16056e2344a6ad4bcb989ea33e7f955bcfe0c4bc9e6550b6770d359f19da4fd",
+      "bytes": 2078
+    },
+    {
       "slug": "synth_strings_1",
+      "kind": "script",
       "file": "synth_strings_1-mp3.js",
       "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/synth_strings_1-mp3.js",
       "sha256": "48b2ac1aefd3d83d24e7b6ce50fa9284cdbdd5dc7ad8472a6db103f791afcda2",
       "bytes": 2897125
     },
     {
-      "slug": "clavinet",
-      "file": "clavinet-mp3.js",
-      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/clavinet-mp3.js",
-      "sha256": "0b0e01046b78ed8bfb535da823f31fa5f4bcc64f3e54bdd78688e1e6e547e916",
-      "bytes": 2423394
-    },
-    {
-      "slug": "electric_guitar_jazz",
-      "file": "electric_guitar_jazz-mp3.js",
-      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_guitar_jazz-mp3.js",
-      "sha256": "94807d392bf39488354684713f946c729a65d6e43f6be1263079b4e43791d183",
-      "bytes": 2330622
-    },
-    {
-      "slug": "lead_2_sawtooth",
-      "file": "lead_2_sawtooth-mp3.js",
-      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/lead_2_sawtooth-mp3.js",
-      "sha256": "de64fdc423efeac7aba38edaf8f47198b5d80f532993b6ebf184b653ac92b6a2",
-      "bytes": 2999673
-    },
-    {
-      "slug": "pad_2_warm",
-      "file": "pad_2_warm-mp3.js",
-      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/pad_2_warm-mp3.js",
-      "sha256": "c688aeeb3d42d1630086cec28125bd3281aa78ff798ac0fa77083d14628ef221",
-      "bytes": 2906336
-    },
-    {
-      "slug": "synth_bass_1",
-      "file": "synth_bass_1-mp3.js",
-      "url": "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/synth_bass_1-mp3.js",
-      "sha256": "bc26d7c27eb9e62f58875a7f7eff0123b03b40ef0eaf526bb93c38142028b7d5",
-      "bytes": 2037954
+      "slug": "synth_strings_1",
+      "kind": "loop",
+      "file": "synth_strings_1-loop.json",
+      "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/synth_strings_1-loop.json",
+      "sha256": "d1fb158e9ac0e836820c2845a815cb838d9179a67209344fb4b052cacba9bec2",
+      "bytes": 1369
     }
   ]
 }

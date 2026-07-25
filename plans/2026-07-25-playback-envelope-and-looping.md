@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-25
 Date: 2026-07-25
 Author: Cursor Grok
-Status: draft (decisions locked 2026-07-25: bundle loops; looping default on)
+Status: approved / in-progress (implementation dispatched 2026-07-25)
 Linked issue/PR: n/a
 SemVer impact: **PATCH** (correctness of existing MIDI / SoundFont audition; no new UI)
 
@@ -71,9 +71,9 @@ loops *natively*:
 | **D. Blind whole-buffer `source.loop`** | Loop entire MP3 | Trivial | Re-triggers attack; bad clicks; wrong for piano |
 
 **Recommendation:** Ship **A** now (envelope + sustain + bundled goldst loops,
-default on). Treat **B or C** as a separate **MINOR/MAJOR** milestone if we want
-a true SoundFont engine (better drums, modulators, one-file banks) — especially
-ahead of Tauri offline WAV export. Do not block this PATCH on an engine swap.
+default on). Next engine milestone: go straight to **C** (full SF2 synth)—skip
+**B** as an architecture. Tracked in `dev-docs/TO_DO.md` (“Full SF2 synth engine”).
+Do not block this PATCH on an engine swap.
 
 ## Approach
 
@@ -178,66 +178,65 @@ scripts/bundle-soundfonts.mjs                — download *-loop.json with Fluid
 
 ### Phase 1: Shared ADSR + oscillator sustain parity
 
-- [ ] Add `src/audio/noteEnvelope.ts` with documented defaults and
+- [x] Add `src/audio/noteEnvelope.ts` with documented defaults and
       `applyNoteEnvelope(param, opts)`.
-- [ ] Wire envelope into `MidiPreviewPlayer.schedule` and
+- [x] Wire envelope into `MidiPreviewPlayer.schedule` and
       `SoundfontPlayer.scheduleSample` (replace the 2-ramp curve).
-- [ ] Teach `MidiPreviewPlayer` to use `buildSustainWindows` /
+- [x] Teach `MidiPreviewPlayer` to use `buildSustainWindows` /
       `getSustainedDuration` / `sustainEventsForChannel` (same as sample path).
-- [ ] Unit tests: envelope control-point times; oscillator path extends duration
+- [x] Unit tests: envelope control-point times; oscillator path extends duration
       under CC64.
 
 ### Phase 2: Playback end / pedal tail
 
-- [ ] Add `playbackEndTime(score)` (max of note ends, sustain event times, and
+- [x] Add `playbackEndTime(score)` (max of note ends, sustain event times, and
       sustained note ends).
-- [ ] Use it for open-pedal clamp in players and for `app.ts` playhead completion
+- [x] Use it for open-pedal clamp in players and for `app.ts` playhead completion
       (do not change visual mapper duration).
-- [ ] Tests: open pedal past last note-off; closed pedal-up after last note.
+- [x] Tests: open pedal past last note-off; closed pedal-up after last note.
 
 ### Phase 3: Sample loop metadata + playback (default on)
 
-- [ ] Fetch/parse goldst `*-loop.json` in the patch loader: local bundled file →
+- [x] Fetch/parse goldst `*-loop.json` in the patch loader: local bundled file →
       CacheStorage → CDN; soft-fail.
-- [ ] Attach loop points to `InstrumentPatch` keyed by MIDI number.
-- [ ] In `scheduleSample`, when points exist: **always** enable
+- [x] Attach loop points to `InstrumentPatch` keyed by MIDI number.
+- [x] In `scheduleSample`, when points exist: **always** enable
       `loop` / `loopStart` / `loopEnd`; still `stop()` at `end + release`.
-- [ ] `gmLoopSlugs` map for known gleitz≠goldst names; tests for map + missing
+- [x] `gmLoopSlugs` map for known gleitz≠goldst names; tests for map + missing
       file soft-fail + player sets loop flags by default.
 - [ ] Manual smoke: held organ/cello/pad vs short piano note (piano may lack
       loop file — one-shot OK).
 
 ### Phase 4: Bundle loops + docs + validate
 
-- [ ] Extend `scripts/bundle-soundfonts.mjs` to download matching
+- [x] Extend `scripts/bundle-soundfonts.mjs` to download matching
       `*-loop.json` for every FluidR3 instrument it already fetches; document
       in script README / ARCHITECTURE; keep gitignore on assets.
-- [ ] Update `ARCHITECTURE.md` playback section (ADSR defaults, CC64 on both
+- [x] Update `ARCHITECTURE.md` playback section (ADSR defaults, CC64 on both
       engines, loop metadata + bundle policy, default-on looping).
-- [ ] `CHANGELOG.md` Unreleased **Fixed** entries; SemVer **PATCH**.
-- [ ] `npm run validate` green (`bundle:soundfonts:verify` still offline-safe).
+- [x] `CHANGELOG.md` Unreleased **Fixed** entries; SemVer **PATCH**.
+- [x] `npm run validate` green (`bundle:soundfonts:verify` still offline-safe).
 
 ## Verification
 
-- [ ] Unit: envelope points (attack → decay → hold → release after `end`).
-- [ ] Unit: CC64 extends duration in both players.
-- [ ] Unit: `playbackEndTime` > visual duration when pedal trails.
-- [ ] Unit: loop JSON parse; sharp/flat key → same MIDI; 404 → null loops.
-- [ ] Unit: `scheduleSample` sets `loop` when metadata present (default on);
+- [x] Unit: envelope points (attack → decay → hold → release after `end`).
+- [x] Unit: CC64 extends duration in both players.
+- [x] Unit: `playbackEndTime` > visual duration when pedal trails.
+- [x] Unit: loop JSON parse; sharp/flat key → same MIDI; 404 → null loops.
+- [x] Unit: `scheduleSample` sets `loop` when metadata present (default on);
       leaves false when absent.
-- [ ] Bundler: verify mode accepts presence of loop JSON beside core `.js`.
+- [x] Bundler: verify mode accepts presence of loop JSON beside core `.js`.
 - [ ] Manual: Bach / pedal-heavy MIDI — pedal rings, no mid-hold fade-to-silence
       on long notes.
 - [ ] Manual: organ or cello held note remains audible past buffer length.
-- [ ] `npm run validate` passes.
+- [x] `npm run validate` passes.
 
 ## Open questions
 
 - [x] **Bundle loop JSON?** Locked: **yes**, with FluidR3 core/demo set.
 - [x] **Looping default?** Locked: **on** when metadata exists; no UI toggle.
-- [ ] Approve this plan before implementation?
-- [ ] **Follow-up (not this plan):** spike SF2/`spessasynth_lib` as a future
-      Sample engine if we outgrow midi-js (size, drums, modulators)?
+- [x] Approve this plan before implementation? Approved 2026-07-25.
+- [x] **Follow-up (not this plan):** Prefer a full SF2 synth (Spessa / FluidSynth WASM), not parse-only SF2 — tracked in `dev-docs/TO_DO.md`.
 
 ## Risks
 

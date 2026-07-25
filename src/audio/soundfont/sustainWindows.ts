@@ -39,3 +39,33 @@ export function sustainEventsForChannel(score: Score, channel: number): SustainE
   }
   return merged.sort((a, b) => a.time - b.time);
 }
+
+/**
+ * Playback end time for audio scheduling and playhead completion.
+ *
+ * Extends visual {@link Score.duration} (last note-off) when sustain-pedal events or
+ * CC64-held notes ring past the last written note-off. Visual mapper duration is unchanged.
+ */
+export function playbackEndTime(score: Score): number {
+  let end = score.duration;
+
+  for (const track of score.tracks) {
+    for (const event of track.sustainEvents ?? []) {
+      end = Math.max(end, event.time);
+    }
+  }
+
+  const channels = new Set(score.tracks.map((track) => track.channel));
+  for (const channel of channels) {
+    const windows = buildSustainWindows(sustainEventsForChannel(score, channel), end);
+    for (const track of score.tracks) {
+      if (track.channel !== channel) continue;
+      for (const note of track.notes) {
+        const sustained = getSustainedDuration(note, windows);
+        end = Math.max(end, note.onset + sustained);
+      }
+    }
+  }
+
+  return end;
+}

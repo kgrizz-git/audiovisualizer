@@ -168,4 +168,113 @@ describe('SoundfontPlayer', () => {
       expect(opts.channels?.sort()).toEqual([0, 1]);
     });
   });
+
+  it('enables AudioBufferSourceNode looping when patch loop metadata exists for the sample key', async () => {
+    const fakeBuffer = {} as AudioBuffer;
+    const createdSources: Array<{
+      loop: boolean;
+      loopStart: number;
+      loopEnd: number;
+    }> = [];
+    const mockGain = {
+      gain: {
+        setValueAtTime: vi.fn(),
+        exponentialRampToValueAtTime: vi.fn(),
+      },
+      connect: vi.fn(() => ({ connect: vi.fn() })),
+    };
+    const mockContext = {
+      resume: async () => {},
+      currentTime: 0,
+      createGain: () => mockGain,
+      createBufferSource: () => {
+        const source = {
+          buffer: null as AudioBuffer | null,
+          loop: false,
+          loopStart: 0,
+          loopEnd: 0,
+          playbackRate: { value: 1 },
+          connect: vi.fn(() => mockGain),
+          start: vi.fn(),
+          stop: vi.fn(),
+          onended: null as (() => void) | null,
+        };
+        createdSources.push(source);
+        return source;
+      },
+      destination: {},
+    } as unknown as AudioContext;
+
+    const loader = {
+      loadPatch: vi.fn(async () => ({
+        bank: 'FluidR3_GM',
+        program: 42,
+        slug: 'cello',
+        buffers: { C4: fakeBuffer },
+        loops: { 60: [1.5, 2.0] },
+      })),
+    };
+    const player = new SoundfontPlayer({
+      loader: loader as never,
+      createFallback: () => ({ start: vi.fn(async () => {}), stop: vi.fn() }) as never,
+    });
+    const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+    const score: Score = {
+      title: 'loop', duration: 1, bpm: 120,
+      tracks: [{
+        name: 'cello', channel: 0, program: 42, instrumentName: 'Cello',
+        notes: [{ id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 }],
+        sustainEvents: [],
+      }],
+    };
+    await player.start(score, 0, { router, context: mockContext });
+    expect(createdSources.length).toBeGreaterThan(0);
+    expect(createdSources[0].loop).toBe(true);
+    expect(createdSources[0].loopStart).toBe(1.5);
+    expect(createdSources[0].loopEnd).toBe(2.0);
+  });
+
+  it('leaves loop disabled when patch has no loop metadata', async () => {
+    const fakeBuffer = {} as AudioBuffer;
+    const createdSources: Array<{ loop: boolean }> = [];
+    const mockGain = {
+      gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      connect: vi.fn(() => ({ connect: vi.fn() })),
+    };
+    const mockContext = {
+      resume: async () => {},
+      currentTime: 0,
+      createGain: () => mockGain,
+      createBufferSource: () => {
+        const source = {
+          buffer: null as AudioBuffer | null,
+          loop: false,
+          loopStart: 0,
+          loopEnd: 0,
+          playbackRate: { value: 1 },
+          connect: vi.fn(() => mockGain),
+          start: vi.fn(),
+          stop: vi.fn(),
+          onended: null as (() => void) | null,
+        };
+        createdSources.push(source);
+        return source;
+      },
+      destination: {},
+    } as unknown as AudioContext;
+
+    const loader = {
+      loadPatch: vi.fn(async () => ({
+        bank: 'FluidR3_GM', program: 0, slug: 'acoustic_grand_piano', buffers: { C4: fakeBuffer },
+      })),
+    };
+    const player = new SoundfontPlayer({
+      loader: loader as never,
+      createFallback: () => ({ start: vi.fn(async () => {}), stop: vi.fn() }) as never,
+    });
+    const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+    await player.start(demoScore(), 0, { router, context: mockContext });
+    expect(createdSources.length).toBeGreaterThan(0);
+    expect(createdSources[0].loop).toBe(false);
+  });
 });

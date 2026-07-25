@@ -1,4 +1,6 @@
 import { getInstrumentSlug } from './gmInstrumentSlugs.js';
+import { getGoldstLoopSlugForGleitzSlug } from './gmLoopSlugs.js';
+import { fetchSoundfontLoopMetadata } from './soundfontLoopLoader.js';
 import { InstrumentPatch, SoundbankPreset } from './soundfontTypes.js';
 
 export type AudioDecoder = (bytes: ArrayBuffer) => Promise<AudioBuffer>;
@@ -70,7 +72,15 @@ export class SoundfontPatchLoader {
           buffers[note] = await this.decode(dataUriToArrayBuffer(uri));
         }),
       );
-      const patch: InstrumentPatch = { bank, program, slug, buffers };
+      const loopSlug = getGoldstLoopSlugForGleitzSlug(slug);
+      const loops = loopSlug ? await fetchSoundfontLoopMetadata(bank, loopSlug) : null;
+      const patch: InstrumentPatch = {
+        bank,
+        program,
+        slug,
+        buffers,
+        ...(loops && Object.keys(loops).length > 0 ? { loops } : {}),
+      };
       this.cache.set(key, patch);
       return patch;
     } catch {

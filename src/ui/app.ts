@@ -7,6 +7,8 @@ import { AutoZoomWindowMode, CameraPreset3D, ChordLayout, DEFAULT_VIEWPORT_3D, G
 import { map3DGeometry } from '../core/mapper/map3d.js';
 import type { I3DRenderer } from '../renderers/three/I3DRenderer.js';
 import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
+import { noteSourceStopTime } from '../audio/noteEnvelope.js';
+import { playbackEndTime } from '../audio/soundfont/sustainWindows.js';
 import { VoiceMixController } from '../audio/voiceMixController.js';
 import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js';
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
@@ -410,7 +412,8 @@ class AudioVisualizerApp {
   }
 
   private async startPlayback(): Promise<void> {
-    if (this.currentTime >= this.currentScore.duration) this.currentTime = 0;
+    const completionTime = noteSourceStopTime(playbackEndTime(this.currentScore));
+    if (this.currentTime >= completionTime) this.currentTime = 0;
     try {
       this.audioContext ??= new AudioContext();
       this.soundfontPlayer ??= new SoundfontPlayer({
@@ -544,24 +547,27 @@ class AudioVisualizerApp {
 
   private tick = (): void => {
     if (!this.isPlaying) return;
+    const visualDuration = this.currentScore.duration;
+    const completionTime = noteSourceStopTime(playbackEndTime(this.currentScore));
+    const timelineDuration = Math.max(visualDuration, completionTime);
     this.currentTime = Math.min(
-      this.currentScore.duration,
+      completionTime,
       this.playbackOffset + (performance.now() - this.playbackStart) / 1000
     );
     if (is3DVariation(this.currentConfig.variation)) {
       // Geometry is static during playback; only the sweeping now-plane moves.
-      this.threeRenderer?.stepPlayhead(this.currentTime);
+      this.threeRenderer?.stepPlayhead(Math.min(this.currentTime, visualDuration));
       this.element<HTMLInputElement>('progress-scrubber').value = String(
-        Math.round(this.currentTime / Math.max(this.currentScore.duration, 0.01) * 1000)
+        Math.round(this.currentTime / Math.max(timelineDuration, 0.01) * 1000)
       );
       this.element<HTMLOutputElement>('time-display').value =
-        `${formatTime(this.currentTime)} / ${formatTime(this.currentScore.duration)}`;
+        `${formatTime(this.currentTime)} / ${formatTime(visualDuration)}`;
     } else {
       const geometry = this.geometryFor(PREVIEW_SIZE);
-      this.viewportController.stepAutoZoom(geometry, this.currentTime, PREVIEW_SIZE, PREVIEW_SIZE);
+      this.viewportController.stepAutoZoom(geometry, Math.min(this.currentTime, visualDuration), PREVIEW_SIZE, PREVIEW_SIZE);
       this.render();
     }
-    if (this.currentTime >= this.currentScore.duration) this.pause();
+    if (this.currentTime >= completionTime) this.pause();
     else this.animationFrameId = requestAnimationFrame(this.tick);
   };
 

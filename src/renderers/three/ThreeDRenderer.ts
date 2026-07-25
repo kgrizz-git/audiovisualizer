@@ -102,27 +102,47 @@ export class ThreeDRenderer implements I3DRenderer {
     this.applyBloom();
     if (this.controls) this.controls.autoRotate = viewport.autoRotate;
     this.frameCamera();
+    // A cue-mode switch must take effect immediately even when playback is
+    // stopped; otherwise the glowing now-plane lingers until the next playhead
+    // step. Re-derive visibility and clip state from the last known playhead.
+    this.applyPlaybackCue();
     this.renderOnce();
   }
 
   public stepPlayhead(t: number | null): void {
     if (!this.nowPlane) return;
     if (t === null) {
-      this.nowPlane.visible = false;
       this.previousPlayhead = null;
-      this.revealPlane.constant = 1e7;
     } else {
-      const nowZ = this.worldZ(t * this.zScale);
-      this.nowPlane.visible = this.viewport.playbackCue === 'now_plane';
-      this.nowPlane.position.z = nowZ;
-      this.revealPlane.constant = this.viewport.playbackCue === 'reveal' ? nowZ : 1e7;
+      this.nowPlane.position.z = this.worldZ(t * this.zScale);
       this.spawnOnsetPulses(this.previousPlayhead, t);
       this.previousPlayhead = t;
       if (this.viewport.autoFollow || this.viewport.chaseCamera) this.followPlayhead(t);
     }
+    this.applyPlaybackCue();
     this.updateOnsetPulses();
     if (this.controls?.autoRotate) this.controls.update();
     this.renderOnce();
+  }
+
+  /**
+   * Synchronizes now-plane visibility and the reveal clip plane with the
+   * current `playbackCue` and the last playhead. Without a playhead the
+   * now-plane is hidden and reveal is fully opened (nothing clipped); with a
+   * playhead the now-plane shows only in `now_plane` mode and the clip plane
+   * engages only in `reveal` mode. Centralizing this avoids the now-plane
+   * lingering visible after a mode switch while paused.
+   */
+  private applyPlaybackCue(): void {
+    if (!this.nowPlane) return;
+    const cue = this.viewport.playbackCue;
+    if (this.previousPlayhead === null) {
+      this.nowPlane.visible = false;
+      this.revealPlane.constant = 1e7;
+      return;
+    }
+    this.nowPlane.visible = cue === 'now_plane';
+    this.revealPlane.constant = cue === 'reveal' ? this.nowPlane.position.z : 1e7;
   }
 
   public capturePNG(): Promise<Blob> {
@@ -161,9 +181,7 @@ export class ThreeDRenderer implements I3DRenderer {
   public dispose(): void {
     this.clearContent();
     this.clearOnsetPulses();
-    this.nowPlane?.geometry.dispose();
-    (this.nowPlane?.material as THREE.Material | undefined)?.dispose();
-    this.nowPlane = null;
+    this.disposeNowPlane();
     if (this.scene.background instanceof THREE.Texture) this.scene.background.dispose();
     this.bloomPass?.dispose();
     this.composer?.dispose();
@@ -323,9 +341,25 @@ export class ThreeDRenderer implements I3DRenderer {
     this.contentGroup.add(new THREE.Points(stars, new THREE.PointsMaterial({ color: 0x7892c9, size: 1.5, transparent: true, opacity: 0.32, depthWrite: false })));
   }
 
+  /**
+   * Removes the now-plane mesh from the scene and frees its GPU resources.
+   * Callers that rebuild content must use this before adding a replacement —
+   * otherwise disposed meshes stay in the scene graph as stuck glowing planes
+   * that no longer follow the playhead or cue mode.
+   */
+  private disposeNowPlane(): void {
+    if (!this.nowPlane) return;
+    this.scene.remove(this.nowPlane);
+    this.nowPlane.geometry.dispose();
+    (this.nowPlane.material as THREE.Material).dispose();
+    this.nowPlane = null;
+  }
+
   private buildNowPlane(geometry: RenderedGeometry3D): void {
-    this.nowPlane?.geometry.dispose();
-    (this.nowPlane?.material as THREE.Material | undefined)?.dispose();
+    // Drop any previous now-plane from the scene before adding a new one. A
+    // full render() (e.g. switching Playback Cue) rebuilds geometry; without
+    // this removal the old mesh was orphaned and kept rendering in place.
+    this.disposeNowPlane();
 
     const planeSize = Math.max(geometry.width, geometry.height) * 1.4;
     const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize);

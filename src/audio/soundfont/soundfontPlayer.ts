@@ -1,4 +1,4 @@
-import { MidiPreviewPlayer } from '../midiPreviewPlayer.js';
+import { MidiPreviewPlayer, noteVolume } from '../midiPreviewPlayer.js';
 import { NoteEvent, Score } from '../../core/types.js';
 import { SoundfontPatchLoader } from './soundfontPatchLoader.js';
 import { InstrumentPatch, PatchStatus, SoundbankPreset } from './soundfontTypes.js';
@@ -19,6 +19,7 @@ function createMockAudioContext(): AudioContext {
       exponentialRampToValueAtTime: () => {},
     },
     connect: () => mockGainNode,
+    disconnect: () => {},
   };
   const mockSourceNode = {
     buffer: null,
@@ -44,6 +45,7 @@ export class SoundfontPlayer {
   private fallback: MidiPreviewPlayer | null = null;
   private status = new Map<number, PatchStatus>();
   private scheduler: LookaheadScheduler | null = null;
+  private masterGain: GainNode | null = null;
   private readonly loader: SoundfontPatchLoader;
   private readonly createFallback: (context: AudioContext) => MidiPreviewPlayer;
 
@@ -65,6 +67,8 @@ export class SoundfontPlayer {
         : createMockAudioContext()
     );
     await this.context.resume();
+    this.masterGain = this.context.createGain();
+    this.masterGain.connect(this.context.destination);
     this.fallback = this.createFallback(this.context);
 
     const defaults = opts.router.getDefaults();
@@ -164,6 +168,10 @@ export class SoundfontPlayer {
     }
     this.activeSources = [];
     this.fallback?.stop();
+    if (this.masterGain) {
+      try { this.masterGain.disconnect(); } catch { /* already disconnected */ }
+    }
+    this.masterGain = null;
   }
 
   private scheduleSample(
@@ -189,13 +197,14 @@ export class SoundfontPlayer {
     source.playbackRate.value = 2 ** ((note.pitch - midiFromNoteName(key)) / 12);
 
     const gain = this.context.createGain();
-    const volume = (0.035 + (note.velocity / 127) * 0.065) * gainMul;
+    const volume = noteVolume(note.velocity, gainMul);
     const start = now + delay;
     const end = start + playDuration;
     gain.gain.setValueAtTime(0.0001, start);
     gain.gain.exponentialRampToValueAtTime(volume, start + Math.min(0.02, playDuration / 3));
     gain.gain.exponentialRampToValueAtTime(0.0001, end);
-    source.connect(gain).connect(this.context.destination);
+    const destination = this.masterGain ?? this.context.destination;
+    source.connect(gain).connect(destination);
     source.start(start);
     source.stop(end + 0.02);
     source.onended = () => {

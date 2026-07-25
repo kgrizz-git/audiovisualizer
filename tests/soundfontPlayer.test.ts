@@ -116,4 +116,56 @@ describe('SoundfontPlayer', () => {
     expect(programs).toContain(40);
     expect(programs).not.toContain(0);
   });
+
+  describe('two voices sharing one GM program (e.g. Bach prelude, both piano)', () => {
+    function twoPianoScore(): Score {
+      return {
+        title: 't', duration: 1, bpm: 120,
+        tracks: [
+          {
+            name: 'lower', channel: 0, program: 0, instrumentName: 'Acoustic Grand Piano',
+            notes: [{ id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 90, voice: 0, pitchClass: 0 }],
+            sustainEvents: [],
+          },
+          {
+            name: 'upper', channel: 1, program: 0, instrumentName: 'Acoustic Grand Piano',
+            notes: [{ id: 'n2', pitch: 72, onset: 0, duration: 0.5, velocity: 90, voice: 1, pitchClass: 0 }],
+            sustainEvents: [],
+          },
+        ],
+      };
+    }
+
+    it('loads the shared patch once and marks both channels loaded (no per-channel synth split)', async () => {
+      const fakeBuffer = {} as AudioBuffer;
+      const loadPatch = vi.fn(async () => ({
+        bank: 'FluidR3_GM', program: 0, slug: 'acoustic_grand_piano', buffers: { C4: fakeBuffer },
+      }));
+      const player = new SoundfontPlayer({
+        loader: { loadPatch } as never,
+        createFallback: () => ({ start: vi.fn(async () => {}), stop: vi.fn() }) as never,
+      });
+      const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+      await player.start(twoPianoScore(), 0, { router });
+      expect(loadPatch).toHaveBeenCalledTimes(1);
+      const status = player.getStatusMap();
+      expect(status.get(0)).toBe('loaded');
+      expect(status.get(1)).toBe('loaded');
+    });
+
+    it('falls back to synth for BOTH voices when the shared patch fails (not just the upper)', async () => {
+      const fallbackStart = vi.fn(async (..._args: unknown[]) => {});
+      const player = new SoundfontPlayer({
+        loader: { loadPatch: vi.fn(async () => null) } as never,
+        createFallback: () => ({ start: fallbackStart, stop: vi.fn() }) as never,
+      });
+      const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+      await player.start(twoPianoScore(), 0, { router });
+      const status = player.getStatusMap();
+      expect(status.get(0)).toBe('fallback');
+      expect(status.get(1)).toBe('fallback');
+      const opts = fallbackStart.mock.calls[0][3] as { channels?: number[] };
+      expect(opts.channels?.sort()).toEqual([0, 1]);
+    });
+  });
 });

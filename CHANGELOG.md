@@ -29,6 +29,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - The canvas preview legend overlay has been moved from the bottom-left to the bottom-right corner to prevent overlapping with the viewport navigation HUD overlay. SemVer: **PATCH**.
+- The 3D idle turntable has been fixed to rotate around the Z-axis (musical time/depth) always, including for the 'Time up' preset where it previously did nothing. It has also been updated to animate continuously when playback is paused. SemVer: **PATCH**.
+- The transient onset pulses (flashes) have been moved inside the rotating content group in the 3D renderer so that they spin in alignment with the active note geometry when the turntable is active. SemVer: **PATCH**.
 - SoundFont preview no longer fades sustained notes to silence mid-hold: a shared ADSR envelope
   replaces the old attack-then-fade-over-the-whole-note gain curve on both sample and oscillator
   engines. SemVer: **PATCH**.

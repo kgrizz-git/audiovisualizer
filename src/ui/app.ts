@@ -101,6 +101,11 @@ class AudioVisualizerApp {
     this.element<HTMLInputElement>('threed-rotate-toggle').addEventListener('change', (event) => {
       this.viewport3d = { ...this.viewport3d, autoRotate: (event.target as HTMLInputElement).checked };
       this.render();
+      if (!this.isPlaying && this.viewport3d.autoRotate && is3DVariation(this.currentConfig.variation)) {
+        if (this.animationFrameId === null) {
+          this.animationFrameId = requestAnimationFrame(this.tick);
+        }
+      }
     });
     this.select<OriginMode>('origin-select', (value) => { this.currentConfig.originMode = value; });
     this.select<PitchHueMode>('hue-mode-select', (value) => { this.currentConfig.pitchHueMode = value; });
@@ -546,29 +551,48 @@ class AudioVisualizerApp {
   }
 
   private tick = (): void => {
-    if (!this.isPlaying) return;
-    const visualDuration = this.currentScore.duration;
-    const completionTime = noteSourceStopTime(playbackEndTime(this.currentScore));
-    const timelineDuration = Math.max(visualDuration, completionTime);
-    this.currentTime = Math.min(
-      completionTime,
-      this.playbackOffset + (performance.now() - this.playbackStart) / 1000
-    );
-    if (is3DVariation(this.currentConfig.variation)) {
-      // Geometry is static during playback; only the sweeping now-plane moves.
-      this.threeRenderer?.stepPlayhead(Math.min(this.currentTime, visualDuration));
-      this.element<HTMLInputElement>('progress-scrubber').value = String(
-        Math.round(this.currentTime / Math.max(timelineDuration, 0.01) * 1000)
-      );
-      this.element<HTMLOutputElement>('time-display').value =
-        `${formatTime(this.currentTime)} / ${formatTime(visualDuration)}`;
-    } else {
-      const geometry = this.geometryFor(PREVIEW_SIZE);
-      this.viewportController.stepAutoZoom(geometry, Math.min(this.currentTime, visualDuration), PREVIEW_SIZE, PREVIEW_SIZE);
-      this.render();
+    const is3D = is3DVariation(this.currentConfig.variation);
+    const needTurntable = is3D && this.viewport3d.autoRotate;
+    if (!this.isPlaying && !needTurntable) {
+      this.animationFrameId = null;
+      return;
     }
-    if (this.currentTime >= completionTime) this.pause();
-    else this.animationFrameId = requestAnimationFrame(this.tick);
+
+    if (this.isPlaying) {
+      const visualDuration = this.currentScore.duration;
+      const completionTime = noteSourceStopTime(playbackEndTime(this.currentScore));
+      const timelineDuration = Math.max(visualDuration, completionTime);
+      this.currentTime = Math.min(
+        completionTime,
+        this.playbackOffset + (performance.now() - this.playbackStart) / 1000
+      );
+      if (is3D) {
+        this.threeRenderer?.stepPlayhead(Math.min(this.currentTime, visualDuration));
+        this.element<HTMLInputElement>('progress-scrubber').value = String(
+          Math.round(this.currentTime / Math.max(timelineDuration, 0.01) * 1000)
+        );
+        this.element<HTMLOutputElement>('time-display').value =
+          `${formatTime(this.currentTime)} / ${formatTime(visualDuration)}`;
+      } else {
+        const geometry = this.geometryFor(PREVIEW_SIZE);
+        this.viewportController.stepAutoZoom(geometry, Math.min(this.currentTime, visualDuration), PREVIEW_SIZE, PREVIEW_SIZE);
+        this.render();
+      }
+      if (this.currentTime >= completionTime) {
+        this.pause();
+        if (needTurntable) {
+          this.animationFrameId = requestAnimationFrame(this.tick);
+        }
+      } else {
+        this.animationFrameId = requestAnimationFrame(this.tick);
+      }
+    } else {
+      if (is3D && this.threeRenderer) {
+        const visualDuration = this.currentScore.duration;
+        this.threeRenderer.stepPlayhead(this.currentTime < visualDuration ? this.currentTime : null);
+      }
+      this.animationFrameId = requestAnimationFrame(this.tick);
+    }
   };
 
   private updateViewportUi(): void {
@@ -683,6 +707,11 @@ class AudioVisualizerApp {
       renderer.setGeometry(map3DGeometry(this.currentScore, this.currentConfig, PREVIEW_SIZE, PREVIEW_SIZE));
       renderer.setViewport(this.viewport3d);
       renderer.stepPlayhead(this.currentTime < this.currentScore.duration ? this.currentTime : null);
+      if (!this.isPlaying && this.viewport3d.autoRotate) {
+        if (this.animationFrameId === null) {
+          this.animationFrameId = requestAnimationFrame(this.tick);
+        }
+      }
     } catch {
       this.setStatus('3D rendering could not start (WebGL unavailable).', true);
     }

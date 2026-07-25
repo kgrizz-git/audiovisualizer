@@ -55,7 +55,8 @@
 }
 .playback-bar { position:absolute;bottom:26px;display:flex;align-items:center;gap:14px;width:min(900px,calc(100% - 84px));padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(10,17,31,.74);backdrop-filter:blur(18px); }.play-pause-btn { width:34px;height:34px;border:0;border-radius:10px;background:var(--mint);color:#07111d;font-weight:800;cursor:pointer; }.playback-bar output { min-width:78px;color:var(--muted);font:10px 'DM Mono'; }.playback-bar input { accent-color:var(--mint); }.audio-engine { display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap; }.audio-engine select { width:auto;padding:4px 22px 4px 8px;font-size:11px; }
 .audio-voice-row { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; margin:10px 0; font-size:11px; }
-.audio-voice-row > span:first-child { flex:1 1 100%; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#d9e2f1; font-weight:600; }
+.audio-voice-row .voice-source-label { flex:1 1 100%; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#d9e2f1; font-weight:600; }
+.audio-voice-row .voice-effective-route { flex:1 1 100%; color:var(--mint); font:500 10px 'DM Mono',monospace; }
 .audio-voice-row select { flex:1 1 150px; min-width:0; }
 .audio-voice-row input[type=range] { flex:1 1 70px; min-width:0; }
 .patch-badge { flex:0 0 auto; font:500 10px 'DM Mono',monospace; color:var(--muted); white-space:nowrap; }

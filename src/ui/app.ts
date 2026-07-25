@@ -7,6 +7,7 @@ import { AutoZoomWindowMode, CameraPreset3D, ChordLayout, DEFAULT_VIEWPORT_3D, G
 import { map3DGeometry } from '../core/mapper/map3d.js';
 import type { I3DRenderer } from '../renderers/three/I3DRenderer.js';
 import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
+import { VoiceMixController } from '../audio/voiceMixController.js';
 import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js';
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
 import { VoiceRouter } from '../audio/soundfont/voiceRouter.js';
@@ -36,6 +37,7 @@ class AudioVisualizerApp {
   private soundfontPlayer: SoundfontPlayer | null = null;
   private voiceRouter = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
   private voicePlayback = new Map<number, VoicePlaybackSettings>();
+  private voiceMixController = new VoiceMixController();
   private backgroundMode: 'black' | 'average' = 'black';
   private exportTitle: string = this.currentScore.title;
   private downloadAbort: AbortController | null = null;
@@ -118,11 +120,11 @@ class AudioVisualizerApp {
 
     this.element<HTMLSelectElement>('playback-engine-select').addEventListener('change', (event) => {
       this.voiceRouter.setDefaults({ engine: (event.target as HTMLSelectElement).value as PlaybackEngine });
-      this.updateScoreUi();
+      void this.applyVoiceRoutingChange();
     });
     this.element<HTMLSelectElement>('playback-bank-select').addEventListener('change', (event) => {
       this.voiceRouter.setDefaults({ soundbank: (event.target as HTMLSelectElement).value as SoundbankPreset });
-      this.updateScoreUi();
+      void this.applyVoiceRoutingChange();
     });
 
     const scrubber = this.element<HTMLInputElement>('progress-scrubber');
@@ -251,6 +253,7 @@ class AudioVisualizerApp {
     this.currentTime = score.duration;
     this.currentConfig.voiceFilter = null;
     this.voicePlayback = new Map(score.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
+    this.voiceMixController.reset();
     this.voiceRouter.clearPrograms();
     this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
     this.exportTitle = score.title;
@@ -267,11 +270,19 @@ class AudioVisualizerApp {
 
   private applyBadge(span: HTMLElement, status: PatchStatus | undefined): void {
     const map: Record<PatchStatus, string> = {
-      loading: '⏳ Loading…',
-      loaded: '✓ Loaded',
+      loading: '⏳ Loading sample…',
+      loaded: '✓ Sample loaded',
       fallback: '⚡ Synth Fallback',
     };
     span.textContent = status ? map[status] : '—';
+  }
+
+  private soundbankLabel(soundbank: SoundbankPreset): string {
+    return {
+      FluidR3_GM: 'FluidR3 GM',
+      MusyngKite: 'MusyngKite',
+      FatBoy: 'FatBoy',
+    }[soundbank];
   }
 
   private updateScoreUi(): void {
@@ -296,28 +307,31 @@ class AudioVisualizerApp {
     });
     const audioOptions = this.element<HTMLElement>('audio-voice-options'); audioOptions.replaceChildren();
     const engine = this.voiceRouter.getDefaults().engine;
+    const soundbank = this.voiceRouter.getDefaults().soundbank;
     const statusMap = this.soundfontPlayer?.getStatusMap();
 
     this.currentScore.tracks.forEach((track, index) => {
       const settings = this.voicePlayback.get(track.channel) ?? defaultVoiceSettings(index);
       this.voicePlayback.set(track.channel, settings);
       const row = document.createElement('div'); row.className = 'audio-voice-row';
-      const name = document.createElement('span'); name.textContent = `${track.name} · ${track.instrumentName}`;
+      const name = document.createElement('span'); name.className = 'voice-source-label'; name.textContent = `${track.name} · MIDI: ${track.instrumentName}`;
+      const effectiveRoute = document.createElement('span'); effectiveRoute.className = 'voice-effective-route';
 
       let timbreOrGmSelect: HTMLElement;
       let badgeSpan: HTMLSpanElement | null = null;
 
       if (engine === 'sample') {
         const currentProgram = this.voiceRouter.resolveTrackSettings(track).program;
+        effectiveRoute.textContent = `Playback: ${this.gmLabel(currentProgram)} · ${this.soundbankLabel(soundbank)}`;
         const gmSelect = document.createElement('select');
-        gmSelect.setAttribute('aria-label', `${track.name} instrument`);
+        gmSelect.setAttribute('aria-label', `${track.name} playback instrument`);
         GM_INSTRUMENT_SLUGS.forEach((_, pIndex) => {
           const option = new Option(this.gmLabel(pIndex), String(pIndex), false, pIndex === currentProgram);
           gmSelect.add(option);
         });
         gmSelect.addEventListener('change', () => {
           this.voiceRouter.setProgram(track.channel, Number(gmSelect.value));
-          if (badgeSpan) this.applyBadge(badgeSpan, undefined);
+          void this.applyVoiceRoutingChange();
         });
         timbreOrGmSelect = gmSelect;
 
@@ -325,6 +339,7 @@ class AudioVisualizerApp {
         badgeSpan.className = 'patch-badge';
         this.applyBadge(badgeSpan, statusMap?.get(track.channel));
       } else {
+        effectiveRoute.textContent = `Playback: ${settings.timbre} oscillator`;
         const timbreSelect = document.createElement('select');
         timbreSelect.setAttribute('aria-label', `${track.name} timbre`);
         ['sine', 'triangle', 'sawtooth', 'square'].forEach((value) => {
@@ -333,7 +348,7 @@ class AudioVisualizerApp {
         });
         timbreSelect.addEventListener('change', () => {
           settings.timbre = timbreSelect.value as VoicePlaybackSettings['timbre'];
-          this.voiceRouter.setMix(track.channel, settings);
+          this.commitVoiceMix(this.voicePlayback);
         });
         timbreOrGmSelect = timbreSelect;
       }
@@ -343,19 +358,18 @@ class AudioVisualizerApp {
         settings.gain = Number(gain.value);
         this.voiceRouter.setMix(track.channel, settings);
       });
+      gain.addEventListener('change', () => this.commitVoiceMix(this.voicePlayback));
       const mute = this.createAudioToggle('M', settings.muted, `${track.name} mute`, (checked) => {
-        settings.muted = checked;
-        this.voiceRouter.setMix(track.channel, settings);
+        this.commitVoiceMix(this.voiceMixController.setMuted(this.voicePlayback, track.channel, checked));
       });
       const solo = this.createAudioToggle('S', settings.solo, `${track.name} solo`, (checked) => {
-        settings.solo = checked;
-        this.voiceRouter.setMix(track.channel, settings);
+        this.commitVoiceMix(this.voiceMixController.setSolo(this.voicePlayback, track.channel, checked));
       });
 
       if (badgeSpan) {
-        row.append(name, timbreOrGmSelect, badgeSpan, gain, mute, solo);
+        row.append(name, effectiveRoute, timbreOrGmSelect, badgeSpan, gain, mute, solo);
       } else {
-        row.append(name, timbreOrGmSelect, gain, mute, solo);
+        row.append(name, effectiveRoute, timbreOrGmSelect, gain, mute, solo);
       }
       audioOptions.append(row);
     });
@@ -372,8 +386,30 @@ class AudioVisualizerApp {
     const input = document.createElement('input'); input.type = 'checkbox'; input.checked = checked; input.setAttribute('aria-label', ariaLabel); input.addEventListener('change', () => apply(input.checked)); wrapper.prepend(input); return wrapper;
   }
 
+  private commitVoiceMix(voices: Map<number, VoicePlaybackSettings>): void {
+    this.voicePlayback = voices;
+    this.voiceRouter.syncFromVoicePlayback(voices);
+    void this.applyVoiceRoutingChange();
+  }
+
+  /** Restarts an active preview so its scheduled audio always matches the visible route. */
+  private async applyVoiceRoutingChange(): Promise<void> {
+    const wasPlaying = this.isPlaying;
+    if (wasPlaying) this.pause();
+    this.updateScoreUi();
+    if (!wasPlaying) {
+      this.setStatus('Playback routing updated. Press Play to audition it.');
+      return;
+    }
+    await this.startPlayback();
+  }
+
   private async togglePlay(): Promise<void> {
     if (this.isPlaying) { this.pause(); return; }
+    await this.startPlayback();
+  }
+
+  private async startPlayback(): Promise<void> {
     if (this.currentTime >= this.currentScore.duration) this.currentTime = 0;
     try {
       this.audioContext ??= new AudioContext();

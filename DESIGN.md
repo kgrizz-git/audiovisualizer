@@ -62,18 +62,29 @@ swatches, while plotter SVG remains color-free.
 - `3d_lines` / `3d_note_halos`: the `lines` and `circles` geometry lifted into three
   dimensions. X/Y are identical to their 2D counterparts (so the Front camera reproduces
   the 2D image); musical time advances along the positive Z axis, turning a path into a
-  calligraphic ribbon and note halos into discs threading into depth. Total Z depth is
-  normalized to the canvas (≈ width × `zScale`/100) so a long piece stays a legible solid
-  rather than an unviewable tunnel. Rendered with Three.js: pitch-hued geometry glows via
-  bloom against a graded dark field with exponential depth fog, a translucent "now-plane"
-  sweeps forward at the current playback moment with pitch-hued onset pulses, and the camera uses fixed preset angles
-  (Isometric, Front, Side, Bird's eye). These modes export to PNG only; SVG/plotter and
-  free-orbit navigation are available through drag / wheel / pan controls. The `3d_piano_roll`
+  calligraphic ribbon and note halos into discs threading into depth. Notes are Z-extruded
+  along their onset→offset so they read as solid strokes/fat rings from the side and the
+  Time-up view; a dimmer tail slab over the release fraction gives long notes a gradual
+  fade-out. Total Z depth is normalized to the geometry's fitted X/Y span (≈ fitted span ×
+  `zScale`/100, default `zScale = 100` so depth matches the on-screen X/Y extent), so a long
+  piece stays a legible, cube-proportioned solid rather than an unviewable tunnel. Rendered
+  with Three.js: pitch-hued geometry glows via bloom against a graded dark field with
+  exponential depth fog, and the camera uses fixed preset angles (Time up, Isometric, Front,
+  Side, Bird's eye). These modes export to PNG only; SVG/plotter and
+  free-orbit navigation are available through drag / wheel / pan controls. The default camera
+  orientation is **Time up**: world Z (time) renders as the screen's vertical axis (time
+  advances upward), with `Reveal through time` as the default playback cue. Other camera
+  presets (Isometric, Front, Side, Bird's eye, Free orbit) remain available. The **Z / time
+  stretch** slider (the 3D `zScale`, range 10–1200, default 100) stretches or compresses the
+  Z (time) axis in real time. `3d_note_spheres` is the note-halo path rendered as
+  instanced spheres — one per note — whose diameter equals the note's duration on the time
+  axis (so long notes read as larger orbs threading through time), each wrapped in a soft,
+  dimmer outer halo for glow. The `3d_piano_roll`
   mode maps pitch to X, voice to Y, and onset/duration to Z boxes. A deterministic grounding
   grid and particle field support depth perception; playback can auto-follow active notes or
   chase the now-plane, while manual navigation deliberately suspends those modes. PNG and a
-  six-second WebM capture are available. Playback Cue selects either the default sweeping
-  now-plane or a cumulative Reveal through time, which clips future geometry at the playhead.
+  six-second WebM capture are available. Playback Cue selects either the sweeping now-plane or
+  the default cumulative Reveal through time, which clips future geometry at the playhead.
   SVG/plotter remain 2D-only. See
   [`plans/specs/2026-07-23-3d-time-slice-modes.md`](plans/specs/2026-07-23-3d-time-slice-modes.md).
 

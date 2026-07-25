@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
-import { map3DGeometry, liftGeometryTo3D, base2DVariation, effectiveZScale } from '../src/core/mapper/map3d.js';
+import { map3DGeometry, liftGeometryTo3D, base2DVariation, effectiveZScale, computeFittedSpan } from '../src/core/mapper/map3d.js';
 import { mapScoreToGeometry } from '../src/core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../src/core/layout/fitGeometry.js';
-import { DEFAULT_VIEWPORT_3D, NoteEvent, RuleConfig, Score } from '../src/core/types.js';
+import { DEFAULT_VIEWPORT_3D, NoteEvent, RuleConfig, Score, is3DVariation } from '../src/core/types.js';
 
 function note(partial: Partial<NoteEvent> & Pick<NoteEvent, 'id' | 'pitch' | 'onset' | 'duration'>): NoteEvent {
   return {
@@ -25,18 +25,21 @@ function scoreOf(notes: NoteEvent[], duration = 4): Score {
 
 const linesConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_lines', zScale: 100 };
 const halosConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_note_halos', zScale: 100 };
+const spheresConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_note_spheres', zScale: 100 };
 const pianoConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_piano_roll', zScale: 100 };
 
 describe('base2DVariation', () => {
-  it('maps 3d_lines to lines and 3d_note_halos to circles', () => {
+  it('maps 3d_lines to lines, and 3d_note_halos / 3d_note_spheres to circles', () => {
     expect(base2DVariation('3d_lines')).toBe('lines');
     expect(base2DVariation('3d_note_halos')).toBe('circles');
+    expect(base2DVariation('3d_note_spheres')).toBe('circles');
   });
 });
 
 describe('3D viewport defaults', () => {
-  it('uses the existing now-plane cue unless reveal is explicitly selected', () => {
-    expect(DEFAULT_VIEWPORT_3D.playbackCue).toBe('now_plane');
+  it('defaults to the reveal cue and the time-up camera orientation', () => {
+    expect(DEFAULT_VIEWPORT_3D.playbackCue).toBe('reveal');
+    expect(DEFAULT_VIEWPORT_3D.preset).toBe('3d_time_up');
   });
 });
 
@@ -50,28 +53,62 @@ describe('map3DGeometry', () => {
   it('derives segment Z from note onset and offset × the effective z-scale', () => {
     const score = scoreOf([note({ id: 'a', pitch: 60, onset: 0.5, duration: 2 })]);
     const geo = map3DGeometry(score, linesConfig, 800, 800);
-    const effZ = effectiveZScale(score.duration, 800, linesConfig); // 800 × 1 / 4 = 200
+    const geo2d = fitGeometryToCanvas(mapScoreToGeometry(score, { ...linesConfig, variation: 'lines' }, 800, 800), 800, 800);
+    const fittedSpan = computeFittedSpan(geo2d);
+    const effZ = effectiveZScale(score.duration, fittedSpan, linesConfig);
     expect(geo.zScale).toBeCloseTo(effZ);
     const seg = geo.segments[0];
     expect(seg.startZ).toBeCloseTo(0.5 * effZ);
     expect(seg.endZ).toBeCloseTo(2.5 * effZ);
   });
 
-  it('normalizes total depth to ~canvas width × zScale/100, independent of duration', () => {
-    const short = map3DGeometry(scoreOf([note({ id: 'a', pitch: 60, onset: 0, duration: 4 })], 4), linesConfig, 800, 800);
-    const long = map3DGeometry(scoreOf([note({ id: 'a', pitch: 60, onset: 0, duration: 40 })], 40), linesConfig, 800, 800);
-    // Both target 800 × 100/100 = 800 units of depth regardless of length.
-    expect(short.depth).toBeCloseTo(800);
-    expect(long.depth).toBeCloseTo(800);
+  it('normalizes total depth to ~fitted XY span × zScale/100, independent of duration', () => {
+    const shortScore = scoreOf([note({ id: 'a', pitch: 60, onset: 0, duration: 4 })], 4);
+    const longScore = scoreOf([note({ id: 'a', pitch: 60, onset: 0, duration: 40 })], 40);
+    const short = map3DGeometry(shortScore, linesConfig, 800, 800);
+    const long = map3DGeometry(longScore, linesConfig, 800, 800);
+    const span = computeFittedSpan(fitGeometryToCanvas(mapScoreToGeometry(shortScore, { ...linesConfig, variation: 'lines' }, 800, 800), 800, 800));
+    expect(span).toBeLessThan(800);
+    // With zScale = 100, Z depth matches the fitted X/Y span regardless of piece length.
+    expect(short.depth).toBeCloseTo(span);
+    expect(long.depth).toBeCloseTo(span);
   });
 
-  it('produces discs (not segments) for 3d_note_halos with Z at onset', () => {
+  it('stretches/compresses Z proportionally to zScale (the Z/time stretch control)', () => {
+    const score = scoreOf([note({ id: 'a', pitch: 60, onset: 0, duration: 4 })], 4);
+    const span = computeFittedSpan(fitGeometryToCanvas(mapScoreToGeometry(score, { ...linesConfig, variation: 'lines' }, 800, 800), 800, 800));
+    const x2 = map3DGeometry(score, { ...linesConfig, zScale: 200 }, 800, 800).depth;
+    const half = map3DGeometry(score, { ...linesConfig, zScale: 50 }, 800, 800).depth;
+    expect(x2).toBeCloseTo(span * 2);
+    expect(half).toBeCloseTo(span * 0.5);
+  });
+
+  it('produces discs (not segments) for 3d_note_halos with Z at onset and a Z extent for side visibility', () => {
     const score = scoreOf([note({ id: 'a', pitch: 60, onset: 1, duration: 1 })]);
     const geo = map3DGeometry(score, halosConfig, 800, 800);
-    const effZ = effectiveZScale(score.duration, 800, halosConfig);
+    const geo2d = fitGeometryToCanvas(mapScoreToGeometry(score, { ...halosConfig, variation: 'circles' }, 800, 800), 800, 800);
+    const effZ = effectiveZScale(score.duration, computeFittedSpan(geo2d), halosConfig);
     expect(geo.discs.length).toBe(1);
     expect(geo.segments.length).toBe(0);
     expect(geo.discs[0].cz).toBeCloseTo(1 * effZ);
+    // Disc Z extent equals half the note duration × effZ (the renderer extrudes ± czExtent on Z).
+    expect(geo.discs[0].czExtent).toBeCloseTo(1 * effZ / 2);
+  });
+
+  it('produces disc geometry for 3d_note_spheres that drives duration-proportional spheres', () => {
+    const score = scoreOf([
+      note({ id: 'a', pitch: 60, onset: 0, duration: 1 }),
+      note({ id: 'b', pitch: 67, onset: 1, duration: 4 }),
+    ]);
+    const geo = map3DGeometry(score, spheresConfig, 800, 800);
+    expect(is3DVariation(geo.config.variation)).toBe(true);
+    expect(geo.config.variation).toBe('3d_note_spheres');
+    // Spheres reuse the disc array (one per note), no segments/boxes.
+    expect(geo.discs.length).toBe(2);
+    expect(geo.segments).toHaveLength(0);
+    expect(geo.boxes).toHaveLength(0);
+    // Longer note gets a larger Z extent → larger sphere radius (radius = czExtent in renderer).
+    expect(geo.discs[1].czExtent).toBeGreaterThan(geo.discs[0].czExtent);
   });
 
   it('preserves the 2D XY geometry exactly (front view matches fitted 2D lines)', () => {
@@ -115,13 +152,15 @@ describe('map3DGeometry', () => {
       ],
     };
     const geometry = map3DGeometry(score, pianoConfig, 800, 600);
+    // Piano roll normalizes Z to the padded usable width (targetWidth − 2×pad).
+    const expectedZ = effectiveZScale(4, 800 - 56 * 2, pianoConfig);
     expect(geometry.segments).toHaveLength(0);
     expect(geometry.discs).toHaveLength(0);
     expect(geometry.boxes).toHaveLength(2);
     expect(geometry.boxes[1].cx).toBeGreaterThan(geometry.boxes[0].cx);
     expect(geometry.boxes[1].cy).toBeGreaterThan(geometry.boxes[0].cy);
     expect(geometry.boxes[1].cz).toBeGreaterThan(geometry.boxes[0].cz);
-    expect(geometry.boxes[0].sz).toBeCloseTo(effectiveZScale(4, 800, pianoConfig));
+    expect(geometry.boxes[0].sz).toBeCloseTo(expectedZ);
     expect(JSON.stringify(map3DGeometry(score, pianoConfig, 800, 600))).toBe(JSON.stringify(geometry));
   });
 });

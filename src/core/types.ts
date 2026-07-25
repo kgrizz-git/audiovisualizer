@@ -5,11 +5,12 @@ export type Variation =
   | 'tonal_time_lines'
   | '3d_lines'
   | '3d_note_halos'
+  | '3d_note_spheres'
   | '3d_piano_roll';
 
 /** True when the variation is rendered by the Three.js 3D renderer rather than Canvas/SVG. */
 export function is3DVariation(variation: Variation): boolean {
-  return variation === '3d_lines' || variation === '3d_note_halos' || variation === '3d_piano_roll';
+  return variation === '3d_lines' || variation === '3d_note_halos' || variation === '3d_note_spheres' || variation === '3d_piano_roll';
 }
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
 export type PitchHueMode = 'pitch_class' | 'register_spiral' | 'voice_palette';
@@ -148,6 +149,9 @@ export interface GeometryDisc3D {
   cy: number;
   cz: number;
   radius: number;
+  /** Half the note's Z extent (duration × zScale / 2); the renderer extrudes the disc
+   *  along Z by `czExtent` in each direction so notes read as solid from the side. */
+  czExtent: number;
   fillColor: string;
   strokeColor: string;
   strokeWidth: number;
@@ -172,7 +176,8 @@ export interface GeometryBox3D {
  * Geometry for the Three.js 3D visualization family. For 3d_lines/3d_note_halos the X/Y
  * coordinates come from the existing 2D interval/path algorithms; for 3d_piano_roll they
  * are a pitch × voice grid. Z is always musical time (seconds × zScale). Consumers
- * discriminate against RenderedGeometry with the `kind` field.
+ * discriminate against RenderedGeometry with the `kind` field. `3d_note_spheres` reuses the
+ * same disc geometry as `3d_note_halos`; the renderer draws instanced spheres from it.
  */
 export interface RenderedGeometry3D {
   kind: '3d';
@@ -183,7 +188,7 @@ export interface RenderedGeometry3D {
   /** Effective seconds → world-unit scale actually applied (for playhead placement). */
   zScale: number;
   segments: GeometrySegment3D[]; // populated for 3d_lines
-  discs: GeometryDisc3D[];       // populated for 3d_note_halos
+  discs: GeometryDisc3D[];       // populated for 3d_note_halos and 3d_note_spheres
   boxes: GeometryBox3D[];        // populated for 3d_piano_roll
   config: RuleConfig;
   bpm: number;
@@ -236,11 +241,16 @@ export function clampZoom(zoom: number): number {
   return Math.min(10.0, Math.max(0.25, zoom));
 }
 
-export type CameraPreset3D = '3d_isometric' | '3d_front' | '3d_side' | '3d_birds_eye' | '3d_free';
+export type CameraPreset3D = '3d_time_up' | '3d_isometric' | '3d_front' | '3d_side' | '3d_birds_eye' | '3d_free';
 export type PlaybackCue3D = 'now_plane' | 'reveal';
 
-/** Orbit angles (degrees) for each fixed camera preset. */
+/**
+ * Orbit angles (degrees) for each fixed camera preset. `3d_time_up` orients the
+ * world so the Z (time) axis renders vertically (time advances upward in the
+ * view); the renderer pairs it with `camera.up` along world Z.
+ */
 export const CAMERA_PRESETS_3D: Readonly<Partial<Record<CameraPreset3D, { azimuth: number; elevation: number }>>> = Object.freeze({
+  '3d_time_up': { azimuth: 0, elevation: 0 },
   '3d_isometric': { azimuth: 45, elevation: 30 },
   '3d_front': { azimuth: 0, elevation: 0 },
   '3d_side': { azimuth: 90, elevation: 0 },
@@ -248,6 +258,7 @@ export const CAMERA_PRESETS_3D: Readonly<Partial<Record<CameraPreset3D, { azimut
 });
 
 export const CAMERA_PRESET_LABELS_3D: Readonly<Record<CameraPreset3D, string>> = Object.freeze({
+  '3d_time_up': 'Time up',
   '3d_isometric': 'Isometric',
   '3d_front': 'Front',
   '3d_side': 'Side',
@@ -274,15 +285,15 @@ export interface ViewportTransform3D {
 }
 
 export const DEFAULT_VIEWPORT_3D: Readonly<ViewportTransform3D> = Object.freeze({
-  preset: '3d_isometric',
+  preset: '3d_time_up',
   bloom: 1.4,
   zoom: 1,
-  azimuth: 45,
-  elevation: 30,
+  azimuth: 0,
+  elevation: 0,
   panX: 0,
   panY: 0,
   autoFollow: false,
   chaseCamera: false,
   autoRotate: false,
-  playbackCue: 'now_plane',
+  playbackCue: 'reveal',
 });

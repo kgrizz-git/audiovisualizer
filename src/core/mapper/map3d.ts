@@ -23,9 +23,11 @@ import {
 import { mapScoreToGeometry, getNoteColor, getVisualPitch } from './scoreMapper.js';
 import { fitGeometryToCanvas } from '../layout/fitGeometry.js';
 
-/** Maps a 3D variation to the 2D variation whose XY geometry it reuses. */
+/** Maps a 3D variation to the 2D variation whose XY geometry it reuses.
+ *  `3d_note_halos` and `3d_note_spheres` both reuse the `circles` halo path; the
+ *  renderer chooses spheres vs cylinders/flat discs from the active variation. */
 export function base2DVariation(variation: Variation): Variation {
-  return variation === '3d_note_halos' ? 'circles' : 'lines';
+  return variation === '3d_note_halos' || variation === '3d_note_spheres' ? 'circles' : 'lines';
 }
 
 /**
@@ -65,11 +67,13 @@ export function liftGeometryTo3D(
     }
     for (const circle of path.circles) {
       const cz = circle.note.onset * zScale;
-      maxZ = Math.max(maxZ, cz);
+      const czExtent = (circle.note.duration * zScale) / 2;
+      maxZ = Math.max(maxZ, cz, cz + czExtent);
       discs.push({
         cx: circle.center.x,
         cy: circle.center.y,
         cz,
+        czExtent,
         radius: circle.radius,
         fillColor: circle.fillColor,
         strokeColor: circle.strokeColor,
@@ -96,14 +100,18 @@ export function liftGeometryTo3D(
 
 /**
  * Computes the effective seconds → world-unit scale so the whole score reads as a
- * well-proportioned solid: total Z depth ≈ canvas width × (config.zScale / 100),
+ * well-proportioned solid: total Z depth ≈ normalizationSpan × (config.zScale / 100),
  * independent of the piece's absolute length. Raw px/sec would make a long score an
- * unviewably deep tunnel (dwarfing the XY detail); normalizing to the canvas keeps
- * pitch/interval geometry and note halos legible for any duration.
+ * unviewably deep tunnel (dwarfing the XY detail); normalizing keeps pitch/interval
+ * geometry and note halos legible for any duration. For path modes the span should be
+ * the fitted XY extent of the mapped geometry so that at the default `zScale = 100`
+ * the Z depth matches the on-screen X/Y extent; for piano roll the raw target width is
+ * used as the normalization span.
  */
-export function effectiveZScale(durationSeconds: number, targetWidth: number, config: RuleConfig): number {
+export function effectiveZScale(durationSeconds: number, normalizationSpan: number, config: RuleConfig): number {
   if (durationSeconds <= 0) return 0;
-  const targetDepth = targetWidth * (config.zScale / 100);
+  const span = Math.max(1, normalizationSpan);
+  const targetDepth = span * (config.zScale / 100);
   return targetDepth / durationSeconds;
 }
 
@@ -120,7 +128,7 @@ export function mapPianoRoll3D(
   targetHeight: number,
 ): RenderedGeometry3D {
   const pad = 56;
-  const zScale = effectiveZScale(score.duration, targetWidth, config);
+  const zScale = effectiveZScale(score.duration, targetWidth - pad * 2, config);
   const tracks = score.tracks.filter(
     (track) => track.notes.length > 0 && (config.voiceFilter === null || config.voiceFilter.includes(track.channel)),
   );
@@ -201,6 +209,35 @@ export function map3DGeometry(
     targetWidth,
     targetHeight,
   );
-  const zScale = effectiveZScale(score.duration, targetWidth, config);
+  // Normalize Z to the geometry's actual fitted X/Y extent so that at the default
+  // `zScale = 100` the score's depth matches its on-screen width/height — the calligraphic
+  // solid reads as a cube rather than a tunnel or a flat ribbon.
+  const fittedSpan = computeFittedSpan(geometry2d);
+  const zScale = effectiveZScale(score.duration, fittedSpan, config);
   return liftGeometryTo3D(geometry2d, zScale, config);
+}
+
+/**
+ * Largest fitted X/Y span of the mapped geometry (after `fitGeometryToCanvas`). Used as
+ * the Z-normalization target so depth matches the visible footprint regardless of canvas
+ * aspect or padding. Falls back to the canvas width bands use.
+ */
+export function computeFittedSpan(geometry: RenderedGeometry): number {
+  let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+  for (const path of geometry.voicePaths) {
+    for (const segment of path.segments) {
+      minX = Math.min(minX, segment.start.x, segment.end.x);
+      minY = Math.min(minY, segment.start.y, segment.end.y);
+      maxX = Math.max(maxX, segment.start.x, segment.end.x);
+      maxY = Math.max(maxY, segment.start.y, segment.end.y);
+    }
+    for (const circle of path.circles) {
+      minX = Math.min(minX, circle.center.x - circle.radius);
+      minY = Math.min(minY, circle.center.y - circle.radius);
+      maxX = Math.max(maxX, circle.center.x + circle.radius);
+      maxY = Math.max(maxY, circle.center.y + circle.radius);
+    }
+  }
+  if (!Number.isFinite(minX)) return geometry.width;
+  return Math.max(maxX - minX, maxY - minY);
 }

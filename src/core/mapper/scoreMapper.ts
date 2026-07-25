@@ -30,7 +30,7 @@ export const DEFAULT_CONFIG: RuleConfig = {
   quantizeSubdivision: 4,
   voiceFilter: null,
   timeLineDensity: 1,
-  zScale: 200,
+  zScale: 100,
 };
 
 /**

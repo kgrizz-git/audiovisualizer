@@ -71,6 +71,18 @@ export function getLegendContent(config: RuleConfig): LegendContent {
           'Now-plane → current playback moment',
         ], swatches,
       };
+    case '3d_note_spheres':
+      return {
+        title: '3D NOTE SPHERES',
+        lines: [
+          hue,
+          ...transpose,
+          'X / Y → note-halo path (same as note halos)',
+          'Z (depth) → onset time',
+          'Sphere diameter → note duration',
+          'Soft halo → outer glow shell',
+        ], swatches,
+      };
     case '3d_piano_roll':
       return {
         title: '3D PIANO ROLL',

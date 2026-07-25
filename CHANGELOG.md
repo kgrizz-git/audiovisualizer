@@ -28,6 +28,16 @@ uses [Semantic Versioning](https://semver.org/).
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- SoundFont preview no longer fades sustained notes to silence mid-hold: a shared ADSR envelope
+  replaces the old attack-then-fade-over-the-whole-note gain curve on both sample and oscillator
+  engines. SemVer: **PATCH**.
+- CC64 sustain pedal now extends note duration on the oscillator/fallback path (parity with
+  SoundFont playback). SemVer: **PATCH**.
+- Playback no longer cuts off at visual score end while the sustain pedal is still down or release
+  tails are ringing: `playbackEndTime` allows audio to finish before stop. SemVer: **PATCH**.
+- Sustained GM instruments (strings, organs, pads) keep sounding for held/pedaled notes: goldst
+  loop metadata enables `AudioBufferSourceNode` looping by default when bundled or CDN metadata
+  exists. SemVer: **PATCH**.
 - Voice controls now distinguish a MIDI file's source instrument from the active preview
   route, and changing a route during playback restarts the preview at the current playhead.
   Solo is exclusive, mutes the other voices, and is mutually exclusive with mute on the

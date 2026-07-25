@@ -19,12 +19,16 @@ export interface VoiceRouteSettings {
   solo: boolean;
 }
 
+import type { LoopPointsByMidi } from './soundfontLoopLoader.js';
+
 export interface InstrumentPatch {
   bank: SoundbankPreset;
   program: number;
   slug: string;
   /** midi-js note name → decoded buffer */
   buffers: Record<string, AudioBuffer>;
+  /** Optional goldst loop regions keyed by MIDI note number (seconds). */
+  loops?: LoopPointsByMidi;
 }
 
 export type PatchStatus = 'loading' | 'loaded' | 'fallback';

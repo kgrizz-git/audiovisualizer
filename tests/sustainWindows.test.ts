@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildSustainWindows,
   getSustainedDuration,
+  playbackEndTime,
   sustainEventsForChannel,
 } from '../src/audio/soundfont/sustainWindows.js';
 import { NoteEvent, Score } from '../src/core/types.js';
@@ -19,6 +20,31 @@ describe('offline sustain windows', () => {
     expect(windows).toEqual([{ start: 0.5, end: 2.0 }]);
     // onset 0.4, natural release 0.7 → inside [0.5, 2.0] → duration 2.0 - 0.4 = 1.6
     expect(getSustainedDuration(note({ onset: 0.4, duration: 0.3 }), windows)).toBeCloseTo(1.6);
+  });
+
+  it('playbackEndTime exceeds visual duration when pedal lifts after the last note-off', () => {
+    const score = {
+      title: 't', duration: 1, bpm: 120,
+      tracks: [{
+        name: 'piano', channel: 0, program: 0, instrumentName: 'p',
+        notes: [note({ onset: 0, duration: 1 })],
+        sustainEvents: [{ time: 0, value: 127 }, { time: 2.5, value: 0 }],
+      }],
+    } as Score;
+    expect(playbackEndTime(score)).toBeGreaterThan(score.duration);
+    expect(playbackEndTime(score)).toBeCloseTo(2.5);
+  });
+
+  it('playbackEndTime matches visual duration when pedal lifts with the last note', () => {
+    const score = {
+      title: 't', duration: 1, bpm: 120,
+      tracks: [{
+        name: 'piano', channel: 0, program: 0, instrumentName: 'p',
+        notes: [note({ onset: 0, duration: 1 })],
+        sustainEvents: [{ time: 0, value: 127 }, { time: 1, value: 0 }],
+      }],
+    } as Score;
+    expect(playbackEndTime(score)).toBeCloseTo(1);
   });
 
   it('clamps an open pedal to score end (never Infinity)', () => {

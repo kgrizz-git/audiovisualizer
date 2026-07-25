@@ -1,9 +1,15 @@
 import { MidiPreviewPlayer, noteVolume } from '../midiPreviewPlayer.js';
+import { applyNoteEnvelope, noteSourceStopTime } from '../noteEnvelope.js';
 import { NoteEvent, Score } from '../../core/types.js';
 import { SoundfontPatchLoader } from './soundfontPatchLoader.js';
 import { InstrumentPatch, PatchStatus, SoundbankPreset } from './soundfontTypes.js';
 import { VoiceRouter } from './voiceRouter.js';
-import { buildSustainWindows, getSustainedDuration, sustainEventsForChannel } from './sustainWindows.js';
+import {
+  buildSustainWindows,
+  getSustainedDuration,
+  playbackEndTime,
+  sustainEventsForChannel,
+} from './sustainWindows.js';
 import { midiFromNoteName, nearestSampleKey } from './midiNoteName.js';
 import { LookaheadScheduler, TimedTask } from '../playbackScheduler.js';
 
@@ -23,6 +29,9 @@ function createMockAudioContext(): AudioContext {
   };
   const mockSourceNode = {
     buffer: null,
+    loop: false,
+    loopStart: 0,
+    loopEnd: 0,
     playbackRate: { value: 1 },
     connect: () => mockGainNode,
     start: () => {},
@@ -121,6 +130,7 @@ export class SoundfontPlayer {
     }
 
     const now = this.context.currentTime + 0.03;
+    const scorePlaybackEnd = playbackEndTime(score);
     const tasks: TimedTask[] = [];
     for (const track of audible) {
       const patch = patchByChannel.get(track.channel);
@@ -128,7 +138,7 @@ export class SoundfontPlayer {
       const route = opts.router.resolveTrackSettings(track);
       const windows = buildSustainWindows(
         sustainEventsForChannel(score, track.channel),
-        score.duration,
+        scorePlaybackEnd,
       );
       for (const note of track.notes) {
         if (note.onset + getSustainedDuration(note, windows) <= offsetSeconds) continue;
@@ -200,13 +210,18 @@ export class SoundfontPlayer {
     const volume = noteVolume(note.velocity, gainMul);
     const start = now + delay;
     const end = start + playDuration;
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(volume, start + Math.min(0.02, playDuration / 3));
-    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+    const release = applyNoteEnvelope(gain.gain, { start, end, peak: volume });
+    const sampleMidi = midiFromNoteName(key);
+    const loopRegion = patch.loops?.[sampleMidi];
+    if (loopRegion) {
+      source.loop = true;
+      source.loopStart = loopRegion[0];
+      source.loopEnd = loopRegion[1];
+    }
     const destination = this.masterGain ?? this.context.destination;
     source.connect(gain).connect(destination);
     source.start(start);
-    source.stop(end + 0.02);
+    source.stop(noteSourceStopTime(end, release));
     source.onended = () => {
       this.activeSources = this.activeSources.filter((s) => s !== source);
     };

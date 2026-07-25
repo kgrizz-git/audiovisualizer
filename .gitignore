@@ -207,5 +207,7 @@ temp/
 
 # SoundFont sample blobs (regenerate with npm run bundle:soundfonts)
 public/soundfonts/**/*.js
+public/soundfonts/**/*-loop.json
+!public/soundfonts/**/manifest.json
 !public/soundfonts/**/.gitkeep
 

@@ -1,5 +1,13 @@
 import { NoteEvent, Score } from '../core/types.js';
+import { applyNoteEnvelope, noteSourceStopTime } from './noteEnvelope.js';
 import { LookaheadScheduler, TimedTask } from './playbackScheduler.js';
+import {
+  buildSustainWindows,
+  getSustainedDuration,
+  playbackEndTime,
+  sustainEventsForChannel,
+  SustainWindow,
+} from './soundfont/sustainWindows.js';
 
 export type SynthTimbre = 'sine' | 'triangle' | 'sawtooth' | 'square';
 
@@ -36,14 +44,19 @@ export class MidiPreviewPlayer {
     if (this.masterGain && this.context) this.masterGain.connect(this.context.destination);
     const now = (this.context?.currentTime ?? 0) + 0.03;
     const tracks = selectAudibleTracks(score, voices, opts?.channels);
+    const scorePlaybackEnd = playbackEndTime(score);
     const tasks: TimedTask[] = [];
     for (const track of tracks) {
       const index = score.tracks.indexOf(track);
       const settings = voices.get(track.channel) ?? defaultVoiceSettings(index);
+      const windows = buildSustainWindows(
+        sustainEventsForChannel(score, track.channel),
+        scorePlaybackEnd,
+      );
       for (const note of track.notes) {
-        if (note.onset + note.duration <= offsetSeconds) continue;
+        if (note.onset + getSustainedDuration(note, windows) <= offsetSeconds) continue;
         const at = now + Math.max(0, note.onset - offsetSeconds);
-        tasks.push({ at, run: () => this.schedule(note, offsetSeconds, now, settings) });
+        tasks.push({ at, run: () => this.schedule(note, offsetSeconds, now, settings, windows) });
       }
     }
     this.scheduler = new LookaheadScheduler(tasks, () => this.context?.currentTime ?? 0);
@@ -67,24 +80,30 @@ export class MidiPreviewPlayer {
     this.masterGain = null;
   }
 
-  private schedule(note: NoteEvent, offset: number, now: number, settings: VoicePlaybackSettings): void {
-    if (!this.context || note.onset + note.duration <= offset) return;
+  private schedule(
+    note: NoteEvent,
+    offset: number,
+    now: number,
+    settings: VoicePlaybackSettings,
+    windows: SustainWindow[],
+  ): void {
+    if (!this.context) return;
+    const sustainedDuration = getSustainedDuration(note, windows);
+    if (note.onset + sustainedDuration <= offset) return;
     const delay = Math.max(0, note.onset - offset);
-    const duration = Math.max(0.03, note.duration - Math.max(0, offset - note.onset));
+    const playDuration = Math.max(0.03, sustainedDuration - Math.max(0, offset - note.onset));
     const oscillator = this.context.createOscillator();
     const gain = this.context.createGain();
     oscillator.type = settings.timbre;
     oscillator.frequency.value = 440 * 2 ** ((note.pitch - 69) / 12);
     const volume = noteVolume(note.velocity, settings.gain);
     const start = now + delay;
-    const end = start + duration;
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(volume, start + Math.min(0.02, duration / 3));
-    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+    const end = start + playDuration;
+    const release = applyNoteEnvelope(gain.gain, { start, end, peak: volume });
     const destination = this.masterGain ?? this.context.destination;
     oscillator.connect(gain).connect(destination);
     oscillator.start(start);
-    oscillator.stop(end + 0.02);
+    oscillator.stop(noteSourceStopTime(end, release));
     oscillator.onended = () => {
       this.activeSources = this.activeSources.filter((source) => source !== oscillator);
     };

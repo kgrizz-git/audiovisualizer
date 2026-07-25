@@ -14,6 +14,9 @@ import {
 } from '../../core/types.js';
 import { I3DRenderer } from './I3DRenderer.js';
 
+/** Fraction of a note's Z extent that renders at full opacity; the remainder fades as a release tail. */
+const RELEASE_BODY_FRACTION = 0.7;
+
 /**
  * Three.js renderer for the 3D calligraphic score modes. The X/Y coordinates arrive in
  * canvas pixel space (0..width, 0..height, y-down); they are recentered and Y-flipped into
@@ -46,7 +49,7 @@ export class ThreeDRenderer implements I3DRenderer {
   // World-space bounds of the current content, for camera framing and plane sizing.
   private center = new THREE.Vector3();
   private radius = 1;
-  private zScale = 200;
+  private zScale = 100;
   private onViewportChange: ((viewport: ViewportTransform3D) => void) | undefined;
 
   public mount(canvas: HTMLCanvasElement, width: number, height: number, onViewportChange?: (viewport: ViewportTransform3D) => void): void {
@@ -219,7 +222,10 @@ export class ThreeDRenderer implements I3DRenderer {
     this.clearOnsetPulses();
 
     if (this.geometry.segments.length > 0) this.buildLines(this.geometry);
-    if (this.geometry.discs.length > 0) this.buildDiscs(this.geometry);
+    if (this.geometry.discs.length > 0) {
+      if (this.geometry.config.variation === '3d_note_spheres') this.buildSpheres(this.geometry);
+      else this.buildDiscs(this.geometry);
+    }
     if (this.geometry.boxes.length > 0) this.buildBoxes(this.geometry);
     this.buildAtmosphere(this.geometry);
     this.buildNowPlane(this.geometry);
@@ -258,19 +264,100 @@ export class ThreeDRenderer implements I3DRenderer {
     this.lineMaterials.push(material);
 
     this.contentGroup.add(new LineSegments2(lineGeometry, material));
+    this.buildLineSlabs(geometry);
+  }
+
+  /**
+   * Axis-aligned Z-extruded instanced slabs (one per note segment) so the calligraphic
+   * ribbons read as solid, time-thick strokes from the side and the Time-up view. Each
+   * slab spans the note's onset→offset on Z (thickness proportional to note duration); a
+   * dimmer tail slab over the release fraction gives long notes a gradual fade-out.
+   */
+  private buildLineSlabs(geometry: RenderedGeometry3D): void {
+    if (geometry.segments.length === 0) return;
+    this.buildSlabSet(geometry, /* tail */ false);
+    this.buildSlabSet(geometry, /* tail */ true);
+  }
+
+  private buildSlabSet(geometry: RenderedGeometry3D, tail: boolean): void {
+    const segs = geometry.segments.filter((seg) => seg.role !== 'gap');
+    if (segs.length === 0) return;
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: tail ? 0.32 : 0.78,
+      vertexColors: false,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    material.clippingPlanes = [this.revealPlane];
+    const slabs = new THREE.InstancedMesh(box, material, segs.length);
+    const matrix = new THREE.Matrix4();
+    const color = new THREE.Color();
+    segs.forEach((seg, i) => {
+      const startZ = this.worldZ(seg.startZ);
+      const endZ = this.worldZ(seg.endZ);
+      const full = Math.max(2, endZ - startZ);
+      const bodyFrac = RELEASE_BODY_FRACTION;
+      const z0 = tail ? startZ + full * bodyFrac : startZ;
+      const z1 = tail ? endZ : startZ + full * bodyFrac;
+      const thickness = Math.max(1.5, seg.width * 0.85);
+      const cx = (this.worldX(seg.startX) + this.worldX(seg.endX)) / 2;
+      const cy = (this.worldY(seg.startY) + this.worldY(seg.endY)) / 2;
+      const cz = (z0 + z1) / 2;
+      const sz = Math.max(1, z1 - z0);
+      matrix.makeScale(thickness, thickness, sz);
+      matrix.setPosition(cx, cy, cz);
+      slabs.setMatrixAt(i, matrix);
+      color.set(seg.color);
+      slabs.setColorAt(i, color);
+    });
+    slabs.instanceMatrix.needsUpdate = true;
+    if (slabs.instanceColor) slabs.instanceColor.needsUpdate = true;
+    this.contentGroup.add(slabs);
+    this.revealMaterials.push(material);
   }
 
   private buildDiscs(geometry: RenderedGeometry3D): void {
     const count = geometry.discs.length;
-    const fillGeometry = new THREE.CircleGeometry(1, 32);
-    const fillMaterial = new THREE.MeshBasicMaterial({
+
+    // Glowing front-facing cap that retains the halo look from the front.
+    const capGeometry = new THREE.CircleGeometry(1, 32);
+    const capMaterial = new THREE.MeshBasicMaterial({
       transparent: true,
       opacity: 0.78,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
-    fillMaterial.clippingPlanes = [this.revealPlane];
-    const fills = new THREE.InstancedMesh(fillGeometry, fillMaterial, count);
+    capMaterial.clippingPlanes = [this.revealPlane];
+    const caps = new THREE.InstancedMesh(capGeometry, capMaterial, count);
+
+    // Z-aligned cylinder: from the front it reads as the disc; from the side it reads
+    // as a fat ring whose height equals the note's duration × zScale. Cylinder axis runs
+    // along Z, so the geometry is rotated −90° about X.
+    const bodyRadius = 1;
+    const bodyGeometry = new THREE.CylinderGeometry(bodyRadius, bodyRadius, 1, 28, 1, true);
+    bodyGeometry.rotateX(Math.PI / 2);
+    const bodyMaterial = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0.78,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    bodyMaterial.clippingPlanes = [this.revealPlane];
+    const bodies = new THREE.InstancedMesh(bodyGeometry, bodyMaterial, count);
+
+    // Dimmer tail slab for the release fade of long notes.
+    const tailGeometry = new THREE.CylinderGeometry(bodyRadius, bodyRadius, 1, 28, 1, true);
+    tailGeometry.rotateX(Math.PI / 2);
+    const tailMaterial = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0.3,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    tailMaterial.clippingPlanes = [this.revealPlane];
+    const tails = new THREE.InstancedMesh(tailGeometry, tailMaterial, count);
 
     const ringGeometry = new THREE.RingGeometry(0.92, 1, 40);
     const ringMaterial = new THREE.MeshBasicMaterial({
@@ -286,19 +373,98 @@ export class ThreeDRenderer implements I3DRenderer {
     const matrix = new THREE.Matrix4();
     const color = new THREE.Color();
     geometry.discs.forEach((disc, i) => {
-      matrix.makeScale(disc.radius, disc.radius, 1);
-      matrix.setPosition(this.worldX(disc.cx), this.worldY(disc.cy), this.worldZ(disc.cz));
-      fills.setMatrixAt(i, matrix);
-      rings.setMatrixAt(i, matrix);
-      color.set(disc.fillColor);
-      fills.setColorAt(i, color);
-    });
-    fills.instanceMatrix.needsUpdate = true;
-    rings.instanceMatrix.needsUpdate = true;
-    if (fills.instanceColor) fills.instanceColor.needsUpdate = true;
+      const cz = this.worldZ(disc.cz);
+      const extent = Math.max(1, disc.czExtent);
+      const full = 2 * extent;
+      const bodyFrac = RELEASE_BODY_FRACTION;
+      const bodyHeight = Math.max(1, full * bodyFrac);
+      const tailHeight = Math.max(1, full * (1 - bodyFrac));
 
-    this.contentGroup.add(fills, rings);
-    this.revealMaterials.push(fillMaterial, ringMaterial);
+      matrix.makeScale(disc.radius, disc.radius, 1);
+      matrix.setPosition(this.worldX(disc.cx), this.worldY(disc.cy), cz);
+      caps.setMatrixAt(i, matrix);
+      rings.setMatrixAt(i, matrix);
+
+      const bodyCenterZ = cz - extent + bodyHeight / 2;
+      matrix.makeScale(disc.radius, disc.radius, bodyHeight);
+      matrix.setPosition(this.worldX(disc.cx), this.worldY(disc.cy), bodyCenterZ);
+      bodies.setMatrixAt(i, matrix);
+
+      const tailCenterZ = cz - extent + bodyHeight + tailHeight / 2;
+      matrix.makeScale(disc.radius, disc.radius, tailHeight * 1.15);
+      matrix.setPosition(this.worldX(disc.cx), this.worldY(disc.cy), tailCenterZ);
+      tails.setMatrixAt(i, matrix);
+
+      color.set(disc.fillColor);
+      caps.setColorAt(i, color);
+      bodies.setColorAt(i, color);
+      tails.setColorAt(i, color);
+    });
+    caps.instanceMatrix.needsUpdate = true;
+    bodies.instanceMatrix.needsUpdate = true;
+    tails.instanceMatrix.needsUpdate = true;
+    rings.instanceMatrix.needsUpdate = true;
+    if (caps.instanceColor) caps.instanceColor.needsUpdate = true;
+    if (bodies.instanceColor) bodies.instanceColor.needsUpdate = true;
+    if (tails.instanceColor) tails.instanceColor.needsUpdate = true;
+
+    this.contentGroup.add(caps, bodies, tails, rings);
+    this.revealMaterials.push(capMaterial, bodyMaterial, tailMaterial, ringMaterial);
+  }
+
+  /**
+   * `3d_note_spheres`: instanced spheres, one per note, reusing the note-halo XY path from
+   * the 2D `circles` mapper and the same disc geometry (`GeometryDisc3D`). Sphere radius is
+   * proportional to the note's duration (radius = the note's half-Z-extent, so a sphere's
+   * diameter spans the note's onset→offset on the time axis), with a small floor so short
+   * notes remain visible. A dimmer, slightly larger halo sphere gives each note a soft glow.
+   */
+  private buildSpheres(geometry: RenderedGeometry3D): void {
+    const count = geometry.discs.length;
+    const sphereGeometry = new THREE.SphereGeometry(1, 24, 18);
+    const coreMaterial = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0.92,
+      depthWrite: false,
+    });
+    coreMaterial.clippingPlanes = [this.revealPlane];
+    const cores = new THREE.InstancedMesh(sphereGeometry, coreMaterial, count);
+
+    const haloMaterial = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0.22,
+      side: THREE.BackSide,
+      depthWrite: false,
+    });
+    haloMaterial.clippingPlanes = [this.revealPlane];
+    const halos = new THREE.InstancedMesh(sphereGeometry, haloMaterial, count);
+
+    const matrix = new THREE.Matrix4();
+    const color = new THREE.Color();
+    geometry.discs.forEach((disc, i) => {
+      const extent = Math.max(disc.czExtent, 2); // floor keeps short notes visible
+      const cx = this.worldX(disc.cx);
+      const cy = this.worldY(disc.cy);
+      const cz = this.worldZ(disc.cz);
+      matrix.makeScale(extent, extent, extent);
+      matrix.setPosition(cx, cy, cz);
+      cores.setMatrixAt(i, matrix);
+      // Soft outer halo: ~1.4× the core radius for a faint bloom-like shell.
+      const haloR = extent * 1.4;
+      matrix.makeScale(haloR, haloR, haloR);
+      matrix.setPosition(cx, cy, cz);
+      halos.setMatrixAt(i, matrix);
+      color.set(disc.fillColor);
+      cores.setColorAt(i, color);
+      halos.setColorAt(i, color);
+    });
+    cores.instanceMatrix.needsUpdate = true;
+    halos.instanceMatrix.needsUpdate = true;
+    if (cores.instanceColor) cores.instanceColor.needsUpdate = true;
+    if (halos.instanceColor) halos.instanceColor.needsUpdate = true;
+
+    this.contentGroup.add(halos, cores);
+    this.revealMaterials.push(coreMaterial, haloMaterial);
   }
 
   private buildBoxes(geometry: RenderedGeometry3D): void {
@@ -434,8 +600,17 @@ export class ThreeDRenderer implements I3DRenderer {
     const distance = this.radius * 3 + 100;
     const target = this.center.clone().add(new THREE.Vector3(this.viewport.panX, this.viewport.panY, 0));
     this.camera.position.copy(target).addScaledVector(dir, distance);
-    this.camera.up.set(0, 1, 0);
-    this.camera.lookAt(target);
+    // For the time-up preset, world Z (time) is the screen vertical: up = world Z,
+    // and the camera looks along world -Y (dir = (0, -1, 0)) so the X/Y calligraphy
+    // faces the viewer while time advances upward in the image.
+    if (this.viewport.preset === '3d_time_up') {
+      this.camera.up.set(0, 0, 1);
+      this.camera.position.copy(target).add(new THREE.Vector3(0, -distance, 0));
+      this.camera.lookAt(target);
+    } else {
+      this.camera.up.set(0, 1, 0);
+      this.camera.lookAt(target);
+    }
 
     const aspect = this.width / this.height;
     const half = this.radius * 1.25 / Math.max(0.25, this.viewport.zoom);

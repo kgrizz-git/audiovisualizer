@@ -38,6 +38,11 @@ npm run bundle:soundfonts
 
 Other presets (MusyngKite, FatBoy) fetch audio samples on demand from CDN when selected in the studio controls.
 
+Each voice row identifies both the MIDI file's source instrument and the effective preview
+route. Changing a voice route while playing restarts the preview at the current playhead so
+the audible result matches the controls. Solo is exclusive and mutes the other voices; a
+voice cannot be muted and soloed at the same time.
+
 The studio includes local classical and ragtime MIDI scores, original modern-genre
 style studies (blues, jazz, funk, electronic, hip-hop, rock, house), and **Find more
 MIDI online** links to FreeMIDI.org, BitMidi, Mutopia, Wikimedia Commons, and similar

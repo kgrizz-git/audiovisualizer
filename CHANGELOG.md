@@ -28,6 +28,10 @@ uses [Semantic Versioning](https://semver.org/).
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- Voice controls now distinguish a MIDI file's source instrument from the active preview
+  route, and changing a route during playback restarts the preview at the current playhead.
+  Solo is exclusive, mutes the other voices, and is mutually exclusive with mute on the
+  same voice. SemVer: **PATCH**.
 - Switching the 3D Playback Cue from "Now-plane" to "Reveal" no longer leaves one or more
   glowing now-planes stuck in the scene: each geometry rebuild now removes the previous
   plane instead of orphaning it, and cue visibility updates immediately even while paused.

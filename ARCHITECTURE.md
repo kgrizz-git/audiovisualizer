@@ -84,6 +84,11 @@ MIDI playback supports dual engines: a sample-based General MIDI SoundFont playe
 
 Sample SoundFont playback resolves General MIDI program numbers to Gleitz audio JS soundbanks via `SoundfontPatchLoader`, which loads local `public/soundfonts/{bank}/{instrument-mp3.js}` files (bundled offline via `npm run bundle:soundfonts`) or CDN fallback, persisting fetched scripts in browser `CacheStorage` (`soundfonts-v1`). `SoundfontPlayer` tracks real-time per-channel patch loading status (`getStatusMap()` returning `'loading'`, `'loaded'`, or `'fallback'`) and honors `VoiceRouter` program overrides during playback setup. If sample loading fails or the oscillator engine is selected, playback seamlessly falls back to per-track web audio synthesis.
 
+The voice-control UI distinguishes each track's MIDI source instrument from its effective
+preview route. A route change during playback restarts the preview at its current playhead
+so scheduled audio cannot drift from the selected controls. Solo is exclusive: it mutes the
+other voices while active, and a voice is never both muted and soloed.
+
 Playback is synchronized with the visual scrubber and uses offline sustain helpers (`sustainWindows.ts`) to compute active pedal windows from CC64 events, extending sample release times without mutating visual note geometry.
 
 Planned audio files enter through a separate local decode/transcription boundary. The adapted estimated score will reuse the same mapper/renderers, while original-audio playback will use an `HTMLAudioElement`. No raw audio leaves local memory or is included in exports.

@@ -15,6 +15,7 @@ export class MidiPreviewPlayer {
   private context: AudioContext | null = null;
   private activeSources: OscillatorNode[] = [];
   private scheduler: LookaheadScheduler | null = null;
+  private masterGain: GainNode | null = null;
 
   constructor(context?: AudioContext) {
     this.context = context ?? null;
@@ -31,6 +32,8 @@ export class MidiPreviewPlayer {
       this.context = new AudioContext();
     }
     await this.context?.resume();
+    this.masterGain = this.context?.createGain() ?? null;
+    if (this.masterGain && this.context) this.masterGain.connect(this.context.destination);
     const now = (this.context?.currentTime ?? 0) + 0.03;
     const tracks = selectAudibleTracks(score, voices, opts?.channels);
     const tasks: TimedTask[] = [];
@@ -58,6 +61,10 @@ export class MidiPreviewPlayer {
       }
     });
     this.activeSources = [];
+    if (this.masterGain) {
+      try { this.masterGain.disconnect(); } catch { /* already disconnected */ }
+    }
+    this.masterGain = null;
   }
 
   private schedule(note: NoteEvent, offset: number, now: number, settings: VoicePlaybackSettings): void {
@@ -68,13 +75,14 @@ export class MidiPreviewPlayer {
     const gain = this.context.createGain();
     oscillator.type = settings.timbre;
     oscillator.frequency.value = 440 * 2 ** ((note.pitch - 69) / 12);
-    const volume = (0.035 + (note.velocity / 127) * 0.065) * settings.gain;
+    const volume = noteVolume(note.velocity, settings.gain);
     const start = now + delay;
     const end = start + duration;
     gain.gain.setValueAtTime(0.0001, start);
     gain.gain.exponentialRampToValueAtTime(volume, start + Math.min(0.02, duration / 3));
     gain.gain.exponentialRampToValueAtTime(0.0001, end);
-    oscillator.connect(gain).connect(this.context.destination);
+    const destination = this.masterGain ?? this.context.destination;
+    oscillator.connect(gain).connect(destination);
     oscillator.start(start);
     oscillator.stop(end + 0.02);
     oscillator.onended = () => {
@@ -85,6 +93,15 @@ export class MidiPreviewPlayer {
 }
 
 const PREVIEW_TIMBRES: SynthTimbre[] = ['sine', 'triangle', 'sawtooth', 'square'];
+
+/**
+ * Per-note peak gain shared by the oscillator and SoundFont sample engines.
+ * Lifting the base+scale keeps quiet scores audible; a per-voice `gain` multiply
+ * (default 1) and the UI gain slider stay first-class overrides.
+ */
+export function noteVolume(velocity: number, gain: number): number {
+  return (0.12 + (velocity / 127) * 0.18) * gain;
+}
 
 /**
  * Default local-synth settings for a score voice.

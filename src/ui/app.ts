@@ -278,6 +278,14 @@ class AudioVisualizerApp {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
     this.element<HTMLElement>('score-meta').textContent = `${this.currentScore.tracks.length} voice${this.currentScore.tracks.length === 1 ? '' : 's'} · ${this.currentScore.bpm} BPM`;
     this.element<HTMLInputElement>('export-title-input').value = this.exportTitle;
+    // Keep the Engine/Bank dropdowns in sync with the router so the displayed
+    // label always reflects the routing actually used at play time. Without this,
+    // the dropdown-label ↔ router-state binding is one-way and can desync, which
+    // makes oscillator playback render behind a "Sample SoundFont" label (and
+    // never shows the synth-fallback badge that would otherwise explain it).
+    const defaults = this.voiceRouter.getDefaults();
+    this.element<HTMLSelectElement>('playback-engine-select').value = defaults.engine;
+    this.element<HTMLSelectElement>('playback-bank-select').value = defaults.soundbank;
     this.updateCanvasAriaLabel();
     const options = this.element<HTMLElement>('voice-filter-options'); options.replaceChildren();
     this.currentScore.tracks.forEach((track) => {

@@ -28,6 +28,7 @@ uses [Semantic Versioning](https://semver.org/).
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- The canvas preview legend overlay has been moved from the bottom-left to the bottom-right corner to prevent overlapping with the viewport navigation HUD overlay. SemVer: **PATCH**.
 - SoundFont preview no longer fades sustained notes to silence mid-hold: a shared ADSR envelope
   replaces the old attack-then-fade-over-the-whole-note gain curve on both sample and oscillator
   engines. SemVer: **PATCH**.

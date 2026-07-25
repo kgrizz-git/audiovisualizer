@@ -126,16 +126,17 @@ export class CanvasRenderer {
     });
   }
 
-  private drawCanvasLegend(_w: number, h: number, geometry: RenderedGeometry): void {
+  private drawCanvasLegend(w: number, h: number, geometry: RenderedGeometry): void {
     const content = getLegendContent(geometry.config);
-    const x = 24;
+    const legendW = 350;
     const legendH = 145;
+    const x = w - legendW - 24;
     const y = h - legendH - 24;
     this.ctx.fillStyle = 'rgba(9, 17, 31, 0.78)';
     this.ctx.strokeStyle = 'rgba(226, 232, 240, 0.18)';
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
-    this.ctx.roundRect(x, y, 350, legendH, 12);
+    this.ctx.roundRect(x, y, legendW, legendH, 12);
     this.ctx.fill();
     this.ctx.stroke();
     this.ctx.fillStyle = '#f8fafc';

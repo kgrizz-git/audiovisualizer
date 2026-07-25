@@ -3,9 +3,10 @@
 Last reviewed: 2026-07-25
 Date: 2026-07-25
 Author: Cursor Grok
-Status: approved / in-progress (implementation dispatched 2026-07-25)
+Status: complete (2026-07-25)
 Linked issue/PR: n/a
 SemVer impact: **PATCH** (correctness of existing MIDI / SoundFont audition; no new UI)
+Completed: 2026-07-25 — committed as `7f94404`; manual smoke accepted by user.
 
 ## Goal
 
@@ -204,8 +205,8 @@ scripts/bundle-soundfonts.mjs                — download *-loop.json with Fluid
       `loop` / `loopStart` / `loopEnd`; still `stop()` at `end + release`.
 - [x] `gmLoopSlugs` map for known gleitz≠goldst names; tests for map + missing
       file soft-fail + player sets loop flags by default.
-- [ ] Manual smoke: held organ/cello/pad vs short piano note (piano may lack
-      loop file — one-shot OK).
+- [x] Manual smoke: held organ/cello/pad vs short piano note (piano may lack
+      loop file — one-shot OK). Accepted by user 2026-07-25.
 
 ### Phase 4: Bundle loops + docs + validate
 
@@ -226,9 +227,10 @@ scripts/bundle-soundfonts.mjs                — download *-loop.json with Fluid
 - [x] Unit: `scheduleSample` sets `loop` when metadata present (default on);
       leaves false when absent.
 - [x] Bundler: verify mode accepts presence of loop JSON beside core `.js`.
-- [ ] Manual: Bach / pedal-heavy MIDI — pedal rings, no mid-hold fade-to-silence
-      on long notes.
-- [ ] Manual: organ or cello held note remains audible past buffer length.
+- [x] Manual: Bach / pedal-heavy MIDI — pedal rings, no mid-hold fade-to-silence
+      on long notes. Accepted by user 2026-07-25.
+- [x] Manual: organ or cello held note remains audible past buffer length.
+      Accepted by user 2026-07-25.
 - [x] `npm run validate` passes.
 
 ## Open questions

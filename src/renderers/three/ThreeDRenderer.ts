@@ -40,6 +40,7 @@ export class ThreeDRenderer implements I3DRenderer {
   private revealMaterials: THREE.Material[] = [];
   private onsetPulses: Array<{ mesh: THREE.Mesh; startedAt: number }> = [];
   private previousPlayhead: number | null = null;
+  private turntableRotation = 0;
 
   private viewport: ViewportTransform3D = { ...DEFAULT_VIEWPORT_3D };
   private geometry: RenderedGeometry3D | null = null;
@@ -91,11 +92,27 @@ export class ThreeDRenderer implements I3DRenderer {
     this.applyBloom();
   }
 
+  private applyTurntableRotation(): void {
+    const pivot = new THREE.Vector3(this.center.x, this.center.y, 0);
+    this.contentGroup.position.set(0, 0, 0);
+    this.contentGroup.rotation.set(0, 0, 0);
+    if (this.viewport.autoRotate) {
+      this.contentGroup.position.sub(pivot);
+      this.contentGroup.position.applyAxisAngle(new THREE.Vector3(0, 0, 1), this.turntableRotation);
+      this.contentGroup.position.add(pivot);
+      this.contentGroup.rotation.z = this.turntableRotation;
+    }
+  }
+
   public setGeometry(geometry: RenderedGeometry3D): void {
     this.geometry = geometry;
     this.zScale = geometry.zScale;
     this.rebuildContent();
     this.computeBounds();
+    if (!this.viewport.autoRotate) {
+      this.turntableRotation = 0;
+    }
+    this.applyTurntableRotation();
     this.frameCamera();
     this.renderOnce();
   }
@@ -103,7 +120,11 @@ export class ThreeDRenderer implements I3DRenderer {
   public setViewport(viewport: ViewportTransform3D): void {
     this.viewport = viewport;
     this.applyBloom();
-    if (this.controls) this.controls.autoRotate = viewport.autoRotate;
+    if (this.controls) this.controls.autoRotate = false;
+    if (!viewport.autoRotate) {
+      this.turntableRotation = 0;
+    }
+    this.applyTurntableRotation();
     this.frameCamera();
     // A cue-mode switch must take effect immediately even when playback is
     // stopped; otherwise the glowing now-plane lingers until the next playhead
@@ -124,7 +145,13 @@ export class ThreeDRenderer implements I3DRenderer {
     }
     this.applyPlaybackCue();
     this.updateOnsetPulses();
-    if (this.controls?.autoRotate) this.controls.update();
+    if (this.viewport.autoRotate) {
+      this.turntableRotation += 0.005;
+    } else {
+      this.turntableRotation = 0;
+    }
+    this.applyTurntableRotation();
+    if (this.controls) this.controls.update();
     this.renderOnce();
   }
 
@@ -172,7 +199,13 @@ export class ThreeDRenderer implements I3DRenderer {
       recorder.start();
       const started = performance.now();
       const frame = () => {
-        if (this.controls?.autoRotate) this.controls.update();
+        if (this.viewport.autoRotate) {
+          this.turntableRotation += 0.005;
+        } else {
+          this.turntableRotation = 0;
+        }
+        this.applyTurntableRotation();
+        if (this.controls) this.controls.update();
         this.renderOnce();
         if (performance.now() - started >= durationSeconds * 1000) recorder.stop();
         else requestAnimationFrame(frame);
@@ -556,7 +589,7 @@ export class ThreeDRenderer implements I3DRenderer {
         new THREE.MeshBasicMaterial({ color: item.color, transparent: true, opacity: 0.95, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }),
       );
       mesh.position.set(this.worldX(item.x), this.worldY(item.y), this.worldZ(item.z) + 1);
-      this.scene.add(mesh);
+      this.contentGroup.add(mesh);
       this.onsetPulses.push({ mesh, startedAt: performance.now() });
     }
   }
@@ -566,7 +599,7 @@ export class ThreeDRenderer implements I3DRenderer {
     this.onsetPulses = this.onsetPulses.filter(({ mesh, startedAt }) => {
       const progress = (now - startedAt) / 520;
       if (progress >= 1) {
-        this.scene.remove(mesh);
+        this.contentGroup.remove(mesh);
         mesh.geometry.dispose();
         (mesh.material as THREE.Material).dispose();
         return false;
@@ -580,7 +613,7 @@ export class ThreeDRenderer implements I3DRenderer {
 
   private clearOnsetPulses(): void {
     for (const { mesh } of this.onsetPulses) {
-      this.scene.remove(mesh);
+      this.contentGroup.remove(mesh);
       mesh.geometry.dispose();
       (mesh.material as THREE.Material).dispose();
     }

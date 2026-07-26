@@ -16,8 +16,9 @@ several independent, concurrent streams.
 3. Keep mapping behavior in `src/core/`; keep browser APIs in `src/ui/` or renderers.
 4. Update focused Vitest coverage with the behavior.
 5. Run `npm run validate`.
-6. Reconcile the active backlog: remove completed work from `dev-docs/TO_DO.md`, then add a
-   concise entry to `CHANGELOG.md` for user-facing work or `CHANGELOG.dev.md` for internal work.
+6. Reconcile the active backlog: add a concise entry to `CHANGELOG.md` for user-facing work
+   or `CHANGELOG.dev.md` for internal work, then remove the completed item from
+   `dev-docs/TO_DO.md`. Do not leave checked-off `[x]` items in the active backlog.
 7. Report changed files, validation result, and any deliberately deferred work.
 
 ## Project-specific checks

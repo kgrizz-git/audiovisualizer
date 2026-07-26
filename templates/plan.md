@@ -49,6 +49,15 @@ How will we know this is done and correct?
 - [ ] [test or check]
 - [ ] [test or check]
 
+## Completion checklist
+
+When all phases and verification are done:
+
+- [ ] Update plan `Status:` to `complete` with completion date
+- [ ] Move plan to `plans/archive/`
+- [ ] Add entry to `CHANGELOG.md` (user-facing) or `CHANGELOG.dev.md` (internal)
+- [ ] Remove the completed item from `dev-docs/TO_DO.md` (do not just check it off)
+
 ## Open questions
 
 - [ ] [question — assign to owner if known]

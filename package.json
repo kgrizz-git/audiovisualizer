@@ -11,9 +11,11 @@
     "render": "npm run build:cli --silent && node dist-cli/render-midi.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "validate": "npm run test && npm run build",
+    "lint": "eslint src/ tests/",
+    "validate": "npm run lint && npm run test && npm run build",
     "bundle:soundfonts": "node scripts/bundle-soundfonts.mjs",
-    "bundle:soundfonts:verify": "node scripts/bundle-soundfonts.mjs --verify"
+    "bundle:soundfonts:verify": "node scripts/bundle-soundfonts.mjs --verify",
+    "prepare": "sh hooks/install.sh 2>/dev/null || true"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
@@ -21,9 +23,12 @@
     "three": "^0.160.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/three": "^0.160.0",
     "esbuild": "^0.28.1",
+    "eslint": "^10.8.0",
     "typescript": "^5.4.5",
+    "typescript-eslint": "^8.65.0",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
   }

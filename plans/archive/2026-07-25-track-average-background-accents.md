@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-25
 Date: 2026-07-25
 Author: Antigravity
-Status: approved
+Status: complete (revised 2026-07-25 per user feedback)
 Linked issue/PR: n/a
 
 ## Goal
@@ -56,20 +56,20 @@ tests/viewportRenderers.test.ts        — add unit tests asserting transparent 
 
 ### Phase 1: Renderer contracts and Canvas 2D fix
 
-- [ ] Add `setBackground` to `I3DRenderer` interface.
-- [ ] Implement `setBackground` in `ThreeDRenderer` with:
+- [x] Add `setBackground` to `I3DRenderer` interface.
+- [x] Implement `setBackground` in `ThreeDRenderer` with:
   - Cache checks for early return
   - Safe circular HSL averaging (handling zero count checks), merging hues across all visible tracks into one top color
   - Explicit texture disposal (`instanceof THREE.Texture` check)
   - 2-stop gradient fallback (never flat `THREE.Color`) for empty/undefined accent lists, preserving the existing gradient aesthetic in `'average'` mode
   - `scene.fog.color.set(...)` guarded with `FogExp2` instanceof check (not `'color' in`), since `scene.fog` is always `FogExp2` from `mount()`
-- [ ] Implement `getTransparentColor` helper and fix the transparent fade color in `canvasRenderer.ts` to prevent grey/blue fringes when fading to a black background.
+- [x] Implement `getTransparentColor` helper and fix the transparent fade color in `canvasRenderer.ts` to prevent grey/blue fringes when fading to a black background.
 
 ### Phase 2: App wiring and Verification
 
-- [ ] Call `renderer.setBackground` in `app.ts`'s `render3D()` (after `ensureThreeRenderer()`) and `downloadPng3D()` (after the existing `if (!renderer) return;` null guard — do not switch to `ensureThreeRenderer()`).
-- [ ] Write unit tests in `tests/viewportRenderers.test.ts` verifying that `CanvasRenderer` translates background options into the correct transparent gradient stops using mocked rendering contexts.
-- [ ] Run `npm run validate` to ensure TypeScript compilation, testing, and production build checks pass.
+- [x] Call `renderer.setBackground` in `app.ts`'s `render3D()` (after `ensureThreeRenderer()`) and `downloadPng3D()` (after the existing `if (!renderer) return;` null guard — do not switch to `ensureThreeRenderer()`).
+- [x] Write unit tests in `tests/viewportRenderers.test.ts` verifying that `CanvasRenderer` translates background options into the correct transparent gradient stops using mocked rendering contexts.
+- [x] Run `npm run validate` to ensure TypeScript compilation, testing, and production build checks pass.
 
 > **Cache invalidation note**: `setScore` (new MIDI load) does not dispose `threeRenderer`; the shared 3D instance is reused for page lifetime. `setBackground`'s cache-miss naturally rebuilds the texture on the next `render3D()` after a MIDI swap, so no explicit cache-bust call is needed — but note that identical new scores coincidentally yielding the same HSL averages will short-circuit the cache, which is correct behavior.
 
@@ -77,15 +77,42 @@ tests/viewportRenderers.test.ts        — add unit tests asserting transparent 
 
 How will we know this is done and correct?
 
-- [ ] When using a black background, the 3D scene background displays a subtle vertical gradient highlighting the average colors of the tracks rather than the default blue-grey.
-- [ ] In `'average'` mode, the 3D background remains a vertical gradient (not a flat solid color), preserving the existing gradient aesthetic derived from `getAverageScoreBackground`.
-- [ ] Changing the selected track/voice changes the background glow color in both 2D and 3D modes.
-- [ ] In 3D mode, the fog matches the background color perfectly so far-away notes fade cleanly to black/solid.
-- [ ] No WebGL textures or resources are leaked when repeatedly toggling background mode **while in a 3D variation** or loading new MIDI files in 3D mode (validated via `renderer.info.memory` or garbage collection checks). In pure 2D mode the 3D path is not invoked, so this test must be exercised in a 3D variation to avoid passing vacuously.
+- [x] When using a black background, the 3D scene background displays a subtle vertical gradient tinted by a single dominant hue (computed across all visible tracks) rather than one hue per track, so only ONE accent color is ever shown.
+- [x] The accent changes visibly between tracks with distinct character, because the hue is the duration×velocity-weighted circular mean (so sustained or loudly-struck notes dominate) rather than an unweighted centroid that collapses toward a common value when notes span the full hue circle.
+- [x] The accent strength stays subtle: 2D atmosphere alpha is 12% per radial gradient (one centered glow for the single accent), and the 3D top color is `hsl(avgHue, 25%, 8%)`, so notes remain legible and the glow is atmospheric rather than vibrant.
+- [x] In `'average'` mode, the 3D background remains a vertical gradient (not a flat solid color), preserving the existing gradient aesthetic derived from `getAverageScoreBackground`.
+- [x] In 3D mode, the fog matches the background color so far-away notes fade cleanly.
+- [x] No WebGL textures or resources are leaked when repeatedly toggling background mode in a 3D variation or loading new MIDI files in 3D mode (old `THREE.CanvasTexture` is disposed before assigning a new one; cache short-circuits identical input).
+
+## Revision note (2026-07-25)
+
+The first implementation shipped per-track circular-mean accents (multiple
+competing gradient stops in 3D and 4 radial gradients in 2D), bumped the 2D
+atmosphere opacity to 22%, and used 75%/15% saturation/lightness in 3D. User
+feedback: the accent often did not change between tracks, multiple accent
+colors were visible at once, and the glow was too strong. The revised
+implementation:
+1. Adds `getDominantScoreAccent` (single accent across all visible tracks) and
+   routes `app.ts` `atmosphereColors()` to a one-element array.
+2. Reverts 2D `drawAtmosphere` to 12% opacity with a single centered radial
+   glow for the single-accent case.
+3. Reverts 3D `setBackground` to one circularly-merged hue at the plan's
+   recommended 25%/8% saturation/lightness, dropping the multi-stop path.
+
+A second revision (same day) corrected the weighting: both
+`getDominantScoreAccent` and `getAverageScoreBackground` now use a
+duration×velocity-weighted circular mean (shared `weightedHueAccumulator`
+helper), mirroring the "Weight → velocity × sounding overlap" coloring already
+used by the tonal-time-lines band colors. The original circular mean counted
+notes one-to-one, ignoring that a four-beat sustained note or a fortissimo
+strike should weigh more than a grace note. The weighted mean makes the accent
+(and the 'average' background mode) reflect the perceived average color over
+the course of the piece.
+
 
 ## Open questions
 
-- [ ] What is the optimal saturation/lightness for the 3D highlight top color to ensure notes remain clearly legible? (Recommend `25%` saturation and `8%` lightness, tune on dense compositions).
+- [x] What is the optimal saturation/lightness for the 3D highlight top color to ensure notes remain clearly legible? (Recommend `25%` saturation and `8%` lightness, tune on dense compositions).
 
 ## Risks
 

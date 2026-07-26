@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildSvg } from '../src/renderers/svg/svgBuilder.js';
 import { RenderedGeometry, DEFAULT_VIEWPORT } from '../src/core/types.js';
 import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
+import { CanvasRenderer } from '../src/renderers/canvas/canvasRenderer.js';
 
 describe('Viewport Renderer Extensions', () => {
   const dummyGeometry: RenderedGeometry = {
@@ -32,5 +33,81 @@ describe('Viewport Renderer Extensions', () => {
     const bandLine = svg.indexOf('y1="125.00"'); // band mid-line at y=100+50/2
     expect(bandLine).toBeGreaterThan(groupStart);
     expect(bandLine).toBeLessThan(groupEnd);
+  });
+});
+
+describe('CanvasRenderer Background Options', () => {
+  it('properly translates background options to transparent stops in drawAtmosphere', () => {
+    // Mock global window to prevent ReferenceError in Node environment
+    const originalWindow = (globalThis as any).window;
+    (globalThis as any).window = { devicePixelRatio: 1 };
+
+    try {
+      const gradientStops: { stop: number; color: string }[] = [];
+      const mockGradient = {
+        addColorStop: (stop: number, color: string) => {
+          gradientStops.push({ stop, color });
+        }
+      };
+
+      const mockCtx = {
+        save: () => {},
+        scale: () => {},
+        translate: () => {},
+        fillRect: () => {},
+        beginPath: () => {},
+        arc: () => {},
+        fill: () => {},
+        stroke: () => {},
+        restore: () => {},
+        roundRect: () => {},
+        fillText: () => {},
+        createRadialGradient: () => mockGradient,
+      };
+
+      const mockCanvas = {
+        getContext: () => mockCtx,
+        width: 100,
+        height: 100,
+      } as unknown as HTMLCanvasElement;
+
+      const renderer = new CanvasRenderer(mockCanvas);
+      const dummyGeometry: RenderedGeometry = {
+        width: 100,
+        height: 100,
+        bands: [],
+        voicePaths: [],
+        config: DEFAULT_CONFIG,
+        bpm: 120,
+      };
+
+      // Test with black background
+      renderer.render(dummyGeometry, {
+        backgroundColor: '#000000',
+        atmosphereColors: ['hsl(100, 85%, 60%)'],
+      });
+
+      // Find the transparent stop (stop 1)
+      const blackFade = gradientStops.find(s => s.stop === 1);
+      expect(blackFade).toBeDefined();
+      expect(blackFade!.color).toBe('#00000000');
+
+      // Test with HSL background
+      gradientStops.length = 0;
+      renderer.render(dummyGeometry, {
+        backgroundColor: 'hsl(210, 32%, 9%)',
+        atmosphereColors: ['hsl(100, 85%, 60%)'],
+      });
+
+      const hslFade = gradientStops.find(s => s.stop === 1);
+      expect(hslFade).toBeDefined();
+      expect(hslFade!.color).toBe('hsla(210, 32%, 9%, 0)');
+    } finally {
+      if (originalWindow === undefined) {
+        delete (globalThis as any).window;
+      } else {
+        (globalThis as any).window = originalWindow;
+      }
+    }
   });
 });

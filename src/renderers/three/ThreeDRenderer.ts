@@ -41,6 +41,8 @@ export class ThreeDRenderer implements I3DRenderer {
   private onsetPulses: Array<{ mesh: THREE.Mesh; startedAt: number }> = [];
   private previousPlayhead: number | null = null;
   private turntableRotation = 0;
+  private currentBgColor: string | null = null;
+  private currentAtmosphereColors: string[] | null = null;
 
   private viewport: ViewportTransform3D = { ...DEFAULT_VIEWPORT_3D };
   private geometry: RenderedGeometry3D | null = null;
@@ -130,6 +132,81 @@ export class ThreeDRenderer implements I3DRenderer {
     // stopped; otherwise the glowing now-plane lingers until the next playhead
     // step. Re-derive visibility and clip state from the last known playhead.
     this.applyPlaybackCue();
+    this.renderOnce();
+  }
+
+  public setBackground(backgroundColor: string, atmosphereColors?: string[]): void {
+    const colorsChanged = !this.currentAtmosphereColors || !atmosphereColors ||
+      this.currentAtmosphereColors.length !== atmosphereColors.length ||
+      this.currentAtmosphereColors.some((c, idx) => c !== atmosphereColors![idx]);
+
+    if (this.currentBgColor === backgroundColor && !colorsChanged) {
+      return;
+    }
+    this.currentBgColor = backgroundColor;
+    this.currentAtmosphereColors = atmosphereColors ? [...atmosphereColors] : null;
+
+    if (this.scene.background instanceof THREE.Texture) {
+      this.scene.background.dispose();
+    }
+
+    // Top color: a single subtle merged accent hue (25% sat / 8% light, per the
+    // plan) derived circularly from the provided atmosphere colors, so all
+    // visible tracks combine into ONE atmospheric tint rather than multiple
+    // competing gradient stops. Falls back to the backgroundColor itself.
+    let topColor = backgroundColor;
+    const hues = (atmosphereColors ?? [])
+      .map((c) => c.match(/hsl\((\d+)/))
+      .map((m) => (m ? parseInt(m[1], 10) : NaN))
+      .filter((h) => !Number.isNaN(h));
+    if (hues.length > 0) {
+      const sum = hues.reduce(
+        (acc, h) => {
+          const r = (h * Math.PI) / 180;
+          return { x: acc.x + Math.cos(r), y: acc.y + Math.sin(r) };
+        },
+        { x: 0, y: 0 },
+      );
+      const avgHue = (Math.atan2(sum.y, sum.x) * 180) / Math.PI;
+      const hue = (avgHue + 360) % 360;
+      topColor = `hsl(${Math.round(hue)}, 25%, 8%)`;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+    const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, topColor);
+
+    // Bottom color: darken the backgroundColor; for pure black, use near-black.
+    let bottomColor = 'hsl(0, 0%, 1%)';
+    if (backgroundColor !== '#000000' && backgroundColor.startsWith('hsl(')) {
+      const match = backgroundColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+      if (match) {
+        const h = match[1];
+        const s = match[2];
+        const l = parseInt(match[3], 10);
+        bottomColor = `hsl(${h}, ${s}%, ${Math.max(1, Math.round(l / 4))}%)`;
+      }
+    } else if (backgroundColor === '#000000' && hues.length > 0) {
+      // Keep the subtle accent hue flowing into the bottom as well when the user
+      // chose the pure-black background mode.
+      const match = topColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+      if (match) bottomColor = `hsl(${match[1]}, ${match[2]}%, 2%)`;
+    }
+
+    gradient.addColorStop(1, bottomColor);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 2, 256);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    this.scene.background = texture;
+
+    if (this.scene.fog instanceof THREE.FogExp2) {
+      this.scene.fog.color.set(backgroundColor);
+    }
     this.renderOnce();
   }
 

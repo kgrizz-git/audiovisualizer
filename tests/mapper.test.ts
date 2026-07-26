@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateDemoScore } from '../src/core/midi/parser.js';
-import { getAverageScoreBackground, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor } from '../src/core/mapper/scoreMapper.js';
+import { getAverageScoreBackground, getDominantScoreAccent, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor } from '../src/core/mapper/scoreMapper.js';
 import { NoteEvent } from '../src/core/types.js';
 
 describe('Score Mapper Unit Tests', () => {
@@ -29,6 +29,62 @@ describe('Score Mapper Unit Tests', () => {
     const accents = getTrackAverageAccents(score, { ...DEFAULT_CONFIG, pitchHueMode: 'voice_palette' });
     expect(accents).toHaveLength(score.tracks.length);
     expect(accents[0]).toBe('hsl(12, 85%, 60%)');
+  });
+
+  it('produces a single weighted average accent dominated by long, loud notes', () => {
+    const score = {
+      title: 'Weighted fixture', duration: 2, bpm: 120,
+      tracks: [
+        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+          // pitch-class 0 => hue 0, but quiet and short.
+          { id: 'a', pitch: 60, onset: 0, duration: 0.1, velocity: 10, voice: 0, pitchClass: 0 },
+        ] },
+        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', notes: [
+          // pitch-class 7 => hue 210, loud and long: weight = 2 × 127 = 254 vs 0.1 × 10 = 1.
+          { id: 'b', pitch: 67, onset: 0, duration: 2, velocity: 127, voice: 1, pitchClass: 7 },
+        ] },
+      ],
+    };
+    const accent = getDominantScoreAccent(score as any, DEFAULT_CONFIG);
+    expect(accent).not.toBeNull();
+    // The long loud bass note dominates; accent hue sits near 210 rather than 0.
+    const match = accent!.match(/hsl\((\d+),/);
+    expect(match).not.toBeNull();
+    expect(parseInt(match![1], 10)).toBeGreaterThan(180);
+    expect(parseInt(match![1], 10)).toBeLessThan(240);
+  });
+
+  it('returns null when no tracks are visible under the voice filter', () => {
+    const score = {
+      title: 'Filtered', duration: 1, bpm: 120,
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+        { id: 'a', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 },
+      ] }],
+    };
+    const accent = getDominantScoreAccent(score as any, { ...DEFAULT_CONFIG, voiceFilter: [1] });
+    expect(accent).toBeNull();
+  });
+
+  it('weights getAverageScoreBackground by duration × velocity for consistency with the accent', () => {
+    const score = {
+      title: 'Weighted bg', duration: 2, bpm: 120,
+      tracks: [
+        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+          // Quiet, short note at hue 0 — should barely perturb the average.
+          { id: 'a', pitch: 60, onset: 0, duration: 0.1, velocity: 10, voice: 0, pitchClass: 0 },
+        ] },
+        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', notes: [
+          // Loud, long note at hue 210 — should dominate.
+          { id: 'b', pitch: 67, onset: 0, duration: 2, velocity: 127, voice: 1, pitchClass: 7 },
+        ] },
+      ],
+    };
+    const background = getAverageScoreBackground(score as any, DEFAULT_CONFIG);
+    expect(background).toMatch(/^hsl\(\d+, 32%, 9%\)$/);
+    const match = background.match(/hsl\((\d+),/)!;
+    const hue = parseInt(match[1], 10);
+    expect(hue).toBeGreaterThan(180);
+    expect(hue).toBeLessThan(240);
   });
 
   it('generates expected geometry segments for demo score in Left-to-Right mode', () => {

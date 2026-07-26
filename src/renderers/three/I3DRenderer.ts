@@ -12,6 +12,8 @@ export interface I3DRenderer {
   setGeometry(geometry: RenderedGeometry3D): void;
   /** Applies camera preset and bloom settings. */
   setViewport(viewport: ViewportTransform3D): void;
+  /** Sets the rendering background color and dynamic highlight atmosphere colors. */
+  setBackground(backgroundColor: string, atmosphereColors?: string[]): void;
   /**
    * Positions the sweeping "now-plane" at playback time `t` (seconds). Pass `null` to
    * hide the plane (static / full-score view when not playing).

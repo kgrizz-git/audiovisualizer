@@ -61,17 +61,41 @@ export function getMappedHue(note: NoteEvent, config: RuleConfig): number {
   return (sourceHue + note.voice * config.hueOffsetPerVoice + 360) % 360;
 }
 
-/** Returns a dark, readable background based on the circular average of mapped note hues. */
-export function getAverageScoreBackground(score: Score, config: RuleConfig): string {
+/**
+ * Sum of hue-unit-vectors for the visible notes, each weighted by its sounding
+ * duration × velocity, mirroring the "Weight → velocity × sounding overlap"
+ * coloring used by `mapTonalTimeBands`. A note that sustains for four beats
+ * contributes roughly four times the weight of a grace note, and a fortissimo
+ * strike contributes more than a pianissimo touch, so the resulting mean hue
+ * matches the perceived average color over the course of the piece rather than
+ * a one-note-one-vote centroid. Honors `config.voiceFilter` and applies
+ * `quantizeNote` for parity with the tonal-time-lines path. Returns the unit
+ * vector accumulator `{ x, y, totalWeight }` (totalWeight is 0 when there are
+ * no visible notes).
+ */
+function weightedHueAccumulator(score: Score, config: RuleConfig): { x: number; y: number; totalWeight: number } {
   const notes = score.tracks
     .filter((track) => config.voiceFilter === null || config.voiceFilter.includes(track.channel))
-    .flatMap((track) => track.notes);
-  if (notes.length === 0) return '#000000';
-  const average = notes.reduce((sum, note) => {
-    const radians = getMappedHue(note, config) * Math.PI / 180;
-    return { x: sum.x + Math.cos(radians), y: sum.y + Math.sin(radians) };
-  }, { x: 0, y: 0 });
-  const hue = (Math.atan2(average.y, average.x) * 180 / Math.PI + 360) % 360;
+    .flatMap((track) => track.notes.map((note) => quantizeNote(note, score.bpm, config)));
+  let x = 0;
+  let y = 0;
+  let totalWeight = 0;
+  for (const note of notes) {
+    const weight = Math.max(0, note.duration) * Math.max(1, note.velocity);
+    if (weight <= 0) continue;
+    const radians = (getMappedHue(note, config) * Math.PI) / 180;
+    x += Math.cos(radians) * weight;
+    y += Math.sin(radians) * weight;
+    totalWeight += weight;
+  }
+  return { x, y, totalWeight };
+}
+
+/** Returns a dark, readable background based on the duration×velocity-weighted mean of mapped note hues. */
+export function getAverageScoreBackground(score: Score, config: RuleConfig): string {
+  const { x, y, totalWeight } = weightedHueAccumulator(score, config);
+  if (totalWeight === 0) return '#000000';
+  const hue = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
   return `hsl(${Math.round(hue)}, 32%, 9%)`;
 }
 
@@ -89,6 +113,22 @@ export function getTrackAverageAccents(score: Score, config: RuleConfig): string
       return `hsl(${Math.round(hue)}, 85%, 60%)`;
     })
     .filter((color): color is string => color !== null);
+}
+
+/**
+ * One single merged accent for the black-background atmosphere, derived from
+ * the duration×velocity-weighted circular mean of mapped note hues across all
+ * visible tracks. This mirrors the "Weight → velocity × sounding overlap"
+ * coloring already used by the tonal-time-lines bands, so a sustained or loudly
+ * struck note carries proportionally more influence than a grace note, and the
+ * accent reflects the perceived average color of the piece. Returns a bright
+ * HSL string, or null when no visible notes exist.
+ */
+export function getDominantScoreAccent(score: Score, config: RuleConfig): string | null {
+  const { x, y, totalWeight } = weightedHueAccumulator(score, config);
+  if (totalWeight === 0) return null;
+  const hue = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  return `hsl(${Math.round(hue)}, 85%, 60%)`;
 }
 
 /**

@@ -577,24 +577,48 @@ export class ThreeDRenderer implements I3DRenderer {
     this.revealMaterials.push(coreMaterial, haloMaterial);
   }
 
+  private bucketOpacity(opacity: number): number {
+    if (opacity < 0.625) return 0.55;
+    if (opacity < 0.775) return 0.70;
+    if (opacity < 0.90) return 0.85;
+    return 0.95;
+  }
+
   private buildBoxes(geometry: RenderedGeometry3D): void {
-    const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.96, vertexColors: true, depthWrite: true });
-    material.clippingPlanes = [this.revealPlane];
-    const boxes = new THREE.InstancedMesh(boxGeometry, material, geometry.boxes.length);
-    const matrix = new THREE.Matrix4();
-    const color = new THREE.Color();
-    geometry.boxes.forEach((box, index) => {
-      matrix.makeScale(box.sx, box.sy, box.sz);
-      matrix.setPosition(this.worldX(box.cx), this.worldY(box.cy), this.worldZ(box.cz));
-      boxes.setMatrixAt(index, matrix);
-      color.set(box.color);
-      boxes.setColorAt(index, color);
+    const bucketMap = new Map<number, typeof geometry.boxes>();
+    geometry.boxes.forEach((box) => {
+      const opacity = this.bucketOpacity(box.opacity);
+      if (!bucketMap.has(opacity)) {
+        bucketMap.set(opacity, []);
+      }
+      bucketMap.get(opacity)!.push(box);
     });
-    boxes.instanceMatrix.needsUpdate = true;
-    if (boxes.instanceColor) boxes.instanceColor.needsUpdate = true;
-    this.contentGroup.add(boxes);
-    this.revealMaterials.push(material);
+
+    bucketMap.forEach((bucketBoxes, opacity) => {
+      const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity,
+        vertexColors: false,
+        depthWrite: false,
+      });
+      material.clippingPlanes = [this.revealPlane];
+      const boxes = new THREE.InstancedMesh(boxGeometry, material, bucketBoxes.length);
+      const matrix = new THREE.Matrix4();
+      const color = new THREE.Color();
+      bucketBoxes.forEach((box, index) => {
+        matrix.makeScale(box.sx, box.sy, box.sz);
+        matrix.setPosition(this.worldX(box.cx), this.worldY(box.cy), this.worldZ(box.cz));
+        boxes.setMatrixAt(index, matrix);
+        color.set(box.color);
+        boxes.setColorAt(index, color);
+      });
+      boxes.instanceMatrix.needsUpdate = true;
+      if (boxes.instanceColor) boxes.instanceColor.needsUpdate = true;
+      this.contentGroup.add(boxes);
+      this.revealMaterials.push(material);
+    });
   }
 
   /** A fixed grounding grid and seeded star field give orbiting views depth without randomness. */

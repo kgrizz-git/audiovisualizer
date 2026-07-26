@@ -80,7 +80,7 @@ swatches, while plotter SVG remains color-free.
   instanced spheres — one per note — whose diameter equals the note's duration on the time
   axis (so long notes read as larger orbs threading through time), each wrapped in a soft,
   dimmer outer halo for glow. The `3d_piano_roll`
-  mode maps pitch to X, voice to Y, and onset/duration to Z boxes. A deterministic grounding
+  mode maps pitch to X, voice to Y, and onset/duration to Z boxes, with velocity modulating the box opacity (quantized to 4 bands) to visualize note dynamics. A deterministic grounding
   grid and particle field support depth perception; playback can auto-follow active notes or
   chase the now-plane, while manual navigation deliberately suspends those modes. PNG and a
   six-second WebM capture are available. Playback Cue selects either the sweeping now-plane or

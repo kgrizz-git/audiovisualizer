@@ -25,10 +25,12 @@ uses [Semantic Versioning](https://semver.org/).
 - Engine-aware voice controls with dynamic per-track UI switching between General MIDI instrument selection (SoundFont mode) and oscillator waveform selection (Synth mode). SemVer: **MINOR**.
 
 ### Changed
+- Velocity now modulates piano-roll slab opacity (4 bands); previously the mapper-computed per-note opacity was dropped by the renderer. SemVer: **MINOR**.
 - When the canvas background is set to 'Black', the 3D scene background and fog now dynamically transition to a subtle vertical gradient tinted by a single merged accent computed from the duration×velocity-weighted circular mean of mapped note hues across all visible tracks (25% saturation / 8% lightness so notes stay legible), instead of a static blue-grey gradient. The 2D atmosphere paints one centered radial glow at the same weighted hue (12% opacity) fading cleanly to transparent to avoid navy fringes. The weighting mirrors the existing tonal-time-lines "Weight → velocity × sounding overlap" coloring, so sustained or loudly struck notes carry proportionally more influence than grace notes, and the accent tracks the perceived average color of the piece. SemVer: **MINOR**.
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- 3D piano-roll slab no longer renders blank — boxes were being shaded black by a `vertexColors: true` material pointing at a `BoxGeometry` with no color attribute; instance colors now pass through correctly. SemVer: **PATCH**.
 - The canvas preview legend overlay has been moved from the bottom-left to the bottom-right corner to prevent overlapping with the viewport navigation HUD overlay. SemVer: **PATCH**.
 - The 3D idle turntable has been fixed to rotate around the Z-axis (musical time/depth) always, including for the 'Time up' preset where it previously did nothing. It has also been updated to animate continuously when playback is paused. SemVer: **PATCH**.
 - The transient onset pulses (flashes) have been moved inside the rotating content group in the 3D renderer so that they spin in alignment with the active note geometry when the turntable is active. SemVer: **PATCH**.

@@ -19,6 +19,13 @@ import {
   buildBoxes,
 } from './geometryBuilders.js';
 import { OnsetPulseController } from './onsetPulses.js';
+import {
+  makeGradientBackground,
+  buildAtmosphere,
+  buildNowPlane,
+  disposeNowPlane,
+} from './sceneAtmosphere.js';
+
 
 /**
  * Three.js renderer for the 3D calligraphic score modes. The X/Y coordinates arrive in
@@ -297,7 +304,7 @@ export class ThreeDRenderer implements I3DRenderer {
   public dispose(): void {
     this.clearContent();
     this.clearOnsetPulses();
-    this.disposeNowPlane();
+    this.nowPlane = disposeNowPlane(this.scene, this.nowPlane);
     if (this.scene.background instanceof THREE.Texture) this.scene.background.dispose();
     this.bloomPass?.dispose();
     this.composer?.dispose();
@@ -355,63 +362,8 @@ export class ThreeDRenderer implements I3DRenderer {
       else buildDiscs(ctx, this.geometry);
     }
     if (this.geometry.boxes.length > 0) buildBoxes(ctx, this.geometry);
-    this.buildAtmosphere(this.geometry);
-    this.buildNowPlane(this.geometry);
-  }
-
-  /** A fixed grounding grid and seeded star field give orbiting views depth without randomness. */
-  private buildAtmosphere(geometry: RenderedGeometry3D): void {
-    const grid = new THREE.GridHelper(Math.max(geometry.width, geometry.depth) * 1.15, 18, 0x263d65, 0x132138);
-    grid.rotation.x = Math.PI / 2;
-    grid.position.y = -geometry.height / 2 - 28;
-    grid.position.z = 0;
-    (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.3;
-    this.contentGroup.add(grid);
-
-    const positions: number[] = [];
-    let seed = 0x9e3779b9;
-    const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 0x100000000; };
-    const span = Math.max(geometry.width, geometry.height, geometry.depth) * 1.25;
-    for (let i = 0; i < 160; i++) positions.push((random() - 0.5) * span, (random() - 0.5) * span, (random() - 0.5) * span);
-    const stars = new THREE.BufferGeometry();
-    stars.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    this.contentGroup.add(new THREE.Points(stars, new THREE.PointsMaterial({ color: 0x7892c9, size: 1.5, transparent: true, opacity: 0.32, depthWrite: false })));
-  }
-
-  /**
-   * Removes the now-plane mesh from the scene and frees its GPU resources.
-   * Callers that rebuild content must use this before adding a replacement —
-   * otherwise disposed meshes stay in the scene graph as stuck glowing planes
-   * that no longer follow the playhead or cue mode.
-   */
-  private disposeNowPlane(): void {
-    if (!this.nowPlane) return;
-    this.scene.remove(this.nowPlane);
-    this.nowPlane.geometry.dispose();
-    (this.nowPlane.material as THREE.Material).dispose();
-    this.nowPlane = null;
-  }
-
-  private buildNowPlane(geometry: RenderedGeometry3D): void {
-    // Drop any previous now-plane from the scene before adding a new one. A
-    // full render() (e.g. switching Playback Cue) rebuilds geometry; without
-    // this removal the old mesh was orphaned and kept rendering in place.
-    this.disposeNowPlane();
-
-    const planeSize = Math.max(geometry.width, geometry.height) * 1.4;
-    const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize);
-    const planeMaterial = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.10,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    this.nowPlane = new THREE.Mesh(planeGeometry, planeMaterial);
-    this.nowPlane.visible = false;
-    this.scene.add(this.nowPlane);
+    buildAtmosphere(this.contentGroup, this.geometry);
+    this.nowPlane = buildNowPlane(this.scene, this.nowPlane, this.geometry);
   }
 
   private spawnOnsetPulses(previous: number | null, current: number): void {
@@ -545,17 +497,3 @@ export class ThreeDRenderer implements I3DRenderer {
   }
 }
 
-function makeGradientBackground(): THREE.Texture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 2;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d')!;
-  const gradient = ctx.createLinearGradient(0, 0, 0, 256);
-  gradient.addColorStop(0, '#0a0b14');
-  gradient.addColorStop(1, '#020204');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 2, 256);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}

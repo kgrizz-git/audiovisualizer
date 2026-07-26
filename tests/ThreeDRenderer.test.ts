@@ -125,4 +125,17 @@ describe('ThreeDRenderer - buildBoxes', () => {
     expect(geometries[0]).not.toBe(geometries[2]);
     expect(geometries[1]).not.toBe(geometries[2]);
   });
+
+  it('ensures every material in revealMaterials carries exactly 1 clipping plane', () => {
+    const renderer = new ThreeDRenderer();
+    renderer.setGeometry(dummyGeometry);
+
+    const revealMaterials = (renderer as any).revealMaterials as THREE.Material[];
+    expect(revealMaterials.length).toBeGreaterThan(0);
+    for (const mat of revealMaterials) {
+      expect(mat.clippingPlanes).toBeDefined();
+      expect(mat.clippingPlanes!.length).toBe(1);
+    }
+  });
 });
+

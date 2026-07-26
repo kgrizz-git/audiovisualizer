@@ -13,7 +13,6 @@ Last updated: 2026-07-23
 
 ## Next product milestones
 
-- [ ] **Fix invisible 3D piano-roll slab and honor velocity opacity**: `3d_piano_roll` renders blank because `buildBoxes` sets `vertexColors: true` on a `BoxGeometry` with no `color` attribute, scaling instance colors to black; the mapper-computed per-note opacity is also ignored. Phased: Phase 1 restores visible boxes (PATCH), Phase 2 bucketed per-note opacity (MINOR). See [`plans/2026-07-25-3d-piano-roll-invisible-fix.md`](../plans/2026-07-25-3d-piano-roll-invisible-fix.md).
 - [x] **Add tonal time-lines display mode**: Map score time from top to bottom as full-width horizontal bands, colored by the circular, velocity-weighted average hue of active notes. See [`plans/2026-07-22-tonal-time-lines.md`](../plans/2026-07-22-tonal-time-lines.md).
 - [ ] **3D playback reveal cue**: Add a selectable cumulative reveal during playback as an alternative to the now-plane, without rebuilding WebGL geometry. See [`plans/2026-07-24-3d-playback-reveal.md`](../plans/2026-07-24-3d-playback-reveal.md).
 - [ ] **Additional 3D score layouts**: Chromagram columns, voice-ribbon grid, and velocity spires, sharing the existing 3D camera/cue infrastructure. See [`plans/2026-07-24-3d-score-layouts.md`](../plans/2026-07-24-3d-score-layouts.md).

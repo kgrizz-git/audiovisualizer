@@ -3,7 +3,8 @@
 Last reviewed: 2026-07-25
 Date: 2026-07-25
 Author: opencode
-Status: draft
+Status: completed
+Completion Date: 2026-07-26
 Linked issue/PR: n/a
 Incorporates:
   - tmp/assessment-20260725-232636.md (Antigravity, 2026-07-25).
@@ -126,10 +127,10 @@ CHANGELOG.md — "Fixed" entry for the invisible slab regression; "Changed" entr
 This phase delivers a working `3d_piano_roll` view end-to-end. It must be reviewable
 and shippable on its own.
 
-- [ ] 1.1 In `ThreeDRenderer.buildBoxes`, remove `vertexColors: true` from the
+- [x] 1.1 In `ThreeDRenderer.buildBoxes`, remove `vertexColors: true` from the
   `MeshBasicMaterial` constructor; leave `color: 0xffffff`, `transparent: true`,
   `opacity` (Phase 1 keeps the existing hard-coded value; Phase 2 changes it).
-- [ ] 1.2 Flip `depthWrite: true` → `depthWrite: false` in the same material, so the
+- [x] 1.2 Flip `depthWrite: true` → `depthWrite: false` in the same material, so the
   semi-transparent boxes sort consistently with `buildSlabSet`/`buildDiscs`/
   `buildSpheres` (which all use `depthWrite: false`). Do **not** carry `DoubleSide`
   over to the box material — boxes are closed geometry, and
@@ -139,7 +140,7 @@ and shippable on its own.
   builders use `DoubleSide`, but their geometries (`CircleGeometry`, `CylinderGeometry`
   with `openEnded`, `SphereGeometry` seen as a shell from inside) are open; boxes are
   not.
-- [ ] 1.3 Add a focused unit test (**in a new file** `tests/ThreeDRenderer.test.ts`,
+- [x] 1.3 Add a focused unit test (**in a new file** `tests/ThreeDRenderer.test.ts`,
   which does not yet exist) that constructs a piano-roll `RenderedGeometry3D` with
   non-empty `boxes`, calls `setGeometry` headlessly (Vitest Node environment — see
   Verification), and traverses `renderer.contentGroup.children` to assert:
@@ -148,28 +149,28 @@ and shippable on its own.
   - `transparent === true`,
   - `side === THREE.FrontSide` (i.e. equal to the material's default),
   - `material.clippingPlanes` still references the renderer's `revealPlane`.
-- [ ] 1.4 Add a regression test that `InstancedMesh.setColorAt` was called per box
+- [x] 1.4 Add a regression test that `InstancedMesh.setColorAt` was called per box
   and that the resulting `instanceColor` attribute carries the box's hue at the right
   index (verifying the path that was being silently zeroed-out is now live).
-- [ ] 1.5 Update `CHANGELOG.md` Unreleased **Fixed** with a PATCH entry:
+- [x] 1.5 Update `CHANGELOG.md` Unreleased **Fixed** with a PATCH entry:
   "3D piano-roll slab no longer renders blank — boxes were being shaded black by a
   `vertexColors: true` material pointing at a `BoxGeometry` with no color attribute;
   instance colors now pass through correctly."
-- [ ] 1.6 Run `npm run validate`; manually load a demo MIDI in the browser, switch to
+- [x] 1.6 Run `npm run validate`; manually load a demo MIDI in the browser, switch to
   `3D piano-roll slab`, and confirm boxes are visible across all camera presets.
-- [ ] 1.7 Mark Phase 1 done in this plan only after 1.6 passes (per checklist honesty).
+- [x] 1.7 Mark Phase 1 done in this plan only after 1.6 passes (per checklist honesty).
 
 ### Phase 2: Honor per-note velocity opacity via bucketing
 
 This phase ships as a follow-up and depends on Phase 1 being merged. It restores
 the velocity signal that `mapPianoRoll3D` already computes but the renderer drops.
 
-- [ ] 2.1 Add a private helper `bucketOpacity(opacity: number): number` returning one
+- [x] 2.1 Add a private helper `bucketOpacity(opacity: number): number` returning one
   of four band centers {0.55, 0.70, 0.85, 0.95} using thresholds 0.625 / 0.775 / 0.90
   (equivalent integer-velocity split at velocities 23 / 71 / 111 — boundaries 23.81 /
   71.44 / 111.13 from `0.55 + (v/127)·0.4`). Pseudocode:
   `if (opacity < 0.625) return 0.55; else if (opacity < 0.775) return 0.70; else if (opacity < 0.90) return 0.85; else return 0.95;`
-- [ ] 2.2 For each non-empty bucket, allocate a **fresh** `THREE.BoxGeometry(1, 1, 1)`
+- [x] 2.2 For each non-empty bucket, allocate a **fresh** `THREE.BoxGeometry(1, 1, 1)`
   *inside* the bucket loop and a per-bucket `MeshBasicMaterial` carrying that bucket's
   `opacity` (transparent: true, vertexColors: false, depthWrite: false, clippingPlanes:
   [this.revealPlane]). Use the default `side: THREE.FrontSide` for closed boxes (see
@@ -182,9 +183,9 @@ the velocity signal that `mapPianoRoll3D` already computes but the renderer drop
   (line 318). Actual disposal happens in the `contentGroup.traverse` loop. The
   `revealMaterials` collection's real role is grouping clip-plane-bound materials
   (per the Antigravity 2026-07-26 update).
-- [ ] 2.3 Keep `setColorAt` per instance in each bucket so each box keeps its hue.
+- [x] 2.3 Keep `setColorAt` per instance in each bucket so each box keeps its hue.
   Verify the `instanceColor` write pattern matches Phase 1's regression test.
-- [ ] 2.4 Update the Phase 1 unit test:
+- [x] 2.4 Update the Phase 1 unit test:
   - assert the renderer now produces a bounded number of `InstancedMesh` objects for
     boxes equal to the number of non-empty buckets (≤ 4 — not == note count),
   - assert each bucket material's `opacity` equals one of {0.55, 0.70, 0.85, 0.95},
@@ -192,26 +193,26 @@ the velocity signal that `mapPianoRoll3D` already computes but the renderer drop
     THREE.FrontSide` on every bucket material,
   - assert each bucket `InstancedMesh`'s `geometry` is a distinct instance
     (`mesh1.geometry !== mesh2.geometry`) so `clearContent` disposal is safe.
-- [ ] 2.5 Add a deterministic regression test vector: a score with two notes of known
+- [x] 2.5 Add a deterministic regression test vector: a score with two notes of known
   velocities maps to boxes with the expected two distinct bucket opacities; assert both
   buckets exist and the high-velocity box sits in the higher-opacity bucket. Concretely:
   a velocity-1 note → opacity `0.55` band, a velocity-127 note → opacity `0.95` band,
   and a mid velocity test (e.g. velocity 50 → `0.70` band, velocity 90 → `0.85` band)
   nails all four bands with three notes.
-- [ ] 2.6 Update `DESIGN.md` to note velocity-encoded box opacity for
+- [x] 2.6 Update `DESIGN.md` to note velocity-encoded box opacity for
   `3d_piano_roll` under the 3D slab description (around the existing
   `3d_piano_roll` reference at DESIGN.md:82).
-- [ ] 2.7 Update `ARCHITECTURE.md`'s 3D paragraph (around ARCHITECTURE.md:76) to
+- [x] 2.7 Update `ARCHITECTURE.md`'s 3D paragraph (around ARCHITECTURE.md:76) to
   mention box opacity is conveyed by renderer-side bucketing, not by
   `instanceColor` alpha (which Three.js strips), so future agents don't repeat the
   mistake. Also note the box material uses `FrontSide` (closed geometry) — distinct
   from `buildDiscs`'s `DoubleSide` (open shells) — and that `revealMaterials` is the
   clip-plane-bound material group, not the disposal vector (disposal happens in the
   `contentGroup.traverse` loop of `clearContent`).
-- [ ] 2.8 Add a "Changed" entry to `CHANGELOG.md` Unreleased:
+- [x] 2.8 Add a "Changed" entry to `CHANGELOG.md` Unreleased:
   "Velocity now modulates piano-roll slab opacity (4 bands); previously the
   mapper-computed per-note opacity was dropped by the renderer. SemVer: **MINOR**."
-- [ ] 2.9 Run `npm run validate`; manual browser verification: high-velocity notes
+- [x] 2.9 Run `npm run validate`; manual browser verification: high-velocity notes
   render noticeably brighter/more opaque than low-velocity ones in the slab view.
 
 ## Verification
@@ -227,25 +228,25 @@ the velocity signal that `mapPianoRoll3D` already computes but the renderer drop
   scratch test was deleted; the real assertions will be re-added in Phases 1/2. **No
   fallback to helper extraction is needed** — the test-strategy risk in the table below
   is closed.
-- [ ] `npm run validate` (typecheck + tests + production build) passes after each
+- [x] `npm run validate` (typecheck + tests + production build) passes after each
   phase.
-- [ ] Existing `tests/map3d.test.ts` "maps piano-roll notes into deterministic
+- [x] Existing `tests/map3d.test.ts` "maps piano-roll notes into deterministic
   pitch × voice × time boxes" still passes unchanged (mapper contract untouched).
-- [ ] New unit test asserts `buildBoxes` material flags (`vertexColors === false`,
+- [x] New unit test asserts `buildBoxes` material flags (`vertexColors === false`,
   `depthWrite === false`, `transparent === true`, `side === THREE.FrontSide`).
   (Phase 1 + Phase 2)
-- [ ] New unit test asserts per-instance `setColorAt` was invoked for each box with
+- [x] New unit test asserts per-instance `setColorAt` was invoked for each box with
   the mapped hue. (Phase 1)
-- [ ] Phase 2: new unit test asserts bucket count == distinct opacity-band count for
+- [x] Phase 2: new unit test asserts bucket count == distinct opacity-band count for
   a multi-velocity score; results land in the expected bands {0.55, 0.70, 0.85, 0.95}.
-- [ ] Phase 2: assert each bucket `InstancedMesh.geometry` is a distinct instance
+- [x] Phase 2: assert each bucket `InstancedMesh.geometry` is a distinct instance
   (no shared-geometry disposal hazard).
-- [ ] Manual browser check after Phase 1: switching to `3D piano-roll slab` shows
+- [x] Manual browser check after Phase 1: switching to `3D piano-roll slab` shows
   colored, Z-axis-extruded boxes; they follow the playhead and reveal/now-plane cues
   behave the same as the other 3D variations.
-- [ ] Manual browser check after Phase 2: loud notes render noticeably more opaque
+- [x] Manual browser check after Phase 2: loud notes render noticeably more opaque
   than soft notes; no z-fighting / flicker when orbiting through dense regions.
-- [ ] PNG export (`capturePNG()`) of the piano-roll slab produces a non-blank image.
+- [x] PNG export (`capturePNG()`) of the piano-roll slab produces a non-blank image.
 
 ## Open questions
 

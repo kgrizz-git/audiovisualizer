@@ -28,6 +28,11 @@ if [ -n "$staged_md" ]; then
     fi
 fi
 
+echo "--- Running check_license_inventory.py ---"
+if ! python3 hooks/scripts/check_license_inventory.py --check; then
+    has_failed=1
+fi
+
 if [ $has_failed -ne 0 ]; then
     exit 1
 fi

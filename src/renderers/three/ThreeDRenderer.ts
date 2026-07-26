@@ -18,6 +18,7 @@ import {
   buildSpheres,
   buildBoxes,
 } from './geometryBuilders.js';
+import { OnsetPulseController } from './onsetPulses.js';
 
 /**
  * Three.js renderer for the 3D calligraphic score modes. The X/Y coordinates arrive in
@@ -40,7 +41,7 @@ export class ThreeDRenderer implements I3DRenderer {
   private revealPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1e7);
   private lineMaterials: LineMaterial[] = [];
   private revealMaterials: THREE.Material[] = [];
-  private onsetPulses: Array<{ mesh: THREE.Mesh; startedAt: number }> = [];
+  private onsetPulseController = new OnsetPulseController();
   private previousPlayhead: number | null = null;
   private turntableRotation = 0;
   private currentBgColor: string | null = null;
@@ -414,48 +415,19 @@ export class ThreeDRenderer implements I3DRenderer {
   }
 
   private spawnOnsetPulses(previous: number | null, current: number): void {
-    if (!this.geometry || previous === null || current < previous) return;
-    const notes = [
-      ...this.geometry.segments.map((segment) => ({ note: segment.note, x: segment.startX, y: segment.startY, z: segment.startZ, color: segment.color })),
-      ...this.geometry.discs.map((disc) => ({ note: disc.note, x: disc.cx, y: disc.cy, z: disc.cz, color: disc.fillColor })),
-      ...this.geometry.boxes.map((box) => ({ note: box.note, x: box.cx, y: box.cy, z: box.cz - box.sz / 2, color: box.color })),
-    ];
-    for (const item of notes) {
-      if (item.note.onset <= previous || item.note.onset > current) continue;
-      const mesh = new THREE.Mesh(
-        new THREE.RingGeometry(0.78, 1, 28),
-        new THREE.MeshBasicMaterial({ color: item.color, transparent: true, opacity: 0.95, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }),
-      );
-      mesh.position.set(this.worldX(item.x), this.worldY(item.y), this.worldZ(item.z) + 1);
-      this.contentGroup.add(mesh);
-      this.onsetPulses.push({ mesh, startedAt: performance.now() });
-    }
-  }
-
-  private updateOnsetPulses(): void {
-    const now = performance.now();
-    this.onsetPulses = this.onsetPulses.filter(({ mesh, startedAt }) => {
-      const progress = (now - startedAt) / 520;
-      if (progress >= 1) {
-        this.contentGroup.remove(mesh);
-        mesh.geometry.dispose();
-        (mesh.material as THREE.Material).dispose();
-        return false;
-      }
-      const scale = 8 + progress * 42;
-      mesh.scale.setScalar(scale);
-      (mesh.material as THREE.MeshBasicMaterial).opacity = (1 - progress) * 0.9;
-      return true;
+    this.onsetPulseController.spawn(previous, current, this.geometry, this.contentGroup, {
+      worldX: (x) => this.worldX(x),
+      worldY: (y) => this.worldY(y),
+      worldZ: (z) => this.worldZ(z),
     });
   }
 
+  private updateOnsetPulses(): void {
+    this.onsetPulseController.update(this.contentGroup);
+  }
+
   private clearOnsetPulses(): void {
-    for (const { mesh } of this.onsetPulses) {
-      this.contentGroup.remove(mesh);
-      mesh.geometry.dispose();
-      (mesh.material as THREE.Material).dispose();
-    }
-    this.onsetPulses = [];
+    this.onsetPulseController.clear(this.contentGroup);
   }
 
   private frameCamera(): void {

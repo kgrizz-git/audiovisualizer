@@ -14,7 +14,6 @@ Last updated: 2026-07-23
 ## Next product milestones
 
 - [x] **Add tonal time-lines display mode**: Map score time from top to bottom as full-width horizontal bands, colored by the circular, velocity-weighted average hue of active notes. See [`plans/2026-07-22-tonal-time-lines.md`](../plans/2026-07-22-tonal-time-lines.md).
-- [ ] **3D playback reveal cue**: Add a selectable cumulative reveal during playback as an alternative to the now-plane, without rebuilding WebGL geometry. See [`plans/2026-07-24-3d-playback-reveal.md`](../plans/2026-07-24-3d-playback-reveal.md).
 - [ ] **Additional 3D score layouts**: Chromagram columns, voice-ribbon grid, and velocity spires, sharing the existing 3D camera/cue infrastructure. See [`plans/2026-07-24-3d-score-layouts.md`](../plans/2026-07-24-3d-score-layouts.md).
 - [ ] **3D frozen 2D frame stack mode**: Volumetric stack of discretized existing 2D variation frames (e.g., tonal-time-lines bands) viewed as a 3D volume. Deferred from 3D brainstorm; high complexity, needs GPU voxel approach; see spec for pros/cons.
 - [ ] **Add scrolling piano roll / sheet music display**: Show a piano roll or sheet music view beneath the main image that scrolls in sync with playback, giving users a traditional notation reference alongside the visualizer.

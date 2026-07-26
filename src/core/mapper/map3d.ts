@@ -27,7 +27,9 @@ import { fitGeometryToCanvas } from '../layout/fitGeometry.js';
  *  `3d_note_halos` and `3d_note_spheres` both reuse the `circles` halo path; the
  *  renderer chooses spheres vs cylinders/flat discs from the active variation. */
 export function base2DVariation(variation: Variation): Variation {
-  return variation === '3d_note_halos' || variation === '3d_note_spheres' ? 'circles' : 'lines';
+  if (variation === '3d_note_halos' || variation === '3d_note_spheres') return 'circles';
+  if (variation === '3d_polar_fan') return 'polar_fan';
+  return 'lines';
 }
 
 /**

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { generateDemoScore } from '../src/core/midi/parser.js';
 import { getAverageScoreBackground, getDominantScoreAccent, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor } from '../src/core/mapper/scoreMapper.js';
-import { NoteEvent } from '../src/core/types.js';
+import { fitGeometryToCanvas } from '../src/core/layout/fitGeometry.js';
+import { NoteEvent, Score } from '../src/core/types.js';
 
 describe('Score Mapper Unit Tests', () => {
   it('calculates deterministic pitch class HSL colors', () => {
@@ -189,5 +190,139 @@ describe('Score Mapper Unit Tests', () => {
     expect(geometry.bands[0]).toMatchObject({ y: 0, height: 1, color: 'hsl(345, 85%, 60%)', silent: false });
     expect(geometry.bands[2]).toMatchObject({ color: 'hsl(0, 85%, 60%)', silent: false });
     expect(geometry.bands[3]).toMatchObject({ color: 'rgb(226, 232, 240)', silent: true });
+  });
+
+  describe('Polar Fan Mapping', () => {
+    const makeScore = (notes: NoteEvent[]): Score => ({
+      title: 'Test Score',
+      duration: Math.max(...notes.map((n) => n.onset + n.duration)),
+      bpm: 120,
+      tracks: [{ name: 'Track 1', channel: 0, program: 0, instrumentName: 'Piano', notes }],
+    });
+
+    it('generates segments from the center origin at correct spoke angles and lengths', () => {
+      const score = makeScore([
+        { id: 'c4', pitch: 60, onset: 0, duration: 2, velocity: 100, voice: 0, pitchClass: 0 },
+      ]);
+      const config = { ...DEFAULT_CONFIG, variation: 'polar_fan' as const, lengthScale: 10 };
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+
+      expect(geometry.voicePaths[0].segments).toHaveLength(1);
+      expect(geometry.voicePaths[0].circles).toHaveLength(0);
+      expect(geometry.bands).toHaveLength(0);
+
+      const segment = geometry.voicePaths[0].segments[0];
+      // Origin is targetWidth/2, targetHeight/2 (400, 400)
+      expect(segment.start.x).toBeCloseTo(400);
+      expect(segment.start.y).toBeCloseTo(400);
+
+      // C4 is pitchClass 0 -> angle = 0 -> end point should be (400 + duration * lengthScale, 400)
+      const expectedLen = 2 * 10;
+      expect(segment.end.x).toBeCloseTo(400 + expectedLen);
+      expect(segment.end.y).toBeCloseTo(400);
+    });
+
+    it('maps a C-major triad to spokes at 0, 120, and 210 degrees', () => {
+      const score = makeScore([
+        { id: 'c4', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 },
+        { id: 'e4', pitch: 64, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 4 },
+        { id: 'g4', pitch: 67, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 7 },
+      ]);
+      const config = { ...DEFAULT_CONFIG, variation: 'polar_fan' as const, lengthScale: 10 };
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+
+      const segments = geometry.voicePaths[0].segments;
+      expect(segments).toHaveLength(3);
+
+      segments.forEach((seg) => {
+        expect(seg.start.x).toBe(400);
+        expect(seg.start.y).toBe(400);
+      });
+
+      // Assert endpoint angles:
+      // seg C: angle 0 -> endX = 400 + 10, endY = 400
+      const segC = segments.find(s => s.note.id === 'c4')!;
+      expect(segC.end.x).toBeCloseTo(410);
+      expect(segC.end.y).toBeCloseTo(400);
+
+      // seg E: angle 120 deg -> endX = 400 + 10 * cos(120), endY = 400 + 10 * sin(120)
+      const segE = segments.find(s => s.note.id === 'e4')!;
+      const radE = (120 * Math.PI) / 180;
+      expect(segE.end.x).toBeCloseTo(400 + 10 * Math.cos(radE));
+      expect(segE.end.y).toBeCloseTo(400 + 10 * Math.sin(radE));
+
+      // seg G: angle 210 deg -> endX = 400 + 10 * cos(210), endY = 400 + 10 * sin(210)
+      const segG = segments.find(s => s.note.id === 'g4')!;
+      const radG = (210 * Math.PI) / 180;
+      expect(segG.end.x).toBeCloseTo(400 + 10 * Math.cos(radG));
+      expect(segG.end.y).toBeCloseTo(400 + 10 * Math.sin(radG));
+    });
+
+    it('respects visual transposition for both spoke angle and color', () => {
+      const score = makeScore([
+        { id: 'c4', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 },
+      ]);
+      const config = { ...DEFAULT_CONFIG, variation: 'polar_fan' as const, lengthScale: 10, transposeSemitones: 2 };
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+
+      const segment = geometry.voicePaths[0].segments[0];
+      // pitch 60 + transpose 2 = 62 -> D -> pitchClass 2 -> angle = 60 deg
+      const radD = (60 * Math.PI) / 180;
+      expect(segment.end.x).toBeCloseTo(400 + 10 * Math.cos(radD));
+      expect(segment.end.y).toBeCloseTo(400 + 10 * Math.sin(radD));
+      expect(segment.color).toBe('hsl(60, 85%, 60%)'); // D's color
+    });
+
+    it('allows unison notes to overlap exactly', () => {
+      const score: Score = {
+        title: 'Unison', duration: 1, bpm: 120,
+        tracks: [
+          { name: 'T1', channel: 0, program: 0, instrumentName: 'Piano', notes: [{ id: 'a', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 }] },
+          { name: 'T2', channel: 1, program: 0, instrumentName: 'Piano', notes: [{ id: 'b', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 1, pitchClass: 0 }] },
+        ],
+      };
+      const config = { ...DEFAULT_CONFIG, variation: 'polar_fan' as const };
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      const seg1 = geometry.voicePaths[0].segments[0];
+      const seg2 = geometry.voicePaths[1].segments[0];
+      expect(seg1.start).toEqual(seg2.start);
+      expect(seg1.end).toEqual(seg2.end);
+    });
+
+    it('maintains center origin under fitGeometryToCanvas for asymmetric scores', () => {
+      const score = makeScore([
+        { id: 'c4', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 },
+      ]);
+      const config = { ...DEFAULT_CONFIG, variation: 'polar_fan' as const };
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      const fitted = fitGeometryToCanvas(geometry, 1000, 600);
+
+      const segment = fitted.voicePaths[0].segments[0];
+      // Target center of 1000x600 is (500, 300)
+      expect(segment.start.x).toBeCloseTo(500);
+      expect(segment.start.y).toBeCloseTo(300);
+    });
+
+    it('is completely deterministic', () => {
+      const score = makeScore([
+        { id: 'c4', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 },
+      ]);
+      const config = { ...DEFAULT_CONFIG, variation: 'polar_fan' as const };
+      const geo1 = mapScoreToGeometry(score, config, 800, 800);
+      const geo2 = mapScoreToGeometry(score, config, 800, 800);
+      expect(geo1).toEqual(geo2);
+    });
+
+    it('ignores gapPolicy and emits no gap segments', () => {
+      const score = makeScore([
+        { id: 'a', pitch: 60, onset: 0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
+        { id: 'b', pitch: 62, onset: 1.0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 2 },
+      ]);
+      const config = { ...DEFAULT_CONFIG, variation: 'polar_fan' as const, gapPolicy: 'ghost' as const };
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      const segments = geometry.voicePaths[0].segments;
+      expect(segments).toHaveLength(2); // no gap segments
+      expect(segments.filter(s => s.role === 'gap')).toHaveLength(0);
+    });
   });
 });

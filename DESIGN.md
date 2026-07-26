@@ -59,6 +59,8 @@ swatches, while plotter SVG remains color-free.
 - `tonal_time_lines`: time runs from top to bottom as full-width bands. Each band is the
   circular, velocity- and overlap-weighted average of active pitch colors; it is not a
   detected key or chord. Silent time is a low-contrast neutral band.
+- `polar_fan`: pitch class maps to spoke angle (an octave spans 360°, so 30° per semitone, with transposed C pointing right at 0° and rotating clockwise) and duration maps to segment length, all radiating from the canvas center. Chords fan as multiple spokes simultaneously, and voices share the origin instead of walking forward. In standard Canvas, segments receive a color-matched line glow. Ignored by `gapPolicy` and `originMode`. See [`plans/specs/2026-07-26-polar-octave-fan-modes.md`](plans/specs/2026-07-26-polar-octave-fan-modes.md).
+- `3d_polar_fan`: the `polar_fan` geometry lifted into three dimensions. XY coordinates are identical to 2D `polar_fan` (fitted symmetrically around the canvas center), and musical time onset maps along the Z axis, turning spokes into a fanning calligraphic ribbon threading into depth.
 - `3d_lines` / `3d_note_halos`: the `lines` and `circles` geometry lifted into three
   dimensions. X/Y are identical to their 2D counterparts (so the Front camera reproduces
   the 2D image); musical time advances along the positive Z axis, turning a path into a

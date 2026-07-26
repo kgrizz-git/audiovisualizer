@@ -43,6 +43,20 @@ export function getLegendContent(config: RuleConfig): LegendContent {
           'Fill + outline → one note (not separate data)',
         ], swatches,
       };
+    case 'polar_fan':
+      return {
+        title: 'POLAR OCTAVE FAN',
+        lines: [
+          hue,
+          ...transpose,
+          'Pitch class → spoke angle (octave = 360°)',
+          'Duration → segment length',
+          'Velocity → stroke weight',
+          'Voices share the canvas center',
+          'Chords fan from the origin',
+        ],
+        swatches,
+      };
     case 'vertical_tone':
       return { title: 'PITCH TIMELINE', lines: ['Time → left to right', 'Pitch → vertical position + hue', ...transpose, 'Duration → segment length', 'Velocity → stroke weight'], swatches };
     case 'tonal_time_lines':
@@ -94,6 +108,19 @@ export function getLegendContent(config: RuleConfig): LegendContent {
           'Box opacity → velocity',
           'Now-plane → current playback moment',
         ], swatches,
+      };
+    case '3d_polar_fan':
+      return {
+        title: '3D POLAR OCTAVE FAN',
+        lines: [
+          hue,
+          ...transpose,
+          'X / Y → polar fan (pitch class × 30°)',
+          'Z (depth) → onset time',
+          'Duration → segment length',
+          'Now-plane → current playback moment',
+        ],
+        swatches,
       };
   }
 }

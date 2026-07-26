@@ -13,11 +13,11 @@ import { VoiceMixController } from '../audio/voiceMixController.js';
 import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js';
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
 import { VoiceRouter } from '../audio/soundfont/voiceRouter.js';
-import { GM_INSTRUMENT_SLUGS } from '../audio/soundfont/gmInstrumentSlugs.js';
-import { PatchStatus, PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
+import { PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
 import { AUTO_ZOOM_BAR_LABELS, AUTO_ZOOM_BAR_STEPS, AUTO_ZOOM_SECOND_STEPS, ViewportController } from '../core/layout/viewportController.js';
 import { ViewportGestures } from './viewportGestures.js';
 import { clearLibraryCache, dismissLibraryPrompt, downloadLibrary, LibraryUIContext, maybeShowLibraryPrompt, refreshCacheStatus } from './soundfontLibraryUI.js';
+import { applyBadge, buildAudioVoiceRow, VoiceRowContext } from './voiceOptionsUI.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
@@ -269,28 +269,6 @@ class AudioVisualizerApp {
     this.setStatus(message);
   }
 
-  private gmLabel(program: number): string {
-    const slug = GM_INSTRUMENT_SLUGS[program] ?? 'acoustic_grand_piano';
-    return `${program} · ${slug.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`;
-  }
-
-  private applyBadge(span: HTMLElement, status: PatchStatus | undefined): void {
-    const map: Record<PatchStatus, string> = {
-      loading: '⏳ Loading sample…',
-      loaded: '✓ Sample loaded',
-      fallback: '⚡ Synth Fallback',
-    };
-    span.textContent = status ? map[status] : '—';
-  }
-
-  private soundbankLabel(soundbank: SoundbankPreset): string {
-    return {
-      FluidR3_GM: 'FluidR3 GM',
-      MusyngKite: 'MusyngKite',
-      FatBoy: 'FatBoy',
-    }[soundbank];
-  }
-
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
     this.element<HTMLElement>('score-meta').textContent = `${this.currentScore.tracks.length} voice${this.currentScore.tracks.length === 1 ? '' : 's'} · ${this.currentScore.bpm} BPM`;
@@ -312,72 +290,46 @@ class AudioVisualizerApp {
       label.append(input, document.createTextNode(track.name)); options.append(label);
     });
     const audioOptions = this.element<HTMLElement>('audio-voice-options'); audioOptions.replaceChildren();
-    const engine = this.voiceRouter.getDefaults().engine;
-    const soundbank = this.voiceRouter.getDefaults().soundbank;
     const statusMap = this.soundfontPlayer?.getStatusMap();
+
+    const voiceContext: VoiceRowContext = {
+      engine: defaults.engine,
+      soundbank: defaults.soundbank,
+      statusMap,
+      getProgram: (track) => this.voiceRouter.resolveTrackSettings(track).program,
+      onProgramChange: (channel, program) => {
+        this.voiceRouter.setProgram(channel, program);
+        void this.applyVoiceRoutingChange();
+      },
+      onTimbreChange: (channel, timbre) => {
+        const settings = this.voicePlayback.get(channel);
+        if (settings) {
+          settings.timbre = timbre;
+          this.commitVoiceMix(this.voicePlayback);
+        }
+      },
+      onGainInput: (channel, gainValue) => {
+        const settings = this.voicePlayback.get(channel);
+        if (settings) {
+          settings.gain = gainValue;
+          this.voiceRouter.setMix(channel, settings);
+        }
+      },
+      onMixChange: () => {
+        this.commitVoiceMix(this.voicePlayback);
+      },
+      onMute: (channel, checked) => {
+        this.commitVoiceMix(this.voiceMixController.setMuted(this.voicePlayback, channel, checked));
+      },
+      onSolo: (channel, checked) => {
+        this.commitVoiceMix(this.voiceMixController.setSolo(this.voicePlayback, channel, checked));
+      },
+    };
 
     this.currentScore.tracks.forEach((track, index) => {
       const settings = this.voicePlayback.get(track.channel) ?? defaultVoiceSettings(index);
       this.voicePlayback.set(track.channel, settings);
-      const row = document.createElement('div'); row.className = 'audio-voice-row';
-      const name = document.createElement('span'); name.className = 'voice-source-label'; name.textContent = `${track.name} · MIDI: ${track.instrumentName}`;
-      const effectiveRoute = document.createElement('span'); effectiveRoute.className = 'voice-effective-route';
-
-      let timbreOrGmSelect: HTMLElement;
-      let badgeSpan: HTMLSpanElement | null = null;
-
-      if (engine === 'sample') {
-        const currentProgram = this.voiceRouter.resolveTrackSettings(track).program;
-        effectiveRoute.textContent = `Playback: ${this.gmLabel(currentProgram)} · ${this.soundbankLabel(soundbank)}`;
-        const gmSelect = document.createElement('select');
-        gmSelect.setAttribute('aria-label', `${track.name} playback instrument`);
-        GM_INSTRUMENT_SLUGS.forEach((_, pIndex) => {
-          const option = new Option(this.gmLabel(pIndex), String(pIndex), false, pIndex === currentProgram);
-          gmSelect.add(option);
-        });
-        gmSelect.addEventListener('change', () => {
-          this.voiceRouter.setProgram(track.channel, Number(gmSelect.value));
-          void this.applyVoiceRoutingChange();
-        });
-        timbreOrGmSelect = gmSelect;
-
-        badgeSpan = document.createElement('span');
-        badgeSpan.className = 'patch-badge';
-        this.applyBadge(badgeSpan, statusMap?.get(track.channel));
-      } else {
-        effectiveRoute.textContent = `Playback: ${settings.timbre} oscillator`;
-        const timbreSelect = document.createElement('select');
-        timbreSelect.setAttribute('aria-label', `${track.name} timbre`);
-        ['sine', 'triangle', 'sawtooth', 'square'].forEach((value) => {
-          const option = new Option(value, value, false, settings.timbre === value);
-          timbreSelect.add(option);
-        });
-        timbreSelect.addEventListener('change', () => {
-          settings.timbre = timbreSelect.value as VoicePlaybackSettings['timbre'];
-          this.commitVoiceMix(this.voicePlayback);
-        });
-        timbreOrGmSelect = timbreSelect;
-      }
-
-      const gain = document.createElement('input'); gain.type = 'range'; gain.min = '0'; gain.max = '1.5'; gain.step = '0.05'; gain.value = String(settings.gain); gain.setAttribute('aria-label', `${track.name} volume`);
-      gain.addEventListener('input', () => {
-        settings.gain = Number(gain.value);
-        this.voiceRouter.setMix(track.channel, settings);
-      });
-      gain.addEventListener('change', () => this.commitVoiceMix(this.voicePlayback));
-      const mute = this.createAudioToggle('M', settings.muted, `${track.name} mute`, (checked) => {
-        this.commitVoiceMix(this.voiceMixController.setMuted(this.voicePlayback, track.channel, checked));
-      });
-      const solo = this.createAudioToggle('S', settings.solo, `${track.name} solo`, (checked) => {
-        this.commitVoiceMix(this.voiceMixController.setSolo(this.voicePlayback, track.channel, checked));
-      });
-
-      if (badgeSpan) {
-        row.append(name, effectiveRoute, timbreOrGmSelect, badgeSpan, gain, mute, solo);
-      } else {
-        row.append(name, effectiveRoute, timbreOrGmSelect, gain, mute, solo);
-      }
-      audioOptions.append(row);
+      audioOptions.append(buildAudioVoiceRow(track, index, settings, voiceContext));
     });
   }
 
@@ -385,11 +337,6 @@ class AudioVisualizerApp {
     const canvas = this.element<HTMLCanvasElement>('visualizer-canvas');
     const title = this.exportTitle.trim() || this.currentScore.title;
     canvas.setAttribute('aria-label', `Visual score rendering: ${title}`);
-  }
-
-  private createAudioToggle(label: string, checked: boolean, ariaLabel: string, apply: (checked: boolean) => void): HTMLLabelElement {
-    const wrapper = document.createElement('label'); wrapper.className = 'audio-toggle'; wrapper.textContent = label;
-    const input = document.createElement('input'); input.type = 'checkbox'; input.checked = checked; input.setAttribute('aria-label', ariaLabel); input.addEventListener('change', () => apply(input.checked)); wrapper.prepend(input); return wrapper;
   }
 
   private commitVoiceMix(voices: Map<number, VoicePlaybackSettings>): void {
@@ -427,7 +374,7 @@ class AudioVisualizerApp {
 
       if (this.voiceRouter.getDefaults().engine === 'sample') {
         const badges = this.element<HTMLElement>('audio-voice-options').querySelectorAll<HTMLElement>('.patch-badge');
-        badges.forEach((span) => this.applyBadge(span, 'loading'));
+        badges.forEach((span) => applyBadge(span, 'loading'));
       }
 
       await this.soundfontPlayer.start(this.currentScore, this.currentTime, {

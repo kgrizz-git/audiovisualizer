@@ -5,7 +5,11 @@ Date: 2026-07-25
 Author: opencode
 Status: draft
 Linked issue/PR: n/a
-Incorporates: tmp/assessment-20260725-232636.md (Antigravity, 2026-07-25).
+Incorporates:
+  - tmp/assessment-20260725-232636.md (Antigravity, 2026-07-25).
+  - tmp/assessment-20260726-0009.md (Antigravity, 2026-07-26) — `FrontSide` vs
+    `DoubleSide` for closed boxes, the role of `revealMaterials`, and test-file
+    creation.
 
 ## Goal
 
@@ -100,14 +104,17 @@ negligible (≤ 4 simple 12-triangle cubes).
 
 ```
 src/renderers/three/ThreeDRenderer.ts — buildBoxes: remove vertexColors:true and
-  depthWrite:true; add velocity-opacity bucketing (Phase 2). May extract a small
-  helper for bucketing.
-tests/ThreeDRenderer.test.ts (new or existing) — assert box material flags and
-  per-bucket opacity behavior using a stubbed WebGLRenderer / headless scene
-  inspection. (See Verification for the realistic constraint.)
+  depthWrite:true; switch the box material from DoubleSide to the default FrontSide
+  (closed geometry ≠ open disc/cylinder shells); add velocity-opacity bucketing
+  (Phase 2). The fresh BoxGeometry-per-bucket rule lives there too (Phase 2 item 2.2).
+tests/ThreeDRenderer.test.ts (NEW FILE) — assert box material flags and per-bucket
+  opacity behavior via direct `renderer.contentGroup.children` inspection in a Node
+  Vitest environment (no DOM/WebGL — see Verification).
 DESIGN.md — note velocity-encoded box opacity as the intended slab dynamic.
 ARCHITECTURE.md — document that buildBoxes uses opacity bucketing (renderer-side
-  quantization) so a future agent doesn't try to push alpha through instanceColor.
+  quantization) so a future agent doesn't try to push alpha through instanceColor;
+  note the `revealMaterials` collection groups clip-plane-bound materials and is
+  *not* the disposal vector (disposal happens in the clearContent traverse).
 CHANGELOG.md — "Fixed" entry for the invisible slab regression; "Changed" entry for
   velocity opacity once Phase 2 lands.
 ```
@@ -124,15 +131,22 @@ and shippable on its own.
   `opacity` (Phase 1 keeps the existing hard-coded value; Phase 2 changes it).
 - [ ] 1.2 Flip `depthWrite: true` → `depthWrite: false` in the same material, so the
   semi-transparent boxes sort consistently with `buildSlabSet`/`buildDiscs`/
-  `buildSpheres` (which all use `depthWrite: false`). Keep `side: THREE.DoubleSide`
-  if present or default to what the other builders use; reconcile with the other
-  builders so the slab is render-order-stable.
-- [ ] 1.3 Add a focused unit test that constructs a piano-roll `RenderedGeometry3D`
-  with non-empty `boxes`, calls `buildBoxes` indirectly via the renderer (or by
-  extracting the material-construction path), and asserts:
+  `buildSpheres` (which all use `depthWrite: false`). Do **not** carry `DoubleSide`
+  over to the box material — boxes are closed geometry, and
+  `transparent + depthWrite:false + DoubleSide` would render back-faces through
+  front-faces, making the boxes read as hollow hulls. Use the material's default
+  `THREE.FrontSide` instead (per the Antigravity 2026-07-26 update). Note: the other
+  builders use `DoubleSide`, but their geometries (`CircleGeometry`, `CylinderGeometry`
+  with `openEnded`, `SphereGeometry` seen as a shell from inside) are open; boxes are
+  not.
+- [ ] 1.3 Add a focused unit test (**in a new file** `tests/ThreeDRenderer.test.ts`,
+  which does not yet exist) that constructs a piano-roll `RenderedGeometry3D` with
+  non-empty `boxes`, calls `setGeometry` headlessly (Vitest Node environment — see
+  Verification), and traverses `renderer.contentGroup.children` to assert:
   - the box `MeshBasicMaterial` has `vertexColors === false`,
   - `depthWrite === false`,
   - `transparent === true`,
+  - `side === THREE.FrontSide` (i.e. equal to the material's default),
   - `material.clippingPlanes` still references the renderer's `revealPlane`.
 - [ ] 1.4 Add a regression test that `InstancedMesh.setColorAt` was called per box
   and that the resulting `instanceColor` attribute carries the box's hue at the right
@@ -157,19 +171,25 @@ the velocity signal that `mapPianoRoll3D` already computes but the renderer drop
   `if (opacity < 0.625) return 0.55; else if (opacity < 0.775) return 0.70; else if (opacity < 0.90) return 0.85; else return 0.95;`
 - [ ] 2.2 For each non-empty bucket, allocate a **fresh** `THREE.BoxGeometry(1, 1, 1)`
   *inside* the bucket loop and a per-bucket `MeshBasicMaterial` carrying that bucket's
-  `opacity` (transparent: true, vertexColors: false, depthWrite: false,
-  side: THREE.DoubleSide, clippingPlanes: [this.revealPlane]). Do **not** share a
-  single geometry across buckets — `clearContent()` disposes each mesh's geometry and a
-  shared instance would be disposed up to 4× (per the Antigravity assessment). Push each
-  bucket material to `this.revealMaterials` so `clearContent` disposes them.
+  `opacity` (transparent: true, vertexColors: false, depthWrite: false, clippingPlanes:
+  [this.revealPlane]). Use the default `side: THREE.FrontSide` for closed boxes (see
+  item 1.2). Do **not** share a single geometry across buckets — `clearContent()`
+  disposes each mesh's geometry by traversing `contentGroup` (lines 319–325 here), and
+  a shared instance would be disposed up to 4× (per the Antigravity 2026-07-25
+  assessment). Push each bucket material to `this.revealMaterials` to match the
+  pattern of `buildSlabSet`/`buildDiscs`/`buildSpheres`; note that `clearContent` does
+  **not** dispose from `this.revealMaterials` — it just reassigns the array to `[]`
+  (line 318). Actual disposal happens in the `contentGroup.traverse` loop. The
+  `revealMaterials` collection's real role is grouping clip-plane-bound materials
+  (per the Antigravity 2026-07-26 update).
 - [ ] 2.3 Keep `setColorAt` per instance in each bucket so each box keeps its hue.
   Verify the `instanceColor` write pattern matches Phase 1's regression test.
 - [ ] 2.4 Update the Phase 1 unit test:
   - assert the renderer now produces a bounded number of `InstancedMesh` objects for
     boxes equal to the number of non-empty buckets (≤ 4 — not == note count),
   - assert each bucket material's `opacity` equals one of {0.55, 0.70, 0.85, 0.95},
-  - assert `vertexColors === false` and `depthWrite === false` on every bucket
-    material,
+  - assert `vertexColors === false`, `depthWrite === false`, and `side ===
+    THREE.FrontSide` on every bucket material,
   - assert each bucket `InstancedMesh`'s `geometry` is a distinct instance
     (`mesh1.geometry !== mesh2.geometry`) so `clearContent` disposal is safe.
 - [ ] 2.5 Add a deterministic regression test vector: a score with two notes of known
@@ -184,7 +204,10 @@ the velocity signal that `mapPianoRoll3D` already computes but the renderer drop
 - [ ] 2.7 Update `ARCHITECTURE.md`'s 3D paragraph (around ARCHITECTURE.md:76) to
   mention box opacity is conveyed by renderer-side bucketing, not by
   `instanceColor` alpha (which Three.js strips), so future agents don't repeat the
-  mistake.
+  mistake. Also note the box material uses `FrontSide` (closed geometry) — distinct
+  from `buildDiscs`'s `DoubleSide` (open shells) — and that `revealMaterials` is the
+  clip-plane-bound material group, not the disposal vector (disposal happens in the
+  `contentGroup.traverse` loop of `clearContent`).
 - [ ] 2.8 Add a "Changed" entry to `CHANGELOG.md` Unreleased:
   "Velocity now modulates piano-roll slab opacity (4 bands); previously the
   mapper-computed per-note opacity was dropped by the renderer. SemVer: **MINOR**."
@@ -209,7 +232,8 @@ the velocity signal that `mapPianoRoll3D` already computes but the renderer drop
 - [ ] Existing `tests/map3d.test.ts` "maps piano-roll notes into deterministic
   pitch × voice × time boxes" still passes unchanged (mapper contract untouched).
 - [ ] New unit test asserts `buildBoxes` material flags (`vertexColors === false`,
-  `depthWrite === false`, `transparent === true`). (Phase 1 + Phase 2)
+  `depthWrite === false`, `transparent === true`, `side === THREE.FrontSide`).
+  (Phase 1 + Phase 2)
 - [ ] New unit test asserts per-instance `setColorAt` was invoked for each box with
   the mapped hue. (Phase 1)
 - [ ] Phase 2: new unit test asserts bucket count == distinct opacity-band count for
@@ -246,6 +270,25 @@ the velocity signal that `mapPianoRoll3D` already computes but the renderer drop
   reachable via `renderer.contentGroup.children`, so Phase 1/2 tests can assert
   material flags, instance count, `instanceColor` presence, and per-bucket geometry
   distinctness directly — no fallback helper extraction is needed.
+
+## Resolved by the Antigravity 2026-07-26 update
+
+- **Material side for closed boxes**: use the default `THREE.FrontSide`, **not**
+  `DoubleSide`, for `buildBoxes`. With `transparent + depthWrite:false + DoubleSide`,
+  the back-faces of closed `BoxGeometry` render through the front-faces and read as
+  hollow hulls. `buildDiscs` keeps `DoubleSide` because circles and open-ended
+  cylinders are one-sided shells. Reflected in items 1.2, 2.2, 2.4, 2.7.
+- **`revealMaterials` is not the disposal vector**: `clearContent()` only
+  reassigns `this.revealMaterials = []` (line 318) — it does not call `.dispose()` on
+  its contents. Actual disposal happens in the `contentGroup.traverse(...)` loop at
+  lines 319–325. The earlier draft wording ("push materials to revealMaterials so
+  clearContent disposes them") was inaccurate and has been corrected in item 2.2.
+  `revealMaterials`' real role is grouping clip-plane-bound materials (visible from
+  the `material.clippingPlanes = [this.revealPlane]` line immediately before each
+  push). We still push to it to match `buildSlabSet`/`buildDiscs`/`buildSpheres`.
+- **Test file is new**: `tests/ThreeDRenderer.test.ts` does not currently exist;
+  Phase 1 creates it. The earlier `(new or existing)` hedge in Proposed file changes
+  has been replaced with an unambiguous `(NEW FILE)`.
 
 ## Risks
 

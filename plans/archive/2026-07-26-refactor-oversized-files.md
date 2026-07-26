@@ -3,7 +3,8 @@
 Last reviewed: 2026-07-26
 Date: 2026-07-26
 Author: agent
-Status: approved
+Status: complete
+Completion date: 2026-07-26
 Linked issue/PR: n/a
 
 ## Goal
@@ -106,9 +107,9 @@ re-renders) and pulling it out would trade a trivial line saving for a new
 callback path. `voiceOptionsUI.ts` owns only the per-track audio voice rows
 (lines 316–383).
 
-- [ ] Create `src/ui/voiceOptionsUI.ts`
-- [ ] Wire `updateScoreUi` to call the new builder per track
-- [ ] Verify voice filter, mute/solo, timbre, and GM select still work
+- [x] Create `src/ui/voiceOptionsUI.ts`
+- [x] Wire `updateScoreUi` to call the new builder per track
+- [x] Verify voice filter, mute/solo, timbre, and GM select still work
 
 ### Task 3: Extract geometry builders from `ThreeDRenderer.ts` (~180 net lines)
 
@@ -140,9 +141,9 @@ interface GeometryBuildContext {
 extracted functions in sequence. ~256 raw lines move out; ~180 net reduction
 after delegation stubs and shared-helper imports remain.
 
-- [ ] Create `src/renderers/three/geometryBuilders.ts`
-- [ ] Update `rebuildContent` to call the extracted functions
-- [ ] Verify all 3D variations render correctly (lines, discs, spheres, boxes)
+- [x] Create `src/renderers/three/geometryBuilders.ts`
+- [x] Update `rebuildContent` to call the extracted functions
+- [x] Verify all 3D variations render correctly (lines, discs, spheres, boxes)
 
 ### Task 4: Extract onset pulses from `ThreeDRenderer.ts` (~45 lines)
 
@@ -155,8 +156,8 @@ Move the pulse ring lifecycle into `src/renderers/three/onsetPulses.ts`:
 Exported as a small `OnsetPulseController` class or free functions operating on
 an array + content group reference.
 
-- [ ] Create `src/renderers/three/onsetPulses.ts`
-- [ ] Wire `ThreeDRenderer` to delegate pulse calls
+- [x] Create `src/renderers/three/onsetPulses.ts`
+- [x] Wire `ThreeDRenderer` to delegate pulse calls
 
 ### Task 5: Extract scene atmosphere from `ThreeDRenderer.ts` (~55 lines)
 
@@ -167,8 +168,8 @@ Move scene dressing into `src/renderers/three/sceneAtmosphere.ts`:
 - `disposeNowPlane`
 - `makeGradientBackground`
 
-- [ ] Create `src/renderers/three/sceneAtmosphere.ts`
-- [ ] Wire `ThreeDRenderer` to call the extracted functions
+- [x] Create `src/renderers/three/sceneAtmosphere.ts`
+- [x] Wire `ThreeDRenderer` to call the extracted functions
 
 ## Verification
 

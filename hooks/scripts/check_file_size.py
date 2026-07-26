@@ -26,7 +26,7 @@ from pathlib import Path
 
 # ── Thresholds ────────────────────────────────────────────────────────────────
 SOFT_LINE_CAP = int(os.getenv("POLICY_SOFT_LINE_CAP", "600"))
-HARD_LINE_CAP = int(os.getenv("POLICY_HARD_LINE_CAP", "1000"))
+HARD_LINE_CAP = int(os.getenv("POLICY_HARD_LINE_CAP", "800"))
 MAX_BYTES = int(os.getenv("POLICY_MAX_BYTES", str(500 * 1024)))
 BINARY_HARD_BYTES = int(os.getenv("POLICY_BINARY_HARD_BYTES", str(5 * 1024 * 1024)))
 DOC_SOFT_LINE_CAP = int(os.getenv("POLICY_DOC_SOFT_LINE_CAP", "1000"))

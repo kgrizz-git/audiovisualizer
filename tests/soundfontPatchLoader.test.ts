@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error Node built-in used for test fixture loading
 import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi } from 'vitest';
 import { getInstrumentSlug } from '../src/audio/soundfont/gmInstrumentSlugs.js';

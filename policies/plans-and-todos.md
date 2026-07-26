@@ -16,7 +16,7 @@ work, and a clear done/archive path so the repo does not accumulate zombie check
 | `plans/` | Implementation plans (`YYYY-MM-DD-slug.md` or stable names). Optional `orchestration-state.md` for multi-agent runs. |
 | `plans/specs/` | Design specs describing visual rules, mapping contracts, and export aesthetics (*what* and *why*). |
 | `plans/archive/` | Completed or abandoned plans moved out of the active set (keep git history). |
-| `to_do.md` or `TODO.md` (repo root) | Short living backlog for the whole project — not a substitute for issues on large teams. |
+| `dev-docs/TO_DO.md` (or equivalent project-specific path) | Short living backlog for the whole project — not a substitute for issues on large teams. |
 | `assessments/` | Timestamped reviews (security, QI, etc.); historical — do not rewrite in place. |
 | `.context/` | Scratch only (gitignored). Never the source of truth for plans. |
 
@@ -36,8 +36,7 @@ helps the harness.
 ### Marking plans done
 
 - Update `Status:` in the plan header to `complete` or `abandoned`.
-- Move the file to `plans/archive/` (or rename with a `DONE-` / `ARCHIVED-` prefix if you
-  prefer a flat `plans/` tree).
+- Move the file to `plans/archive/`.
 - If `plans/orchestration-state.md` exists, set phase to `complete` / `blocked` and point
   “next action” at none / user.
 - Do **not** delete completed plans; archive them so agents can learn from prior work.

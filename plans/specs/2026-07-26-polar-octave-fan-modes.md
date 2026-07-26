@@ -33,9 +33,9 @@ Comes in two variants sharing the same XY mapping:
 
 | Quantity | Mapping |
 |---|---|
-| Segment start | Center of the canvas — `(width/2, height/2)` after `fitGeometryToCanvas` padding is applied symmetrically. Per-voice staggering is **not** added: all voices share one origin. |
-| Segment angle θ | `((pitchClass) × 30°) mod 360°`, where `pitchClass = midiPitch mod 12`. Measured clockwise from +X (the existing `scoreMapper` angle convention). Pitch class 0 (C) → 0°. |
-| Segment length L | `note.duration × lengthScale` (seconds × the existing `RuleConfig.lengthScale`), then scaled by `fitGeometryToCanvas` so the longest note fits the canvas. Duration is post-normalization seconds — the same duration quantity used everywhere else in the mapper. |
+| Segment start | Center of the canvas — `(width/2, height/2)`. The `fitGeometryToCanvas` pass scales the geometry to fit the canvas but preserves the origin at the canvas center by computing bounds symmetrically around the origin (symmetric bounds computation for `polar_fan`). This ensures the "voices start at the center and move out" contract is honored even for asymmetric scores. Per-voice staggering is **not** added: all voices share one origin. |
+| Segment angle θ | `((visualPitchClass) × 30°) mod 360°`, where `visualPitchClass = getVisualPitch(note, config) mod 12` — i.e. the pitch class **after** `transposeSemitones` is applied, matching the hue used by `getNoteColor`. Measured clockwise from +X (the existing `scoreMapper` angle convention). Visual pitch class 0 (C) → 0°. Using the raw MIDI `note.pitchClass` would desync spoke angle from note color whenever `transposeSemitones !== 0`. |
+| Segment length L | `max(minSegmentLength, note.duration × lengthScale)` (seconds × the existing `RuleConfig.lengthScale`), then scaled by `fitGeometryToCanvas` so the longest note fits the canvas. The `minSegmentLength` floor ensures very short notes (e.g., grace notes) remain visible. Duration is post-normalization seconds — the same duration quantity used everywhere else in the mapper. |
 | Segment end | `start + (L cos θ, L sin θ)` |
 | Color | Existing `getNoteColor(note, config)` — pitch hue / velocity, unchanged. |
 | Width | Existing per-voice `clusterWidth()`-style stroke width, unchanged. |
@@ -95,10 +95,12 @@ resulting spoke length equals the longer of the two notes — the voice-route de
 
 Because segments always originate at the center, the `gapPolicy` setting is **not
 consulted** for `polar_fan` or `3d_polar_fan`. There is no path "gap" to bridge when the
-cursor never moves between notes. Existing per-note role coloring (`role: 'attack' | 'body'
-| 'release'`) is preserved — each segment is broken into the same three sub-segments as
-`lines` so release tails and onset attacks render consistently. Strokes for the role
-segments all lie on the same spoke (same θ, successively shorter L for attack/body/release).
+cursor never moves between notes. Each note emits a single `GeometrySegment` with its
+spoke angle and length — no `'gap'`-role segments are produced (an earlier draft of this
+spec claimed attack/body/release sub-segmentation mirroring `lines`; that was a
+hallucination — `GeometrySegment.role` is typed `'note' | 'gap'` and the existing
+`lines`/`circles` mappers emit one segment per note. The three-role ADSR concept lives only
+in the audio envelope engine, not in the visual geometry layer).
 
 ## 3. Out of scope
 
@@ -145,10 +147,10 @@ instancing optimization that bubbles the dominant color, *without* changing the 
 
 Two notes in one voice with the same pitch class but different octaves (e.g. C4 and C5)
 draw on the **same spoke** at the **same time** (if they overlap musically). Higher
-      octave does not push the segment further. The spoke will then carry whichever segment is
-      rendered last (painter's order), so the longer-duration note dominates visually — this is
-      the desired behavior: longer duration ⇒ longer spoke ⇒ "wins" the spoke, which is the
-      reader-comprehensible visual. (See open question 4.4 below for the alternative.)
+octave does not push the segment further. The spoke will then carry whichever segment is
+rendered last (painter's order), so the longer-duration note dominates visually — this is
+the desired behavior: longer duration ⇒ longer spoke ⇒ "wins" the spoke, which is the
+reader-comprehensible visual. (See open question 4.4 below for the alternative.)
 
 ### 4.4 Could octave disambiguation be optional?
 
@@ -174,8 +176,9 @@ contract section) when the implementation plan lands:
 - Determinism: same score+config → identical XY (and XYZ) geometry, verified by a
   Vitest unit test mirroring `tests/map3d.test.ts`.
 - Spec-correctness cases the implementation plan must cover:
-  - C-major triad (C4/E4/G4 simultaneous) produces three segments at 0°, 80°, 140°
-    (mod 360°); clarifies that simultaneous-onset chord → fan, not a cluster.
+  - C-major triad (C4/E4/G4 simultaneous) produces three segments at 0°, 120°, 210°
+    (C4 pitchClass 0 × 30° = 0°, E4 pitchClass 4 × 30° = 120°, G4 pitchClass 7 × 30° = 210°);
+    clarifies that simultaneous-onset chord → fan, not a cluster.
   - A two-octave descending run (C5 → C4) in one voice paints the same spoke twice in
     succession; the spoke length decreases when the shorter note (if any) is reached.
   - Two voices both playing middle C simultaneously overlap exactly — unison visual.

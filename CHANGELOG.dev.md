@@ -7,7 +7,27 @@ Last reviewed: 2026-07-24
 
 ## Unreleased
 
+### Added
+- Pre-commit git hook: runs `check_file_size.py`, `check_todo_limits.py`, and
+  `check_doc_freshness.py` on staged files at commit time.
+- Pre-push git hook: runs `npm run validate` (type-check + test + build) before push.
+- `hooks/install.sh`: idempotent hook installer; wired into `package.json` `prepare` so
+  hooks auto-install on `npm install`.
+- `check_todo_limits.py` now rejects checked-off `[x]` items in backlog files as a hard
+  error, enforcing the policy that completed items must be removed after changelog recording.
+- Plan template (`templates/plan.md`) now includes a "Completion checklist" section with
+  explicit steps: update status, archive plan, add changelog entry, remove from backlog.
+
 ### Changed
+- Aligned four contradicting policy documents on backlog/changelog procedures:
+  `agent-workflow.md` (order of operations: changelog first, then remove from backlog),
+  `changelog-conventions.md` (VERSION bumped at release only, not per-PR),
+  `plans-and-todos.md` (backlog path is `dev-docs/TO_DO.md`, archive means `plans/archive/`
+  only — removed `DONE-`/`ARCHIVED-` prefix alternative).
+- Cleaned `dev-docs/TO_DO.md`: removed 14 stale checked-off `[x]` items and 2 obsolete
+  `- Note:` entries that violated the remove-after-changelog policy. File reduced from
+  42 lines to 21 lines of active work only.
+- `check_todo_limits.py` default targets now include `dev-docs/TO_DO.md` and `dev-docs/todo.md`.
 - Corrected the black-background accent implementation per user feedback: replaced per-track circular-mean accents (multiple competing colors and an unintentionally strong glow) with a single merged accent computed as the duration×velocity-weighted circular mean of mapped note hues across all visible tracks — mirroring the existing "Weight → velocity × sounding overlap" coloring already used by tonal-time-lines band colors, so a sustained or loudly struck note carries proportionally more weight than a grace note and the accent reflects the perceived average color. Added `getDominantScoreAccent` in `src/core/mapper/scoreMapper.ts`; rewired `app.ts` `atmosphereColors()` to return a one-element array. The 2D `drawAtmosphere` now paints one centered radial glow at 12% opacity (reverting the bumped 22%); the 3D `setBackground` uses a single subtle merged hue at 25% saturation / 8% lightness (per the archived plan) rather than a multi-stop 75%/15% gradient. Applied the same duration×velocity weighting to `getAverageScoreBackground` for cross-mode consistency. Added weighted mapper tests for both helpers.
 - Clarified agent workflow, plan, TODO, and changelog policies: completed backlog items are
   removed from `dev-docs/TO_DO.md` after being recorded in the public or developer changelog.
@@ -16,6 +36,8 @@ Last reviewed: 2026-07-24
 - Updated `tests/soundfontPlayer.test.ts` types for compatibility with Vitest 4's `vi.fn` generics.
 
 ### Added
+- Added plan assessment for the polar octave fan display modes in [tmp/2026-07-26T12:45-polar-octave-fan-modes-assessment.md](tmp/2026-07-26T12:45-polar-octave-fan-modes-assessment.md).
+- Added a TODO item to randomize visualizer mode and initial loaded bundled MIDI at launch in [dev-docs/TO_DO.md](dev-docs/TO_DO.md).
 - SoundFont asset bundler script (`scripts/bundle-soundfonts.js` and `npm run bundle:soundfonts`) to fetch and bundle offline FluidR3 GM soundfont samples into `public/soundfonts/`.
 - Gitignore policy rule for bundled audio patches (`public/soundfonts/**/*.js`) to keep large binary asset files out of Git history.
 - SoundFont patch loader, player, voice router, and sustain window unit tests (`tests/audio/soundfont/`).

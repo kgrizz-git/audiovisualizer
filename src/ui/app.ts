@@ -1,3 +1,4 @@
+// policy:file-size allow=850 reason=Main UI wiring; split into control modules is tracked in TO_DO.md
 import { generateDemoScore, parseMidiData } from '../core/midi/parser.js';
 import { DEFAULT_CONFIG, getAverageScoreBackground, getDominantScoreAccent, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
@@ -480,7 +481,7 @@ class AudioVisualizerApp {
 
   private maybeShowLibraryPrompt(): void {
     let alreadyPrompted = false;
-    try { alreadyPrompted = localStorage.getItem(LIBRARY_PROMPT_FLAG) === '1'; } catch { alreadyPrompted = false; }
+    try { alreadyPrompted = localStorage.getItem(LIBRARY_PROMPT_FLAG) === '1'; } catch { /* storage unavailable */ }
     if (alreadyPrompted) return;
     const dialog = this.element<HTMLDialogElement>('library-prompt');
     if (typeof dialog.showModal === 'function') dialog.showModal();
@@ -609,7 +610,7 @@ class AudioVisualizerApp {
     if (panelAuto.checked !== vp.autoZoom) panelAuto.checked = vp.autoZoom;
 
     const mode = vp.autoZoomMode ?? 'musical';
-    let badgeText = 'Auto';
+    let badgeText: string;
     
     const modeMusical = this.element<HTMLButtonElement>('btn-mode-musical');
     const modeTime = this.element<HTMLButtonElement>('btn-mode-time');

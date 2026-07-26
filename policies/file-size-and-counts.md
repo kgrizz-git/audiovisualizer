@@ -15,7 +15,7 @@ variables (see [`hooks/README.md`](../hooks/README.md)) or the script defaults.
 
 | Rule | Default | Tier |
 |---|---|---|
-| Max lines per source file | **600** (soft warn), **1000** (hard) | soft→hard gate |
+| Max lines per source file | **600** (soft warn), **800** (hard) | soft→hard gate |
 | Max lines per function/method | 60 (soft), 100 (hard) | advisory → soft gate |
 | Max cyclomatic complexity per function | 10 (soft), 15 (hard) | advisory |
 | Max bytes per committed file (non-binary) | 500 KB | hard gate |
@@ -33,8 +33,8 @@ variables (see [`hooks/README.md`](../hooks/README.md)) or the script defaults.
 
 ## Function size & complexity
 
-Function length and cyclomatic complexity are advisory (no automated pre-commit block by
-default) because they require language-level parsing.
+Function length and cyclomatic complexity are enforced via ESLint warnings for JS/TS
+projects (see `eslint.config.js`). Other languages can use the tools below.
 
 **Python — check with radon or ruff:**
 

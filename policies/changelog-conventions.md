@@ -80,7 +80,8 @@ Example developer entry:
 
 ## Agent rules
 
-1. When product behavior changes, update **public** changelog + `VERSION` in the same PR.
+1. When product behavior changes, update the **public** changelog in the same PR. (`VERSION`
+   is bumped only at release time — see `AGENTS.md`.)
 2. When only harness/inventory/tests/CI change, update **developer** changelog (or
    Internal section); bump PATCH if you cut a release.
 3. When completing work tracked in `dev-docs/TO_DO.md`, first add the appropriate changelog

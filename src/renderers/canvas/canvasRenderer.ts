@@ -34,7 +34,7 @@ export class CanvasRenderer {
     this.ctx.scale(dpr, dpr);
     this.ctx.fillStyle = options.backgroundColor || '#000000';
     this.ctx.fillRect(0, 0, width, height);
-    if (geometry.bands.length === 0) this.drawAtmosphere(width, height, options.atmosphereColors);
+    if (geometry.bands.length === 0) this.drawAtmosphere(width, height, options.atmosphereColors, options.backgroundColor);
 
     const viewport = options.viewport ?? DEFAULT_VIEWPORT;
     this.ctx.save();
@@ -114,16 +114,41 @@ export class CanvasRenderer {
     this.ctx.fillRect(0, band.y, width, band.height);
   }
 
-  private drawAtmosphere(width: number, height: number, colors: string[] = ['hsl(168, 70%, 50%)']): void {
+  private drawAtmosphere(width: number, height: number, colors: string[] = ['hsl(168, 70%, 50%)'], backgroundColor?: string): void {
+    const fadeColor = this.getTransparentColor(backgroundColor || '#000000');
+    // A single accent paints one subtle centered glow; multiple accents keep the
+    // original multi-position layout (used only as a fallback).
+    if (colors.length === 1) {
+      const color = colors[0];
+      const x = width * 0.5;
+      const y = height * 0.4;
+      const glow = this.ctx.createRadialGradient(x, y, 0, x, y, width * 0.6);
+      glow.addColorStop(0, color.replace('hsl(', 'hsla(').replace('%)', '%, 0.12)'));
+      glow.addColorStop(1, fadeColor);
+      this.ctx.fillStyle = glow;
+      this.ctx.fillRect(0, 0, width, height);
+      return;
+    }
     colors.slice(0, 4).forEach((color, index) => {
       const x = width * (0.22 + index * 0.23);
       const y = height * (0.2 + (index % 2) * 0.55);
       const glow = this.ctx.createRadialGradient(x, y, 0, x, y, width * 0.48);
       glow.addColorStop(0, color.replace('hsl(', 'hsla(').replace('%)', '%, 0.12)'));
-      glow.addColorStop(1, 'rgba(9, 17, 31, 0)');
+      glow.addColorStop(1, fadeColor);
       this.ctx.fillStyle = glow;
       this.ctx.fillRect(0, 0, width, height);
     });
+  }
+
+  private getTransparentColor(color: string): string {
+    const trimmed = color.trim().toLowerCase();
+    if (trimmed.startsWith('#')) {
+      if (trimmed.length === 4) return trimmed + '0'; // #000 -> #0000
+      if (trimmed.length === 7) return trimmed + '00'; // #000000 -> #00000000
+    } else if (trimmed.startsWith('hsl(')) {
+      return trimmed.replace('hsl(', 'hsla(').replace(')', ', 0)');
+    }
+    return 'rgba(0, 0, 0, 0)';
   }
 
   private drawCanvasLegend(w: number, h: number, geometry: RenderedGeometry): void {

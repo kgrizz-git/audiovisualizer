@@ -8,6 +8,7 @@ Last reviewed: 2026-07-24
 ## Unreleased
 
 ### Changed
+- Corrected the black-background accent implementation per user feedback: replaced per-track circular-mean accents (multiple competing colors and an unintentionally strong glow) with a single merged accent computed as the duration×velocity-weighted circular mean of mapped note hues across all visible tracks — mirroring the existing "Weight → velocity × sounding overlap" coloring already used by tonal-time-lines band colors, so a sustained or loudly struck note carries proportionally more weight than a grace note and the accent reflects the perceived average color. Added `getDominantScoreAccent` in `src/core/mapper/scoreMapper.ts`; rewired `app.ts` `atmosphereColors()` to return a one-element array. The 2D `drawAtmosphere` now paints one centered radial glow at 12% opacity (reverting the bumped 22%); the 3D `setBackground` uses a single subtle merged hue at 25% saturation / 8% lightness (per the archived plan) rather than a multi-stop 75%/15% gradient. Applied the same duration×velocity weighting to `getAverageScoreBackground` for cross-mode consistency. Added weighted mapper tests for both helpers.
 - Clarified agent workflow, plan, TODO, and changelog policies: completed backlog items are
   removed from `dev-docs/TO_DO.md` after being recorded in the public or developer changelog.
 - Upgraded devDependencies `vite` to `^8.1.5` and `vitest` to `^4.1.10` to resolve high and critical dev-tooling security vulnerabilities.

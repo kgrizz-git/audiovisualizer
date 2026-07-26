@@ -25,6 +25,7 @@ uses [Semantic Versioning](https://semver.org/).
 - Engine-aware voice controls with dynamic per-track UI switching between General MIDI instrument selection (SoundFont mode) and oscillator waveform selection (Synth mode). SemVer: **MINOR**.
 
 ### Changed
+- When the canvas background is set to 'Black', the 3D scene background and fog now dynamically transition to a subtle vertical gradient tinted by a single merged accent computed from the duration×velocity-weighted circular mean of mapped note hues across all visible tracks (25% saturation / 8% lightness so notes stay legible), instead of a static blue-grey gradient. The 2D atmosphere paints one centered radial glow at the same weighted hue (12% opacity) fading cleanly to transparent to avoid navy fringes. The weighting mirrors the existing tonal-time-lines "Weight → velocity × sounding overlap" coloring, so sustained or loudly struck notes carry proportionally more influence than grace notes, and the accent tracks the perceived average color of the piece. SemVer: **MINOR**.
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed

@@ -1,5 +1,5 @@
 import { generateDemoScore, parseMidiData } from '../core/midi/parser.js';
-import { DEFAULT_CONFIG, getAverageScoreBackground, getTrackAverageAccents, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
+import { DEFAULT_CONFIG, getAverageScoreBackground, getDominantScoreAccent, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
@@ -706,6 +706,7 @@ class AudioVisualizerApp {
       if (!is3DVariation(this.currentConfig.variation)) return; // variation changed while loading
       renderer.setGeometry(map3DGeometry(this.currentScore, this.currentConfig, PREVIEW_SIZE, PREVIEW_SIZE));
       renderer.setViewport(this.viewport3d);
+      renderer.setBackground(this.backgroundColor(), this.atmosphereColors());
       renderer.stepPlayhead(this.currentTime < this.currentScore.duration ? this.currentTime : null);
       if (!this.isPlaying && this.viewport3d.autoRotate) {
         if (this.animationFrameId === null) {
@@ -762,6 +763,7 @@ class AudioVisualizerApp {
   private async downloadPng3D(): Promise<void> {
     const renderer = this.threeRenderer;
     if (!renderer) return;
+    renderer.setBackground(this.backgroundColor(), this.atmosphereColors());
     try {
       const blob = await renderer.capturePNG();
       this.download(blob, `${this.filename()}.png`);
@@ -787,7 +789,11 @@ class AudioVisualizerApp {
 
   private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }
   private backgroundColor(): string { return this.backgroundMode === 'average' ? getAverageScoreBackground(this.currentScore, this.currentConfig) : '#000000'; }
-  private atmosphereColors(): string[] | undefined { return this.backgroundMode === 'black' ? getTrackAverageAccents(this.currentScore, this.currentConfig) : undefined; }
+  private atmosphereColors(): string[] | undefined {
+    if (this.backgroundMode !== 'black') return undefined;
+    const accent = getDominantScoreAccent(this.currentScore, this.currentConfig);
+    return accent ? [accent] : undefined;
+  }
   private download(blob: Blob, name: string): void { const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }
   private filename(): string { return `${this.currentScore.title.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '').toLowerCase()}-${this.currentConfig.variation}`; }
   private setStatus(message: string, isError = false): void { const status = this.element<HTMLElement>('app-status'); status.textContent = message; status.classList.toggle('is-error', isError); }

@@ -3,15 +3,17 @@
 Last reviewed: 2026-07-26
 Date: 2026-07-26
 Author: agent
-Status: draft
+Status: approved
 Linked issue/PR: n/a
 
 ## Goal
 
-Two source files exceed the 800-line hard cap enforced by `check_file_size.py`:
-`src/ui/app.ts` (804 lines) and `src/renderers/three/ThreeDRenderer.ts` (852 lines).
-Extract cohesive slices into sibling modules so both files fall comfortably under
-the limit without changing any public behavior.
+Two source files are near or over the 800-line hard cap enforced by
+`check_file_size.py`: `src/ui/app.ts` (804 lines, currently passing via a
+`policy:file-size allow=850` override) and `src/renderers/three/ThreeDRenderer.ts`
+(852 lines, no override — failing the hook). Extract cohesive slices into sibling
+modules so both files fall comfortably under the 800 cap and the `app.ts`
+dispensation can be retired, restoring a consistent limit across the codebase.
 
 ## Out of scope
 
@@ -30,7 +32,7 @@ single orchestrator; move self-contained helper groups out.
 | Option | Why not chosen |
 |---|---|
 | Raise the hook limit | Defeats the purpose of the policy; other files will hit it later |
-| Add `policy:file-size` exemption | Already tried on `app.ts` (allow=850) but hook hard cap is 800 |
+| Keep the `allow=850` exemption on `app.ts` | Works today (804 < 850), but is policy-dispensation tech debt; this refactor retires it so the consistent 800 cap applies everywhere |
 | Inline-compress code further | Already dense; further compression hurts readability |
 
 ## Proposed file changes
@@ -39,7 +41,7 @@ single orchestrator; move self-contained helper groups out.
 src/ui/app.ts                          — shrink by ~120 lines via extractions below
 src/ui/soundfontLibraryUI.ts           — NEW: library prompt, download, cache-clear, cache-status
 src/ui/voiceOptionsUI.ts               — NEW: per-track audio voice row DOM builder
-src/renderers/three/ThreeDRenderer.ts  — shrink by ~200 lines via extractions below
+src/renderers/three/ThreeDRenderer.ts  — shrink by ~270 lines via extractions below (Phases 3–5)
 src/renderers/three/geometryBuilders.ts — NEW: buildLines, buildSlabSet, buildDiscs, buildSpheres, buildBoxes
 src/renderers/three/onsetPulses.ts     — NEW: spawn/update/clear onset pulse ring meshes
 src/renderers/three/sceneAtmosphere.ts — NEW: buildAtmosphere, buildNowPlane, disposeNowPlane, makeGradientBackground
@@ -50,7 +52,17 @@ src/renderers/three/sceneAtmosphere.ts — NEW: buildAtmosphere, buildNowPlane, 
 ### Phase 1: Extract SoundFont library UI from `app.ts` (~55 lines)
 
 Move these methods out of `AudioVisualizerApp` into `src/ui/soundfontLibraryUI.ts`
-as a class or free functions that accept the DOM element helper and status callback:
+as free functions. The orchestrator passes a small callback surface so the leaf
+module has no reference to `this`:
+
+```ts
+interface LibraryUIContext {
+  element: <T extends HTMLElement>(id: string) => T;
+  setStatus: (message: string, isError?: boolean) => void;
+}
+```
+
+Methods to extract:
 
 - `maybeShowLibraryPrompt`
 - `dismissLibraryPrompt`
@@ -71,11 +83,34 @@ is self-contained. Extract into `src/ui/voiceOptionsUI.ts`:
 - `applyBadge(span, status)` — patch-status badge helper
 - `gmLabel(program)` / `soundbankLabel(soundbank)` — label formatters
 
+The row's event listeners currently call private orchestrator methods
+(`commitVoiceMix`, `applyVoiceRoutingChange`, `voiceRouter.setProgram`, etc.).
+The extracted module stays a leaf by receiving callbacks, not references:
+
+```ts
+interface VoiceRowContext {
+  engine: PlaybackEngine;
+  soundbank: SoundbankPreset;
+  statusMap?: Map<number, PatchStatus>;
+  onProgramChange(channel: number, program: number): void;
+  onTimbreChange(channel: number, timbre: VoicePlaybackSettings['timbre']): void;
+  onMixChange(channel: number, settings: VoicePlaybackSettings): void;
+  onMute(channel: number, muted: boolean): void;
+  onSolo(channel: number, solo: boolean): void;
+}
+```
+
+**Decision:** the voice-filter checkbox row (`app.ts:309-315`) stays in `app.ts`.
+It is 7 lines of tight orchestrator logic (mutates `currentConfig.voiceFilter` +
+re-renders) and pulling it out would trade a trivial line saving for a new
+callback path. `voiceOptionsUI.ts` owns only the per-track audio voice rows
+(lines 316–383).
+
 - [ ] Create `src/ui/voiceOptionsUI.ts`
 - [ ] Wire `updateScoreUi` to call the new builder per track
 - [ ] Verify voice filter, mute/solo, timbre, and GM select still work
 
-### Phase 3: Extract geometry builders from `ThreeDRenderer.ts` (~280 lines)
+### Phase 3: Extract geometry builders from `ThreeDRenderer.ts` (~180 net lines)
 
 Move the instanced-mesh construction methods into `src/renderers/three/geometryBuilders.ts`:
 
@@ -84,9 +119,26 @@ Move the instanced-mesh construction methods into `src/renderers/three/geometryB
 - `buildSpheres`
 - `buildBoxes` + `bucketOpacity`
 
-These become free functions that accept `RenderedGeometry3D`, the content group,
-the reveal plane, and a materials accumulator. `ThreeDRenderer.rebuildContent`
-calls them in sequence.
+These become free functions that accept a context object carrying the coordinate
+helpers, content group, reveal plane, and materials accumulators:
+
+```ts
+interface GeometryBuildContext {
+  worldX: (x: number) => number;
+  worldY: (y: number) => number;
+  worldZ: (z: number) => number;
+  contentGroup: THREE.Group;
+  revealPlane: THREE.Plane;
+  lineMaterials: LineMaterial[];
+  revealMaterials: THREE.Material[];
+  width: number;
+  height: number;
+}
+```
+
+`ThreeDRenderer.rebuildContent` constructs the context once and calls the
+extracted functions in sequence. ~256 raw lines move out; ~180 net reduction
+after delegation stubs and shared-helper imports remain.
 
 - [ ] Create `src/renderers/three/geometryBuilders.ts`
 - [ ] Update `rebuildContent` to call the extracted functions
@@ -125,6 +177,13 @@ Move scene dressing into `src/renderers/three/sceneAtmosphere.ts`:
 - [ ] `npm run validate` passes (typecheck + tests + production build)
 - [ ] Manual smoke: 2D variations render, 3D variations render, onset pulses animate,
       playback works, SoundFont library download/clear works, voice rows build correctly
+- [ ] Manual smoke (reveal-clip): verify reveal playback cue clips notes at the
+      now-plane for `3d_lines`, `3d_note_spheres`, and `3d_boxes`; verify long
+      notes show the release tail fade in `3d_lines` and `3d_note_discs`
+- [ ] (Optional) Add a Vitest asserting every material pushed into
+      `revealMaterials` carries `clippingPlanes.length === 1` — cheap safety net
+      for the extraction since 3D rendering is browser-only and not otherwise
+      under unit test
 
 ## Completion checklist
 
@@ -135,7 +194,17 @@ Move scene dressing into `src/renderers/three/sceneAtmosphere.ts`:
 
 ## Open questions
 
-- [ ] Should `voiceOptionsUI.ts` also own the voice-filter checkbox row, or keep that in `app.ts`?
+None — resolved during review. Voice-filter checkbox row stays in `app.ts` (see Phase 2).
+
+## Line-budget sanity check (realistic)
+
+| File | Now | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Phase 5 | Projected |
+|---|---|---|---|---|---|---|---|
+| `src/ui/app.ts` | 804 | −55 | −65 | — | — | — | **~684** |
+| `ThreeDRenderer.ts` | 852 | — | — | −180 | −40 | −50 | **~582** |
+
+Both clear the 800 hard cap with comfortable margin. The `allow=850` comment on
+`app.ts:1` is retired; `ThreeDRenderer.ts` needs no override now or after.
 
 ## Risks
 

@@ -128,11 +128,11 @@ CHANGELOG.md                       — 'Added' entry under Unreleased for two ne
       `is3DVariation()` untouched in this phase (3D comes in Phase 3).
 - [ ] Add a new `else if (config.variation === 'polar_fan')` branch inside the
       `notes.forEach` callback in `src/core/mapper/scoreMapper.ts`, after the `vertical_tone`
-      branch (which ends at line 248). The branch goes between the closing brace of
-      `vertical_tone` and the `prevNote = note` statement. Each note:
+      branch. The branch goes between the closing brace of `vertical_tone` and the
+      `prevNote = note` statement. Each note:
       - Compute the **transposed** pitch class via the existing helper:
         `const visualPitch = getVisualPitch(note, config);` (already applies
-        `transposeSemitones`, scoreMapper.ts:48-50) then
+        `transposeSemitones`) then
         `const transposedPitchClass = visualPitch % 12;` and
         `const angle = (transposedPitchClass * 30 * Math.PI) / 180;`.
         Raw `note.pitchClass` is the *un-transposed* MIDI source value and must NOT be
@@ -141,7 +141,7 @@ CHANGELOG.md                       — 'Added' entry under Unreleased for two ne
         Note: `getVisualPitch` clamps the result to 0..127, so extreme transposition
         values are bounded (e.g., pitch 120 + transpose 20 = clamped to 127, pitchClass 7).
       - Compute `length = Math.max(config.minSegmentLength, note.duration * config.lengthScale)`.
-        Same formula as the existing `lines`/`circles` branch (scoreMapper.ts:181).
+        Same formula as the existing `lines`/`circles` branch.
       - Compute `origin = { x: targetWidth / 2, y: targetHeight / 2 }`. Recompute per track
         so nothing leaks; do **not** call `getInitialCursor` — `originMode` is not consulted
         for this variation (spec §1.2).
@@ -149,7 +149,7 @@ CHANGELOG.md                       — 'Added' entry under Unreleased for two ne
         `{ start: origin, end: { x: origin.x + cos(angle)*length,
         y: origin.y + sin(angle)*length }, color: getNoteColor(note, config), width:
         strokeWidthBase + (note.velocity/127)*strokeWidthScale, opacity: 0.9, note }`.
-        Mirrors the geometry of the `lines` branch (scoreMapper.ts:196-203). Do **not**
+        Mirrors the geometry of the `lines` branch. Do **not**
         subdivide into attack/body/release segments — `GeometrySegment.role` is typed
         `'note' | 'gap'` (types.ts:86); the three-role concept lives only in the audio
         envelope engine and does not exist in the visual geometry layer (review finding
@@ -158,12 +158,12 @@ CHANGELOG.md                       — 'Added' entry under Unreleased for two ne
         `advanceCursorForGap`. No `'gap'`-role segments are emitted.
       - Skip `applyIntervalTurn`. There is no heading to maintain between notes.
       - The `chordLayout === 'polyphony'` fast path (`mapPolyphonicLineSegments`) is
-        automatically bypassed because `polar_fan !== 'lines'` — the code structure at
-        scoreMapper.ts:173 routes non-`lines` variations into the `else` block containing
-        the `notes.forEach` loop. No explicit guard is needed.
+        automatically bypassed because `polar_fan !== 'lines'` — the code structure routes
+        non-`lines` variations into the `else` block containing the `notes.forEach` loop.
+        No explicit guard is needed.
 - [ ] Add a defensive `else` clause immediately after the `vertical_tone` block closes
-      (line 248) and before `prevNote = note` (line 250) in `scoreMapper.ts`. The clause
-      throws an error for unhandled variations:
+      (and before `prevNote = note`) in `scoreMapper.ts`. The clause throws an error for
+      unhandled variations:
       ```typescript
       } else {
         throw new Error(`Unhandled variation: ${config.variation}`);
@@ -172,7 +172,7 @@ CHANGELOG.md                       — 'Added' entry under Unreleased for two ne
       This catches silent failures if a future variation is added but the branch is missing
       or misspelled (e.g., `'polar-fan'` instead of `'polar_fan'`).
 - [ ] Confirm `circles`/`bands` arrays stay empty for `polar_fan` voices (segments-only).
-- [ ] Add legend case `polar_fan` in `src/core/legend/legendContent.ts:20`. Add
+- [ ] Add legend case `polar_fan` in `src/core/legend/legendContent.ts`. Add
       `case 'polar_fan':` to the switch statement, returning a `LegendContent` object.
       Include the standard `hue` and `...transpose` lines (matching the pattern used by
       `lines` and `circles`), then add the polar-specific lines:
@@ -233,11 +233,10 @@ CHANGELOG.md                       — 'Added' entry under Unreleased for two ne
 - [ ] Confirm `app.ts`'s existing variation-select handler (`src/ui/app.ts:87`) routes
       through `updateCanvasMode()` and renders the new variation with no extra wiring —
       `is3DVariation('polar_fan')` is false, so the 2D Canvas path is automatic.
-- [ ] **CLI**: add `'polar_fan'` to the allowed-mode enum array in
-      `src/cli/renderMidi.ts:67` and to the `--help` description at renderMidi.ts:30-ish.
-      3D variations stay excluded — the CLI emits 2D SVG, but `polar_fan` is a 2D
-      SVG-exportable mode and must be reachable from `npm run render -- --mode polar_fan`
-      (review finding #3).
+- [ ] **CLI**: add `'polar_fan'` to the allowed-mode enum array in `src/cli/renderMidi.ts`
+      and to the `--help` description. 3D variations stay excluded — the CLI emits 2D SVG,
+      but `polar_fan` is a 2D SVG-exportable mode and must be reachable from
+      `npm run render -- --mode polar_fan` (review finding #3).
 - [ ] **Canvas glow**: extend the line-glow predicate at
       `src/renderers/canvas/canvasRenderer.ts:101` from `variation === 'lines'` to
       `variation === 'lines' || variation === 'polar_fan'` so the spokes share the line
@@ -317,10 +316,12 @@ CHANGELOG.md                       — 'Added' entry under Unreleased for two ne
       3D Z = onset counterpart. Match the structure used for the `3d_piano_roll` entry.
       Reference the spec (`plans/specs/2026-07-26-polar-octave-fan-modes.md`) as the source
       of truth for the visual rule, so the DESIGN.md entry stays in sync.
+      (Per AGENTS.md line 21: update DESIGN.md when changing visual rules)
 - [ ] Update `ARCHITECTURE.md` near the `map3DGeometry`/`base2DVariation` section
       (currently references `lines`/`circles`/`piano_roll` routing) to add the
       `'3d_polar_fan' → 'polar_fan'` route and call out that `polar_fan` ignores
       `gapPolicy` and `originMode`.
+      (Per AGENTS.md line 22: update ARCHITECTURE.md when changing domain contracts)
 - [ ] Add a CHANGELOG.md entry under "Unreleased" → "Added": describe both variations in
       one bullet; tag SemVer: **MINOR**.
 - [ ] **CLI verification**: run `npm run render -- --input public/demo-midi/bach_prelude_c.mid
@@ -380,3 +381,12 @@ CHANGELOG.md                       — 'Added' entry under Unreleased for two ne
 | Forgetting to skip `gapPolicy`/`originMode` for polar_fan accidentally links `left_to_right` cursor origin into the new branch | low | med | Phase 1 explicitly does **not** call `getInitialCursor`/`getInitialHeading`/`addGapSegment`. Add a guard test asserting that a `gapPolicy: 'ghost'` config still emits zero `'role: 'gap'` segments for `polar_fan`. |
 | CLI drops `--mode polar_fan` with an enum validation error because the allowed-mode array wasn't extended (review finding #3) | high if unmitigated | med — feature is silently unreachable from the CLI | Phase 2 task explicitly extends the array and the `--help` text before Phase 4 verification runs `npm run validate`. Phase 4 includes an end-to-end CLI test. |
 | Spokes look flat in the 2D Canvas because the line-glow predicate is locked to `variation === 'lines'` (review finding #6) | high if unmitigated | low-med — looks inconsistent with the line family | Phase 2 task extends the predicate to include `polar_fan`. Visually confirm in manual review; tune the shadow-blur multiplier if dense chords wash out. |
+
+## Completion checklist
+
+When all phases and verification are done:
+
+- [ ] Update plan `Status:` to `complete` with completion date
+- [ ] Move plan to `plans/archive/`
+- [ ] Add entry to `CHANGELOG.md` (user-facing) or `CHANGELOG.dev.md` (internal)
+- [ ] Remove the completed item from `dev-docs/TO_DO.md` (do not just check it off)

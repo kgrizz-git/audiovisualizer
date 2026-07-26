@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-24
 Date: 2026-07-24
 Author: Codex
-Status: in-progress
+Status: complete (2026-07-26); browser manual verification pending
 Linked issue/PR: n/a
 
 ## Goal
@@ -19,8 +19,10 @@ a calmer, cumulative reading mode without changing deterministic geometry or exp
 
 ## Approach
 
-Add a `playbackCue` choice to `ViewportTransform3D`: `now_plane` (existing default) or
-`reveal`. The Three.js renderer will retain its static buffers and update only material
+Add a `playbackCue` choice to `ViewportTransform3D`: `now_plane` or `reveal`. After
+implementation, `reveal` was promoted to the shipped default (`DEFAULT_VIEWPORT_3D.playbackCue = 'reveal'`)
+— it reads as the calmer, cumulative view the plan is built around, while `now_plane`
+remains available as the alternate cue. The Three.js renderer retains its static buffers and updates only material
 visibility at each playhead tick: line segments and discs/boxes whose onset is in the
 future are hidden; currently sounding line segments remain partially visible via a small
 per-frame draw range. This keeps the mapper pure and avoids rebuilding geometry each frame.
@@ -59,7 +61,7 @@ tests/                            — config/default and mapper determinism cove
 ## Verification
 
 - [x] Same score/config still maps to identical 3D geometry.
-- [x] `now_plane` remains the default and retains its current behavior.
+- [x] Default switched to `reveal` (`DEFAULT_VIEWPORT_3D.playbackCue`); `now_plane` retains its current behavior as the alternate cue.
 - [ ] Reveal mode is smooth on a dense score and shows no future geometry.
 
 ## Risks

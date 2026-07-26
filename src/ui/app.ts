@@ -1,4 +1,3 @@
-// policy:file-size allow=850 reason=Main UI wiring; split into control modules is tracked in TO_DO.md
 import { generateDemoScore, parseMidiData } from '../core/midi/parser.js';
 import { DEFAULT_CONFIG, getAverageScoreBackground, getDominantScoreAccent, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
@@ -15,16 +14,15 @@ import { SoundfontPatchLoader } from '../audio/soundfont/soundfontPatchLoader.js
 import { SoundfontPlayer } from '../audio/soundfont/soundfontPlayer.js';
 import { VoiceRouter } from '../audio/soundfont/voiceRouter.js';
 import { GM_INSTRUMENT_SLUGS } from '../audio/soundfont/gmInstrumentSlugs.js';
-import { clearSoundfontCache, getCacheStatus, prefetchBank } from '../audio/soundfont/soundfontLibrary.js';
 import { PatchStatus, PlaybackEngine, SoundbankPreset } from '../audio/soundfont/soundfontTypes.js';
 import { AUTO_ZOOM_BAR_LABELS, AUTO_ZOOM_BAR_STEPS, AUTO_ZOOM_SECOND_STEPS, ViewportController } from '../core/layout/viewportController.js';
 import { ViewportGestures } from './viewportGestures.js';
+import { clearLibraryCache, dismissLibraryPrompt, downloadLibrary, LibraryUIContext, maybeShowLibraryPrompt, refreshCacheStatus } from './soundfontLibraryUI.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
 const DEFAULT_DEMO_URL = './demo-midi/bach_prelude_c_full.mid';
 const DEFAULT_DEMO_TITLE = 'Bach Prelude in C · full score (2:20)';
-const LIBRARY_PROMPT_FLAG = 'av-soundfont-library-prompted';
 
 class AudioVisualizerApp {
   private currentScore: Score = generateDemoScore();
@@ -479,68 +477,33 @@ class AudioVisualizerApp {
     }
   }
 
+  private get libraryUIContext(): LibraryUIContext {
+    return {
+      element: <T extends HTMLElement>(id: string) => this.element<T>(id),
+      setStatus: (message, isError) => this.setStatus(message, isError),
+      getDownloadAbort: () => this.downloadAbort,
+      setDownloadAbort: (controller) => { this.downloadAbort = controller; },
+    };
+  }
+
   private maybeShowLibraryPrompt(): void {
-    let alreadyPrompted = false;
-    try { alreadyPrompted = localStorage.getItem(LIBRARY_PROMPT_FLAG) === '1'; } catch { /* storage unavailable */ }
-    if (alreadyPrompted) return;
-    const dialog = this.element<HTMLDialogElement>('library-prompt');
-    if (typeof dialog.showModal === 'function') dialog.showModal();
+    maybeShowLibraryPrompt(this.libraryUIContext);
   }
 
   private dismissLibraryPrompt(): void {
-    try { localStorage.setItem(LIBRARY_PROMPT_FLAG, '1'); } catch { /* storage unavailable */ }
-    const dialog = this.element<HTMLDialogElement>('library-prompt');
-    if (dialog.open) dialog.close();
+    dismissLibraryPrompt(this.libraryUIContext);
   }
 
   private async refreshCacheStatus(): Promise<void> {
-    const label = this.element<HTMLElement>('sf-cache-status');
-    const status = await getCacheStatus('FluidR3_GM');
-    if (!status.available) {
-      label.textContent = 'Offline cache unavailable in this browser.';
-      return;
-    }
-    label.textContent = `SoundFont cache: ${status.cached}/${status.total} FluidR3 GM instruments stored.`;
+    await refreshCacheStatus(this.libraryUIContext);
   }
 
   private async downloadLibrary(): Promise<void> {
-    if (this.downloadAbort) return; // a download is already running
-    const downloadBtn = this.element<HTMLButtonElement>('btn-download-library');
-    const cancelBtn = this.element<HTMLButtonElement>('btn-cancel-download');
-    const clearBtn = this.element<HTMLButtonElement>('btn-clear-cache');
-    const progress = this.element<HTMLElement>('sf-progress');
-    const fill = this.element<HTMLElement>('sf-progress-fill');
-    const progressLabel = this.element<HTMLElement>('sf-progress-label');
-
-    this.downloadAbort = new AbortController();
-    downloadBtn.hidden = true;
-    cancelBtn.hidden = false;
-    clearBtn.disabled = true;
-    progress.hidden = false;
-
-    const result = await prefetchBank('FluidR3_GM', (p) => {
-      const pct = Math.round((p.done / p.total) * 100);
-      fill.style.width = `${pct}%`;
-      progressLabel.textContent = `${p.done}/${p.total} · ${p.slug.replace(/_/g, ' ')}`;
-    }, this.downloadAbort.signal);
-
-    this.downloadAbort = null;
-    downloadBtn.hidden = false;
-    cancelBtn.hidden = true;
-    clearBtn.disabled = false;
-    progress.hidden = true;
-    fill.style.width = '0%';
-
-    if (result.aborted) this.setStatus(`Library download cancelled (${result.ok} instruments cached).`);
-    else if (result.failed > 0) this.setStatus(`Library download finished — ${result.ok} cached, ${result.failed} unavailable.`, result.ok === 0);
-    else this.setStatus(`Full SoundFont library downloaded (${result.ok} instruments).`);
-    await this.refreshCacheStatus();
+    await downloadLibrary(this.libraryUIContext);
   }
 
   private async clearLibraryCache(): Promise<void> {
-    const cleared = await clearSoundfontCache();
-    this.setStatus(cleared ? 'SoundFont cache cleared.' : 'No SoundFont cache to clear.');
-    await this.refreshCacheStatus();
+    await clearLibraryCache(this.libraryUIContext);
   }
 
   private pause(): void {

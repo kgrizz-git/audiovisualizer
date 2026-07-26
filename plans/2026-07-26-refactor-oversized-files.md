@@ -47,9 +47,9 @@ src/renderers/three/onsetPulses.ts     — NEW: spawn/update/clear onset pulse r
 src/renderers/three/sceneAtmosphere.ts — NEW: buildAtmosphere, buildNowPlane, disposeNowPlane, makeGradientBackground
 ```
 
-## Phases & checklist
+## Tasks & checklist
 
-### Phase 1: Extract SoundFont library UI from `app.ts` (~55 lines)
+### Task 1: Extract SoundFont library UI from `app.ts` (~55 lines)
 
 Move these methods out of `AudioVisualizerApp` into `src/ui/soundfontLibraryUI.ts`
 as free functions. The orchestrator passes a small callback surface so the leaf
@@ -70,11 +70,11 @@ Methods to extract:
 - `downloadLibrary`
 - `clearLibraryCache`
 
-- [ ] Create `src/ui/soundfontLibraryUI.ts` with the extracted functions
-- [ ] Replace inline methods in `app.ts` with delegating calls
-- [ ] Remove the `policy:file-size` exemption comment from `app.ts`
+- [x] Create `src/ui/soundfontLibraryUI.ts` with the extracted functions
+- [x] Replace inline methods in `app.ts` with delegating calls
+- [x] Remove the `policy:file-size` exemption comment from `app.ts`
 
-### Phase 2: Extract voice options row builder from `app.ts` (~65 lines)
+### Task 2: Extract voice options row builder from `app.ts` (~65 lines)
 
 The per-track audio row DOM construction inside `updateScoreUi` (lines 316-383)
 is self-contained. Extract into `src/ui/voiceOptionsUI.ts`:
@@ -110,7 +110,7 @@ callback path. `voiceOptionsUI.ts` owns only the per-track audio voice rows
 - [ ] Wire `updateScoreUi` to call the new builder per track
 - [ ] Verify voice filter, mute/solo, timbre, and GM select still work
 
-### Phase 3: Extract geometry builders from `ThreeDRenderer.ts` (~180 net lines)
+### Task 3: Extract geometry builders from `ThreeDRenderer.ts` (~180 net lines)
 
 Move the instanced-mesh construction methods into `src/renderers/three/geometryBuilders.ts`:
 
@@ -144,7 +144,7 @@ after delegation stubs and shared-helper imports remain.
 - [ ] Update `rebuildContent` to call the extracted functions
 - [ ] Verify all 3D variations render correctly (lines, discs, spheres, boxes)
 
-### Phase 4: Extract onset pulses from `ThreeDRenderer.ts` (~45 lines)
+### Task 4: Extract onset pulses from `ThreeDRenderer.ts` (~45 lines)
 
 Move the pulse ring lifecycle into `src/renderers/three/onsetPulses.ts`:
 
@@ -158,7 +158,7 @@ an array + content group reference.
 - [ ] Create `src/renderers/three/onsetPulses.ts`
 - [ ] Wire `ThreeDRenderer` to delegate pulse calls
 
-### Phase 5: Extract scene atmosphere from `ThreeDRenderer.ts` (~55 lines)
+### Task 5: Extract scene atmosphere from `ThreeDRenderer.ts` (~55 lines)
 
 Move scene dressing into `src/renderers/three/sceneAtmosphere.ts`:
 

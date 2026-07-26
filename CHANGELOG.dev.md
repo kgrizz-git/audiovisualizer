@@ -39,6 +39,7 @@ Last reviewed: 2026-07-24
 - Updated `tests/soundfontPlayer.test.ts` types for compatibility with Vitest 4's `vi.fn` generics.
 
 ### Added
+- Implemented 2D `polar_fan` and 3D `3d_polar_fan` display modes: added visual mapping math, symmetric fit-to-canvas layout centering, legend content switch cases, index.html variation select options, CLI mode support, and canvas line glow. Added unit tests for both variations.
 - Added plan assessment for the polar octave fan display modes in [tmp/2026-07-26T12:45-polar-octave-fan-modes-assessment.md](file:///Users/kevingrizzard/MyCode/AudioVisualizer/tmp/2026-07-26T12:45-polar-octave-fan-modes-assessment.md).
 - Added a TODO item to randomize visualizer mode and initial loaded bundled MIDI at launch in [dev-docs/TO_DO.md](file:///Users/kevingrizzard/MyCode/AudioVisualizer/dev-docs/TO_DO.md).
 - SoundFont asset bundler script (`scripts/bundle-soundfonts.js` and `npm run bundle:soundfonts`) to fetch and bundle offline FluidR3 GM soundfont samples into `public/soundfonts/`.

@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-26
 Date: 2026-07-26
 Author: opencode
-Status: draft
+Status: complete
 Linked issue/PR: n/a
 Spec: [`plans/specs/2026-07-26-polar-octave-fan-modes.md`](specs/2026-07-26-polar-octave-fan-modes.md)
 Review: [`tmp/2026-07-26T1133-polar-octave-fan-modes-assessment.md`](../tmp/2026-07-26T1133-polar-octave-fan-modes-assessment.md) — six revisions integrated below. Independent assessment findings also integrated: silent-failure guard, symmetric-bounds fitter, test fixture guidance, legend switch-case format, CLI end-to-end verification.

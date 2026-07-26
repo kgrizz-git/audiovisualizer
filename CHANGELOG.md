@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Polar octave-fan modes (2D `polar_fan` and 3D `3d_polar_fan`): pitch class maps to spoke angle (an octave spans 360°, clockwise from +X) and duration to segment length, fanning outward from the canvas center. Voices share a static center origin and chords fan simultaneously, creating a wind-rose visual layout of tonal centers and octave equivalence. SemVer: **MINOR**.
 - Per-voice color palettes, compact Canvas/SVG palette swatches, and visual-only semitone
   transposition (including reproducible CLI `--hue` and `--transpose` options). SemVer: **MINOR**.
 - Stronger default 3D bloom and color-matched Canvas glow for 2D line paths and note halos.

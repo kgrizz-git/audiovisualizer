@@ -229,22 +229,26 @@ export function mapScoreToGeometry(
         });
 
         cursor = centerPoint;
-      } else if (config.variation === 'vertical_tone') {
-        // X = time onset, Y = pitch height (low pitch at bottom, high at top)
-        const timeFraction = note.onset / (score.duration || 1);
-        const x = 50 + timeFraction * (targetWidth - 100);
-        const y = targetHeight - 50 - ((getVisualPitch(note, config) - 24) / 84) * (targetHeight - 100);
-
-        const endX = x + segmentLen;
+      } else if (config.variation === 'polar_fan') {
+        const visualPitch = getVisualPitch(note, config);
+        const transposedPitchClass = visualPitch % 12;
+        const angle = (transposedPitchClass * 30 * Math.PI) / 180;
+        const length = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
+        const origin = { x: targetWidth / 2, y: targetHeight / 2 };
 
         segments.push({
-          start: { x, y },
-          end: { x: endX, y },
+          start: origin,
+          end: {
+            x: origin.x + Math.cos(angle) * length,
+            y: origin.y + Math.sin(angle) * length,
+          },
           color,
-          width: strokeWidth * 1.5,
-          opacity: 0.85,
+          width: strokeWidth,
+          opacity: 0.9,
           note,
         });
+      } else {
+        throw new Error(`Unhandled variation: ${config.variation}`);
       }
 
       prevNote = note;

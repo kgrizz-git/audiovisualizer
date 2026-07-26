@@ -3,14 +3,22 @@ export type Variation =
   | 'circles'
   | 'vertical_tone'
   | 'tonal_time_lines'
+  | 'polar_fan'
   | '3d_lines'
   | '3d_note_halos'
   | '3d_note_spheres'
-  | '3d_piano_roll';
+  | '3d_piano_roll'
+  | '3d_polar_fan';
 
 /** True when the variation is rendered by the Three.js 3D renderer rather than Canvas/SVG. */
 export function is3DVariation(variation: Variation): boolean {
-  return variation === '3d_lines' || variation === '3d_note_halos' || variation === '3d_note_spheres' || variation === '3d_piano_roll';
+  return (
+    variation === '3d_lines' ||
+    variation === '3d_note_halos' ||
+    variation === '3d_note_spheres' ||
+    variation === '3d_piano_roll' ||
+    variation === '3d_polar_fan'
+  );
 }
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
 export type PitchHueMode = 'pitch_class' | 'register_spiral' | 'voice_palette';

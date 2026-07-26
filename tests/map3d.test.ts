@@ -163,6 +163,56 @@ describe('map3DGeometry', () => {
     expect(geometry.boxes[0].sz).toBeCloseTo(expectedZ);
     expect(JSON.stringify(map3DGeometry(score, pianoConfig, 800, 600))).toBe(JSON.stringify(geometry));
   });
+
+  describe('3d_polar_fan', () => {
+    const polar3dConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_polar_fan', zScale: 150 };
+
+    it('preserves the 2D polar_fan XY geometry exactly (front view matches fitted 2D polar_fan)', () => {
+      const notes = [
+        note({ id: 'a', pitch: 60, onset: 0, duration: 1 }),
+        note({ id: 'b', pitch: 67, onset: 1, duration: 1 }),
+      ];
+      const score = scoreOf(notes);
+      const geo3d = map3DGeometry(score, polar3dConfig, 800, 800);
+      const geo2d = fitGeometryToCanvas(
+        mapScoreToGeometry(score, { ...polar3dConfig, variation: 'polar_fan' }, 800, 800),
+        800,
+        800,
+      );
+
+      const flat2d = geo2d.voicePaths.flatMap((p) => p.segments);
+      expect(geo3d.segments.length).toBe(flat2d.length);
+      geo3d.segments.forEach((seg, i) => {
+        expect(seg.startX).toBeCloseTo(flat2d[i].start.x);
+        expect(seg.startY).toBeCloseTo(flat2d[i].start.y);
+        expect(seg.endX).toBeCloseTo(flat2d[i].end.x);
+        expect(seg.endY).toBeCloseTo(flat2d[i].end.y);
+      });
+    });
+
+    it('maps segment Z to note onset and offset × zScale', () => {
+      const score = scoreOf([note({ id: 'a', pitch: 60, onset: 0.5, duration: 2 })]);
+      const geo = map3DGeometry(score, polar3dConfig, 800, 800);
+      const geo2d = fitGeometryToCanvas(mapScoreToGeometry(score, { ...polar3dConfig, variation: 'polar_fan' }, 800, 800), 800, 800);
+      const fittedSpan = computeFittedSpan(geo2d);
+      const effZ = effectiveZScale(score.duration, fittedSpan, polar3dConfig);
+
+      expect(geo.zScale).toBeCloseTo(effZ);
+      const seg = geo.segments[0];
+      expect(seg.startZ).toBeCloseTo(0.5 * effZ);
+      expect(seg.endZ).toBeCloseTo(2.5 * effZ);
+    });
+
+    it('is completely deterministic', () => {
+      const score = scoreOf([
+        note({ id: 'a', pitch: 60, onset: 0, duration: 1 }),
+        note({ id: 'b', pitch: 64, onset: 0.5, duration: 1.5 }),
+      ]);
+      const a = map3DGeometry(score, polar3dConfig, 800, 800);
+      const b = map3DGeometry(score, polar3dConfig, 800, 800);
+      expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    });
+  });
 });
 
 describe('liftGeometryTo3D', () => {

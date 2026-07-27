@@ -8,6 +8,7 @@ const track = (channel: number, program: number): TrackScore => ({
   channel,
   program,
   instrumentName: 'x',
+  isPercussion: channel === 9,
   notes: [],
   sustainEvents: [],
 });

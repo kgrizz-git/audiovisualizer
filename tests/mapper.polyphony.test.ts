@@ -76,7 +76,7 @@ describe('mapScoreToGeometry polyphony', () => {
   it('starts a staggered overlapping note at the time-true point on the previous segment', () => {
     const score = {
       title: 'Overlap', duration: 2, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         note({ id: 'a', pitch: 60, onset: 0, duration: 1, pitchClass: 0 }),
         note({ id: 'b', pitch: 64, onset: 0.5, duration: 0.5, pitchClass: 4 }),
       ] }],
@@ -91,7 +91,7 @@ describe('mapScoreToGeometry polyphony', () => {
   it('fans same-onset chord tones from one join using interval angle offsets', () => {
     const score = {
       title: 'Chord', duration: 2, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         note({ id: 'c', pitch: 60, onset: 0, duration: 1, pitchClass: 0 }),
         note({ id: 'e', pitch: 64, onset: 0, duration: 1, pitchClass: 4 }),
         note({ id: 'g', pitch: 67, onset: 0, duration: 1, pitchClass: 7 }),
@@ -110,7 +110,7 @@ describe('mapScoreToGeometry polyphony', () => {
   it('joins the next note at the centroid of still-active tips after one chord tone ends', () => {
     const score = {
       title: 'Centroid', duration: 3, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         note({ id: 'lo', pitch: 60, onset: 0, duration: 1.0, pitchClass: 0 }),
         note({ id: 'hi', pitch: 72, onset: 0, duration: 1.0, pitchClass: 0 }),
         note({ id: 'mid', pitch: 66, onset: 0, duration: 0.4, pitchClass: 6 }),
@@ -137,7 +137,7 @@ describe('mapScoreToGeometry polyphony', () => {
   it('uses parallel headings within a cluster when interval turns are off', () => {
     const score = {
       title: 'Parallel', duration: 1, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         note({ id: 'a', pitch: 60, onset: 0, duration: 1, pitchClass: 0 }),
         note({ id: 'b', pitch: 67, onset: 0, duration: 1, pitchClass: 7 }),
       ] }],
@@ -151,7 +151,7 @@ describe('mapScoreToGeometry polyphony', () => {
   it('advances the pen across rests with lift_pen without drawing a gap segment', () => {
     const score = {
       title: 'Rest', duration: 2, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         note({ id: 'a', pitch: 60, onset: 0, duration: 0.5, pitchClass: 0 }),
         note({ id: 'b', pitch: 64, onset: 1, duration: 0.5, pitchClass: 4 }),
       ] }],
@@ -175,7 +175,7 @@ describe('mapScoreToGeometry polyphony', () => {
   it('preserves sequential chain geometry when chordLayout is chain', () => {
     const score = {
       title: 'Chain', duration: 2, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         note({ id: 'a', pitch: 60, onset: 0, duration: 1, pitchClass: 0 }),
         note({ id: 'b', pitch: 64, onset: 0.5, duration: 0.5, pitchClass: 4 }),
       ] }],

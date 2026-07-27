@@ -45,6 +45,8 @@ export interface TrackScore {
   channel: number;
   program: number;
   instrumentName: string;
+  /** True when track is assigned to MIDI channel 10 (0-indexed channel 9). */
+  isPercussion: boolean;
   notes: NoteEvent[];
   sustainEvents?: SustainEvent[];
 }

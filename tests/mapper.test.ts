@@ -36,11 +36,11 @@ describe('Score Mapper Unit Tests', () => {
     const score = {
       title: 'Weighted fixture', duration: 2, bpm: 120,
       tracks: [
-        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
           // pitch-class 0 => hue 0, but quiet and short.
           { id: 'a', pitch: 60, onset: 0, duration: 0.1, velocity: 10, voice: 0, pitchClass: 0 },
         ] },
-        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', notes: [
+        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', isPercussion: false, notes: [
           // pitch-class 7 => hue 210, loud and long: weight = 2 × 127 = 254 vs 0.1 × 10 = 1.
           { id: 'b', pitch: 67, onset: 0, duration: 2, velocity: 127, voice: 1, pitchClass: 7 },
         ] },
@@ -58,7 +58,7 @@ describe('Score Mapper Unit Tests', () => {
   it('returns null when no tracks are visible under the voice filter', () => {
     const score = {
       title: 'Filtered', duration: 1, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         { id: 'a', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 },
       ] }],
     };
@@ -70,11 +70,11 @@ describe('Score Mapper Unit Tests', () => {
     const score = {
       title: 'Weighted bg', duration: 2, bpm: 120,
       tracks: [
-        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
           // Quiet, short note at hue 0 — should barely perturb the average.
           { id: 'a', pitch: 60, onset: 0, duration: 0.1, velocity: 10, voice: 0, pitchClass: 0 },
         ] },
-        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', notes: [
+        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', isPercussion: false, notes: [
           // Loud, long note at hue 210 — should dominate.
           { id: 'b', pitch: 67, onset: 0, duration: 2, velocity: 127, voice: 1, pitchClass: 7 },
         ] },
@@ -110,11 +110,11 @@ describe('Score Mapper Unit Tests', () => {
     const score = {
       title: 'Fixture', duration: 2, bpm: 120,
       tracks: [
-        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+        { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
           { id: 'a', pitch: 60, onset: 0.02, duration: 0.2, velocity: 100, voice: 0, pitchClass: 0 },
           { id: 'b', pitch: 64, onset: 0.63, duration: 0.2, velocity: 100, voice: 0, pitchClass: 4 },
         ] },
-        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', notes: [{ id: 'c', pitch: 36, onset: 0, duration: 1, velocity: 100, voice: 1, pitchClass: 0 }] },
+        { name: 'Bass', channel: 1, program: 32, instrumentName: 'Bass', isPercussion: false, notes: [{ id: 'c', pitch: 36, onset: 0, duration: 1, velocity: 100, voice: 1, pitchClass: 0 }] },
       ],
     };
     const geometry = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, quantizeOnset: true, gapPolicy: 'ghost', voiceFilter: [0] });
@@ -134,7 +134,7 @@ describe('Score Mapper Unit Tests', () => {
   it('maps ascending and descending intervals to opposite heading turns by default', () => {
     const score = {
       title: 'Interval fixture', duration: 3, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         { id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
         { id: 'n2', pitch: 64, onset: 0.5, duration: 0.5, velocity: 100, voice: 0, pitchClass: 4 },
         { id: 'n3', pitch: 60, onset: 1, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
@@ -152,7 +152,7 @@ describe('Score Mapper Unit Tests', () => {
   it('places circle centers with interval turns or straight along the origin heading', () => {
     const score = {
       title: 'Circle interval fixture', duration: 3, bpm: 120,
-      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         { id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
         { id: 'n2', pitch: 64, onset: 0.5, duration: 0.5, velocity: 100, voice: 0, pitchClass: 4 },
         { id: 'n3', pitch: 60, onset: 1, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 },
@@ -178,7 +178,7 @@ describe('Score Mapper Unit Tests', () => {
 
   it('maps top-to-bottom tonal bands with circular active-note hue averaging and silence', () => {
     const score = {
-      title: 'Tonal fixture', duration: 4, bpm: 120, tracks: [{ name: 'Voice', channel: 0, program: 0, instrumentName: 'Piano', notes: [
+      title: 'Tonal fixture', duration: 4, bpm: 120, tracks: [{ name: 'Voice', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [
         { id: 'c', pitch: 60, onset: 0, duration: 2, velocity: 100, voice: 0, pitchClass: 0 },
         { id: 'b', pitch: 71, onset: 0, duration: 2, velocity: 100, voice: 0, pitchClass: 11 },
         { id: 'c-octave', pitch: 72, onset: 2, duration: 1, velocity: 100, voice: 0, pitchClass: 0 },
@@ -197,7 +197,7 @@ describe('Score Mapper Unit Tests', () => {
       title: 'Test Score',
       duration: Math.max(...notes.map((n) => n.onset + n.duration)),
       bpm: 120,
-      tracks: [{ name: 'Track 1', channel: 0, program: 0, instrumentName: 'Piano', notes }],
+      tracks: [{ name: 'Track 1', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes }],
     });
 
     it('generates segments from the center origin at correct spoke angles and lengths', () => {
@@ -277,8 +277,8 @@ describe('Score Mapper Unit Tests', () => {
       const score: Score = {
         title: 'Unison', duration: 1, bpm: 120,
         tracks: [
-          { name: 'T1', channel: 0, program: 0, instrumentName: 'Piano', notes: [{ id: 'a', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 }] },
-          { name: 'T2', channel: 1, program: 0, instrumentName: 'Piano', notes: [{ id: 'b', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 1, pitchClass: 0 }] },
+          { name: 'T1', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [{ id: 'a', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 0, pitchClass: 0 }] },
+          { name: 'T2', channel: 1, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [{ id: 'b', pitch: 60, onset: 0, duration: 1, velocity: 100, voice: 1, pitchClass: 0 }] },
         ],
       };
       const config = { ...DEFAULT_CONFIG, variation: 'polar_fan' as const };

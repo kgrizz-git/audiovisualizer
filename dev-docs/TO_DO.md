@@ -1,6 +1,6 @@
 # AudioVisualizer Development TODOs
 
-Last updated: 2026-07-26
+Last updated: 2026-07-27
 
 ## Next product milestones
 
@@ -14,4 +14,29 @@ Last updated: 2026-07-26
 - [ ] **Explore a desktop-only high-fidelity polyphonic tier (frontier transcribers)**: For the offline desktop bundle, evaluate large multi-instrument transformers that beat Basic Pitch on real mixes — e.g. MuScriptor (2026, 1.3B open-weight), YourMT3+/MIROS (2025 AMT winners, MusicFM encoder), MT3. All are heavy GPU-oriented PyTorch (multi-GB), so not browser-viable and only feasible in a heavy Tauri bundle (ONNX/Python sidecar). Research-tier, not v1. Surveyed 2026-07-23.
 - [ ] **Export inferred audio transcription as downloadable MIDI**: v1 audio input ships visual exports only; add a `.mid` writer so users can take the estimated notes into a DAW, with the same estimated/model-version manifest metadata. Deferred follow-up to [`plans/2026-07-22-audio-file-input.md`](../plans/2026-07-22-audio-file-input.md).
 - [ ] **Deterministic offline WAV audio export**: Render score audio directly to downloadable WAV file offline.
+
+## Bugs and UX issues
+
+- [ ] **Play not working first time pressed**: Playback fails to start on the first press of the play button. See [`plans/2026-07-27-playback-and-transport-fixes.md`](../plans/2026-07-27-playback-and-transport-fixes.md).
+- [ ] **Continue playback when skipping ahead/back**: Playback should keep running when the user scrubs the timeline forward or backward during playback. See [`plans/2026-07-27-playback-and-transport-fixes.md`](../plans/2026-07-27-playback-and-transport-fixes.md).
+
+## 3D camera interaction
+
+- [ ] **Allow panning on 3D as well as zoom and rotate**: Add pan (two-finger or modifier-key drag) to the 3D camera alongside existing zoom and rotate. See [`plans/2026-07-27-playback-and-transport-fixes.md`](../plans/2026-07-27-playback-and-transport-fixes.md).
+
+## Visual tweaks
+
+- [ ] **Turn off transient ring flashes on 3D polar fan**: The 3D polar fan layout currently flashes transient rings; disable or make them optional. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
+- [ ] **Note halo/line length proportional to velocity option**: For note halos and lines (2D and 3D), allow length/size to be proportional to velocity instead of duration. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
+- [ ] **Velocity-proportional color saturation or glow**: Option where color saturation or glow intensity are proportional to note velocity. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
+- [ ] **Constant line thickness option**: Option for line thickness to be constant instead of proportional to duration. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
+
+## New layout: Radial voice paths
+
+- [ ] **Radial voice-path layout (polar walk variant)**: Each voice gets assigned to a radial path. Each line for a voice starts along that path. See [`plans/2026-07-27-radial-voice-path-layout.md`](../plans/2026-07-27-radial-voice-path-layout.md).
+  - Angle and color of line = note.
+  - Length = duration.
+  - Radial start position = time when note starts.
+  - Percussion rendered as concentric circles with radius proportional to time; color represents different percussion types.
+  - Voices in low register assigned to downward directions; high register assigned to upward directions (e.g., bass down, cello middle, violin/piccolo up).
 

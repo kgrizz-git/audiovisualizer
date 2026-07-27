@@ -170,6 +170,12 @@ describe('voiceOptionsUI', () => {
     applyBadge(span as any, 'fallback');
     expect(span.textContent).toBe('⚡ Synth Fallback');
 
+    applyBadge(span as any, 'drumkit');
+    expect(span.textContent).toBe('🥁 Drum Kit');
+
+    applyBadge(span as any, 'drumkit-missing');
+    expect(span.textContent).toBe('❌ Drum Kit Missing');
+
     applyBadge(span as any, undefined);
     expect(span.textContent).toBe('—');
   });
@@ -264,4 +270,55 @@ describe('voiceOptionsUI', () => {
     const badge = row.querySelector('.patch-badge');
     expect(badge).toBeNull();
   });
+
+  it('builds voice row for percussion track with no select dropdown, read-only drum label, and drumkit badge', () => {
+    const drumTrack: TrackScore = {
+      name: 'Drums',
+      channel: 10,
+      program: 0,
+      instrumentName: 'Standard Drum Kit',
+      isPercussion: true,
+      notes: [],
+    };
+
+    const context: VoiceRowContext = {
+      engine: 'sample',
+      soundbank: 'FluidR3_GM',
+      statusMap: new Map([[10, 'drumkit']]),
+      isPercussion: (t) => t.isPercussion,
+      onProgramChange: vi.fn(),
+      onTimbreChange: vi.fn(),
+      onGainInput: vi.fn(),
+      onMixChange: vi.fn(),
+      onMute: vi.fn(),
+      onSolo: vi.fn(),
+    };
+
+    const row = buildAudioVoiceRow(drumTrack, 0, dummySettings, context) as unknown as MockElement;
+
+    const routeLabel = row.querySelector('.voice-effective-route');
+    expect(routeLabel?.textContent).toBe('Playback: Drum kit · FluidR3 Standard');
+
+    const select = row.querySelector('select');
+    expect(select).toBeNull();
+
+    const badge = row.querySelector('.patch-badge');
+    expect(badge).not.toBeNull();
+    expect(badge?.textContent).toBe('🥁 Drum Kit');
+
+    const gainInput = row.querySelector<MockElement>('input[type="range"]');
+    expect(gainInput).not.toBeNull();
+
+    const checkboxes = row.querySelectorAll<MockElement>('input[type="checkbox"]');
+    expect(checkboxes.length).toBe(2);
+
+    checkboxes[0].checked = true;
+    checkboxes[0].dispatchEvent({ type: 'change' });
+    expect(context.onMute).toHaveBeenCalledWith(10, true);
+
+    checkboxes[1].checked = true;
+    checkboxes[1].dispatchEvent({ type: 'change' });
+    expect(context.onSolo).toHaveBeenCalledWith(10, true);
+  });
 });
+

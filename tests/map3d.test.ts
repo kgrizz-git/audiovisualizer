@@ -19,7 +19,7 @@ function scoreOf(notes: NoteEvent[], duration = 4): Score {
     title: 'Test',
     duration,
     bpm: 120,
-    tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', notes }],
+    tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes }],
   };
 }
 
@@ -147,8 +147,8 @@ describe('map3DGeometry', () => {
     const score: Score = {
       title: 'Piano roll', duration: 4, bpm: 120,
       tracks: [
-        { name: 'Low', channel: 0, program: 0, instrumentName: 'Piano', notes: [note({ id: 'a', pitch: 48, onset: 0, duration: 1 })] },
-        { name: 'High', channel: 1, program: 0, instrumentName: 'Piano', notes: [note({ id: 'b', pitch: 72, onset: 2, duration: 1 })] },
+        { name: 'Low', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [note({ id: 'a', pitch: 48, onset: 0, duration: 1 })] },
+        { name: 'High', channel: 1, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [note({ id: 'b', pitch: 72, onset: 2, duration: 1 })] },
       ],
     };
     const geometry = map3DGeometry(score, pianoConfig, 800, 600);

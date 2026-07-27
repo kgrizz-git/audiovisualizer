@@ -118,6 +118,7 @@ describe('voiceOptionsUI', () => {
     channel: 1,
     program: 0,
     instrumentName: 'Acoustic Grand Piano',
+    isPercussion: false,
     notes: [],
   };
 

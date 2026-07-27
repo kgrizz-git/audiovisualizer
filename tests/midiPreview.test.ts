@@ -41,8 +41,8 @@ describe('selectAudibleTracks', () => {
   const score: Score = {
     title: 't', duration: 1, bpm: 120,
     tracks: [
-      { name: 'a', channel: 0, program: 0, instrumentName: 'p', notes: [], sustainEvents: [] },
-      { name: 'b', channel: 1, program: 32, instrumentName: 'b', notes: [], sustainEvents: [] },
+      { name: 'a', channel: 0, program: 0, instrumentName: 'p', isPercussion: false, notes: [], sustainEvents: [] },
+      { name: 'b', channel: 1, program: 32, instrumentName: 'b', isPercussion: false, notes: [], sustainEvents: [] },
     ],
   };
 
@@ -89,6 +89,7 @@ describe('oscillator CC64 sustain parity', () => {
         channel: 0,
         program: 0,
         instrumentName: 'p',
+        isPercussion: false,
         notes: [note({ onset: 0.2, duration: 0.3 })],
         sustainEvents: [{ time: 0, value: 127 }, { time: 2.5, value: 0 }],
       }],
@@ -107,6 +108,7 @@ describe('oscillator CC64 sustain parity', () => {
         channel: 0,
         program: 0,
         instrumentName: 'p',
+        isPercussion: false,
         notes: [note({ onset: 0, duration: 1.0 })],
         sustainEvents: [{ time: 0, value: 127 }, { time: 2.0, value: 0 }],
       }],
@@ -126,6 +128,7 @@ describe('oscillator CC64 sustain parity', () => {
         channel: 0,
         program: 0,
         instrumentName: 'p',
+        isPercussion: false,
         notes: [note({ onset: 0, duration: 1.0 })],
         sustainEvents: [{ time: 0, value: 127 }, { time: 1.0, value: 0 }],
       }],
@@ -145,6 +148,7 @@ describe('MidiPreviewPlayer sustain scheduling', () => {
         channel: 0,
         program: 0,
         instrumentName: 'p',
+        isPercussion: false,
         notes: [{ id: 'n', pitch: 60, onset: 0, duration: 0.2, velocity: 100, voice: 0, pitchClass: 0 }],
         sustainEvents: [{ time: 0, value: 127 }, { time: 1.5, value: 0 }],
       }],

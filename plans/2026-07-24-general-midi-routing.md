@@ -224,16 +224,16 @@ Hand-built `TrackScore` literals across tests must add `isPercussion: false`
 - [x] Confirm community Standard kit parses as midi-js script, slug `marimba`,
       ~5.7 MB, keys MIDI 27–87; canonical CDN is `.com` after github.io 301.
 
-### Phase 1: Parser — `isPercussion`
+### Task 1: Parser — `isPercussion`
 
-- [ ] Add required `TrackScore.isPercussion` with JSDoc (channel 10 ≡ index 9).
-- [ ] Set `isPercussion = (channel === 9)` in `parseMidiData` after channel
+- [x] Add required `TrackScore.isPercussion` with JSDoc (channel 10 ≡ index 9).
+- [x] Set `isPercussion = (channel === 9)` in `parseMidiData` after channel
       resolution. Leave `channel ?? trackIdx` fallback as-is (hygiene later).
-- [ ] Set `isPercussion: false` on both tracks in `generateDemoScore()`.
-- [ ] Tests: channel-9 → true, channel-0 → false; update fixtures project-wide
+- [x] Set `isPercussion: false` on both tracks in `generateDemoScore()`.
+- [x] Tests: channel-9 → true, channel-0 → false; update fixtures project-wide
       so `tsc` / Vitest pass.
 
-### Phase 2: Routing + drum kit + track-scoped fallback
+### Task 2: Routing + drum kit + track-scoped fallback
 
 - [ ] Add `'drumkit' | 'drumkit-missing'` to `PatchStatus`.
 - [ ] Implement `drumkitLoader.ts` per Decision 3 (local → canonical CDN;
@@ -253,14 +253,14 @@ Hand-built `TrackScore` literals across tests must add `isPercussion: false`
       drumkit-missing isolation, and “piano loads / organ misses on same channel
       → only organ notes fall back to oscillator.”
 
-### Phase 3: UI
+### Task 3: UI
 
 - [ ] Percussion row: read-only drum label; badges for `'drumkit'` /
       `'drumkit-missing'`; mute/solo/gain kept.
 - [ ] `app.ts` passes `isPercussion: (t) => t.isPercussion`.
 - [ ] Tests: percussion row has no `onProgramChange`; melodic row unchanged.
 
-### Phase 4: Bundler, docs, changelog, validate
+### Task 4: Bundler, docs, changelog, validate
 
 - [ ] Bundler downloads Standard kit into
       `public/soundfonts/FluidR3_GM/percussion/`; sha256 in manifest; `--verify`

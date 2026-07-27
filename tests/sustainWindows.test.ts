@@ -85,9 +85,9 @@ describe('offline sustain windows', () => {
     const score = {
       title: 't', duration: 10, bpm: 120,
       tracks: [
-        { name: 'a', channel: 0, program: 0, instrumentName: 'p', notes: [], sustainEvents: [{ time: 0, value: 127 }] },
-        { name: 'b', channel: 0, program: 0, instrumentName: 'p', notes: [], sustainEvents: [{ time: 2, value: 0 }] },
-        { name: 'c', channel: 1, program: 32, instrumentName: 'b', notes: [], sustainEvents: [{ time: 1, value: 127 }] },
+        { name: 'a', channel: 0, program: 0, instrumentName: 'p', isPercussion: false, notes: [], sustainEvents: [{ time: 0, value: 127 }] },
+        { name: 'b', channel: 0, program: 0, instrumentName: 'p', isPercussion: false, notes: [], sustainEvents: [{ time: 2, value: 0 }] },
+        { name: 'c', channel: 1, program: 32, instrumentName: 'b', isPercussion: false, notes: [], sustainEvents: [{ time: 1, value: 127 }] },
       ],
     } as Score;
     expect(sustainEventsForChannel(score, 0)).toEqual([

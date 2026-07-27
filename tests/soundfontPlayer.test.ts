@@ -8,12 +8,12 @@ function demoScore(): Score {
     title: 't', duration: 2, bpm: 120,
     tracks: [
       {
-        name: 'piano', channel: 0, program: 0, instrumentName: 'Acoustic Grand Piano',
+        name: 'piano', channel: 0, program: 0, instrumentName: 'Acoustic Grand Piano', isPercussion: false,
         notes: [{ id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 }],
         sustainEvents: [],
       },
       {
-        name: 'bass', channel: 1, program: 32, instrumentName: 'Acoustic Bass',
+        name: 'bass', channel: 1, program: 32, instrumentName: 'Acoustic Bass', isPercussion: false,
         notes: [{ id: 'n2', pitch: 36, onset: 0, duration: 0.5, velocity: 100, voice: 1, pitchClass: 0 }],
         sustainEvents: [],
       },
@@ -123,12 +123,12 @@ describe('SoundfontPlayer', () => {
         title: 't', duration: 1, bpm: 120,
         tracks: [
           {
-            name: 'lower', channel: 0, program: 0, instrumentName: 'Acoustic Grand Piano',
+            name: 'lower', channel: 0, program: 0, instrumentName: 'Acoustic Grand Piano', isPercussion: false,
             notes: [{ id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 90, voice: 0, pitchClass: 0 }],
             sustainEvents: [],
           },
           {
-            name: 'upper', channel: 1, program: 0, instrumentName: 'Acoustic Grand Piano',
+            name: 'upper', channel: 1, program: 0, instrumentName: 'Acoustic Grand Piano', isPercussion: false,
             notes: [{ id: 'n2', pitch: 72, onset: 0, duration: 0.5, velocity: 90, voice: 1, pitchClass: 0 }],
             sustainEvents: [],
           },
@@ -222,7 +222,7 @@ describe('SoundfontPlayer', () => {
     const score: Score = {
       title: 'loop', duration: 1, bpm: 120,
       tracks: [{
-        name: 'cello', channel: 0, program: 42, instrumentName: 'Cello',
+        name: 'cello', channel: 0, program: 42, instrumentName: 'Cello', isPercussion: false,
         notes: [{ id: 'n1', pitch: 60, onset: 0, duration: 0.5, velocity: 100, voice: 0, pitchClass: 0 }],
         sustainEvents: [],
       }],

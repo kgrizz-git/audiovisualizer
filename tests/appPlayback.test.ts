@@ -112,6 +112,8 @@ function setupMockDom() {
   vi.stubGlobal('AudioContext', MockAudioContext);
   vi.stubGlobal('Option', MockOption);
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false })));
+  vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
 }
 
 setupMockDom();
@@ -172,5 +174,60 @@ describe('AudioVisualizerApp playback first-press behavior', () => {
 
     expect(playerStartSpy).toHaveBeenCalledWith(app.currentScore, midTime, expect.anything());
     expect(app.playbackOffset).toBe(midTime);
+  });
+});
+
+describe('AudioVisualizerApp scrub-resume behavior', () => {
+  let playerStartSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setupMockDom();
+    playerStartSpy = vi.spyOn(SoundfontPlayer.prototype, 'start').mockImplementation(async () => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+  const fire = (el: any, evt: string) => (el._listeners[evt] || []).forEach((fn: (...args: unknown[]) => void) => fn({}));
+
+  it('pauses on scrub input during playback and resumes on change at the new position', async () => {
+    const app = new AudioVisualizerApp() as any;
+    const scrubber = (globalThis as any).document.getElementById('progress-scrubber');
+
+    await app.togglePlay();
+    expect(app.isPlaying).toBe(true);
+
+    // Dragging the scrubber (input) pauses playback and seeks the playhead.
+    scrubber.value = '500';
+    fire(scrubber, 'input');
+    expect(app.isPlaying).toBe(false);
+    expect(app.wasPlayingBeforeScrub).toBe(true);
+    expect(app.currentTime).toBeCloseTo(app.currentScore.duration / 2, 5);
+
+    // Releasing the scrubber (change) resumes playback from the seek position.
+    const seekTime = app.currentTime;
+    fire(scrubber, 'change');
+    await flush();
+    expect(app.isPlaying).toBe(true);
+    expect(app.wasPlayingBeforeScrub).toBe(false);
+    expect(playerStartSpy).toHaveBeenLastCalledWith(app.currentScore, seekTime, expect.anything());
+  });
+
+  it('does not auto-start playback when scrubbing while paused', async () => {
+    const app = new AudioVisualizerApp() as any;
+    const scrubber = (globalThis as any).document.getElementById('progress-scrubber');
+
+    scrubber.value = '250';
+    fire(scrubber, 'input');
+    fire(scrubber, 'change');
+    await flush();
+
+    expect(playerStartSpy).not.toHaveBeenCalled();
+    expect(app.isPlaying).toBe(false);
+    expect(app.currentTime).toBeCloseTo(app.currentScore.duration * 0.25, 5);
   });
 });

@@ -1,7 +1,35 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ThreeDRenderer } from '../src/renderers/three/ThreeDRenderer.js';
 import { RenderedGeometry3D } from '../src/core/types.js';
 import * as THREE from 'three';
+
+// mount() constructs a real WebGLRenderer, which needs a WebGL context that Node
+// cannot provide. Stub only that class; every other three.js export stays real so
+// the geometry/material assertions below keep exercising genuine three objects.
+vi.mock('three', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('three')>();
+  class StubWebGLRenderer {
+    domElement: unknown;
+    toneMapping = actual.NoToneMapping;
+    outputColorSpace: string = actual.SRGBColorSpace;
+    localClippingEnabled = false;
+    autoClear = true;
+    constructor(params: { canvas?: unknown } = {}) { this.domElement = params.canvas; }
+    setPixelRatio(): void {}
+    setSize(): void {}
+    getPixelRatio(): number { return 1; }
+    getSize(target: THREE.Vector2): THREE.Vector2 { return target.set(900, 900); }
+    getRenderTarget(): null { return null; }
+    setRenderTarget(): void {}
+    getClearColor(target: THREE.Color): THREE.Color { return target; }
+    getClearAlpha(): number { return 1; }
+    setClearColor(): void {}
+    clear(): void {}
+    render(): void {}
+    dispose(): void {}
+  }
+  return { ...actual, WebGLRenderer: StubWebGLRenderer };
+});
 
 const dummyGeometry: RenderedGeometry3D = {
   kind: '3d',
@@ -135,6 +163,51 @@ describe('ThreeDRenderer - buildBoxes', () => {
     for (const mat of revealMaterials) {
       expect(mat.clippingPlanes).toBeDefined();
       expect(mat.clippingPlanes!.length).toBe(1);
+    }
+  });
+});
+
+describe('ThreeDRenderer - mount controls', () => {
+  it('enables OrbitControls panning after mount', () => {
+    vi.stubGlobal('window', { devicePixelRatio: 1 });
+    // OrbitControls registers a capture-phase keydown listener on the global
+    // document, and stubbing document also routes makeGradientBackground through
+    // its canvas path, so both need lightweight stand-ins.
+    vi.stubGlobal('document', {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      createElement: () => ({
+        width: 0,
+        height: 0,
+        getContext: () => ({
+          createLinearGradient: () => ({ addColorStop: () => {} }),
+          fillRect: () => {},
+          fillStyle: null,
+        }),
+      }),
+    });
+    try {
+      // Minimal canvas stand-in: OrbitControls only needs a style object and
+      // event-listener hooks at construction time.
+      const canvas = {
+        style: {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        setPointerCapture: () => {},
+        releasePointerCapture: () => {},
+        clientWidth: 900,
+        clientHeight: 900,
+      } as unknown as HTMLCanvasElement;
+
+      const renderer = new ThreeDRenderer();
+      renderer.mount(canvas, 900, 900);
+
+      const controls = (renderer as any).controls;
+      expect(controls).not.toBeNull();
+      expect(controls.enablePan).toBe(true);
+      expect(controls.screenSpacePanning).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 });

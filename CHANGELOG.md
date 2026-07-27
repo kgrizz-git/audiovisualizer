@@ -29,11 +29,14 @@ uses [Semantic Versioning](https://semver.org/).
 - Engine-aware voice controls with dynamic per-track UI switching between General MIDI instrument selection (SoundFont mode) and oscillator waveform selection (Synth mode). SemVer: **MINOR**.
 
 ### Changed
+- The default auto-zoom musical window during playback is now 1 bar (was 4 bars), giving a tighter default framing of the active region; the window remains configurable from 1/16 note to 16 bars or Full track. SemVer: **MINOR**.
 - Velocity now modulates piano-roll slab opacity (4 bands); previously the mapper-computed per-note opacity was dropped by the renderer. SemVer: **MINOR**.
 - When the canvas background is set to 'Black', the 3D scene background and fog now dynamically transition to a subtle vertical gradient tinted by a single merged accent computed from the duration×velocity-weighted circular mean of mapped note hues across all visible tracks (25% saturation / 8% lightness so notes stay legible), instead of a static blue-grey gradient. The 2D atmosphere paints one centered radial glow at the same weighted hue (12% opacity) fading cleanly to transparent to avoid navy fringes. The weighting mirrors the existing tonal-time-lines "Weight → velocity × sounding overlap" coloring, so sustained or loudly struck notes carry proportionally more influence than grace notes, and the accent tracks the perceived average color of the piece. SemVer: **MINOR**.
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- Scrubbing the timeline during playback no longer stops it: the playhead seeks while dragging and playback resumes from the release position. SemVer: **PATCH**.
+- 3D pan gestures (right-click drag, shift+left-drag, two-finger swipe) are now always enabled, and manual orbit zoom is folded into the viewport zoom when a gesture ends so repeated pan/zoom cycles no longer drift or get lost on reframe. SemVer: **PATCH**.
 - Fixed play button first-press behavior so pressing play on initial score load or track completion correctly resets playback time to 0 and starts audio from the beginning. SemVer: **PATCH**.
 - Fixed multi-program channel SoundFont patch collisions by keying cached patches on both channel and resolved program (`${channel}:${program}`). SemVer: **PATCH**.
 - 3D piano-roll slab no longer renders blank — boxes were being shaded black by a `vertexColors: true` material pointing at a `BoxGeometry` with no color attribute; instance colors now pass through correctly. SemVer: **PATCH**.

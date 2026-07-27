@@ -94,13 +94,25 @@ export class ThreeDRenderer implements I3DRenderer {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
     this.controls.screenSpacePanning = true;
+    this.controls.enablePan = true;
     this.controls.addEventListener('start', () => {
       // A deliberate orbit/pan is an explicit framing choice, so it takes precedence
       // over the preset and playback tracking until the user re-enables either mode.
       this.viewport = { ...this.viewport, preset: '3d_free', autoFollow: false, chaseCamera: false };
+      // Clear any camera.zoom drift left over from a previous gesture so the dolly
+      // factor folded in on 'end' always starts from a normalized baseline.
+      this.camera.zoom = 1;
     });
     this.controls.addEventListener('change', () => this.renderOnce());
-    this.controls.addEventListener('end', () => this.recordOrbitViewport());
+    this.controls.addEventListener('end', () => {
+      this.recordOrbitViewport();
+      // OrbitControls dollies orthographic cameras via camera.zoom, which frameCamera
+      // ignores; recordOrbitViewport folds that factor into viewport.zoom, so reset it
+      // and reframe to keep repeated gestures from compounding the scale.
+      this.camera.zoom = 1;
+      this.frameCamera();
+      this.renderOnce();
+    });
     this.applyBloom();
   }
 
@@ -449,7 +461,9 @@ export class ThreeDRenderer implements I3DRenderer {
       preset: '3d_free',
       azimuth: Math.atan2(offset.x, offset.z) * 180 / Math.PI,
       elevation: Math.asin(offset.y / distance) * 180 / Math.PI,
-      zoom: this.radius * 1.25 / Math.max(this.camera.top, 0.001),
+      // camera.top reflects the framed viewport.zoom while camera.zoom carries the
+      // OrbitControls dolly since the gesture began; their product is the effective zoom.
+      zoom: this.radius * 1.25 / Math.max(this.camera.top, 0.001) * this.camera.zoom,
       panX: this.controls.target.x - this.center.x,
       panY: this.controls.target.y - this.center.y,
     };

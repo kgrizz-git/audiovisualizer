@@ -1,10 +1,9 @@
 # Plan: Visual Property Options
 
-NEEDS REVIEW
 Last reviewed: 2026-07-27
 Date: 2026-07-27
 Author: opencode
-Status: draft
+Status: approved
 Linked issue/PR: n/a
 
 ## Goal

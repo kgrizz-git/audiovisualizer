@@ -33,6 +33,7 @@ export class AudioVisualizerApp {
   private playbackStart = 0;
   private playbackOffset = 0;
   private isPlaying = false;
+  private wasPlayingBeforeScrub = false;
   private audioContext: AudioContext | null = null;
   private soundfontPlayer: SoundfontPlayer | null = null;
   private voiceRouter = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
@@ -157,7 +158,19 @@ export class AudioVisualizerApp {
     });
 
     const scrubber = this.element<HTMLInputElement>('progress-scrubber');
-    scrubber.addEventListener('input', () => { this.pause(); this.currentTime = this.currentScore.duration * Number(scrubber.value) / 1000; this.render(); });
+    scrubber.addEventListener('input', () => {
+      // Pause while the user drags so the tick loop cannot fight the scrubber,
+      // but remember whether playback was active so 'change' can resume it.
+      if (this.isPlaying) this.wasPlayingBeforeScrub = true;
+      this.pause();
+      this.currentTime = this.currentScore.duration * Number(scrubber.value) / 1000;
+      this.render();
+    });
+    scrubber.addEventListener('change', () => {
+      if (!this.wasPlayingBeforeScrub) return;
+      this.wasPlayingBeforeScrub = false;
+      void this.startPlayback();
+    });
     this.element<HTMLButtonElement>('play-btn').addEventListener('click', () => this.togglePlay());
     this.element<HTMLButtonElement>('btn-export-svg').addEventListener('click', () => this.downloadSvg(false));
     this.element<HTMLButtonElement>('btn-export-plotter').addEventListener('click', () => this.downloadSvg(true));
@@ -551,7 +564,7 @@ export class AudioVisualizerApp {
     const wrapSecs = this.element<HTMLElement>('wrapper-seconds-range');
 
     if (mode === 'musical') {
-      const bars = vp.autoZoomWindowBars ?? AUTO_ZOOM_BAR_STEPS[6];
+      const bars = vp.autoZoomWindowBars ?? AUTO_ZOOM_BAR_STEPS[4];
       let idx = AUTO_ZOOM_BAR_STEPS.indexOf(bars);
       if (idx === -1) idx = AUTO_ZOOM_BAR_STEPS.length - 1; // fallback to Infinity
       

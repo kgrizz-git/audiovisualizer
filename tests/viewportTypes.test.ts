@@ -25,7 +25,7 @@ describe('Viewport Domain Types Extension', () => {
   it('includes default autoZoomMode, autoZoomWindowBars, and autoZoomWindowSeconds', () => {
     const vp: ViewportTransform = DEFAULT_VIEWPORT;
     expect(vp.autoZoomMode).toBe('musical');
-    expect(vp.autoZoomWindowBars).toBe(4);
+    expect(vp.autoZoomWindowBars).toBe(1);
     expect(vp.autoZoomWindowSeconds).toBe(3);
   });
 

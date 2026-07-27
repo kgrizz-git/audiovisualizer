@@ -1,10 +1,9 @@
 # Plan: Playback & Transport Fixes
 
-NEEDS REVIEW
 Last reviewed: 2026-07-27
 Date: 2026-07-27
 Author: opencode
-Status: draft
+Status: in progress
 Linked issue/PR: n/a
 
 ## Goal
@@ -54,31 +53,31 @@ DESIGN.md                             — document pan controls in 3D interactio
 
 ### Task 2: Resume playback after scrub
 
-- [ ] Add `wasPlayingBeforeScrub: boolean` state in `src/ui/app.ts`.
-- [ ] In the scrubber `input` listener: if playing, set `wasPlayingBeforeScrub = true` and call `this.pause()`. Update `currentTime` and render frame.
-- [ ] Add a `change` listener on the scrubber. If `wasPlayingBeforeScrub` is true, call `this.startPlayback()` and reset `wasPlayingBeforeScrub = false`.
-- [ ] Add integration test: scrub during playback pauses playhead, and mouseup/release resumes it at the correct position.
+- [x] Add `wasPlayingBeforeScrub: boolean` state in `src/ui/app.ts`.
+- [x] In the scrubber `input` listener: if playing, set `wasPlayingBeforeScrub = true` and call `this.pause()`. Update `currentTime` and render frame.
+- [x] Add a `change` listener on the scrubber. If `wasPlayingBeforeScrub` is true, call `this.startPlayback()` and reset `wasPlayingBeforeScrub = false`.
+- [x] Add integration test: scrub during playback pauses playhead, and mouseup/release resumes it at the correct position.
 
 ### Task 3: Enable 3D pan & fix zoom tracking
 
-- [ ] In `ThreeDRenderer.ts` `mount()`, set `this.controls.enablePan = true` on the `OrbitControls` instance.
-- [ ] In `ThreeDRenderer.ts` `mount()`, add a listener to the `OrbitControls` `'start'` event: reset `this.camera.zoom = 1` to clear any gesture-onset drift.
-- [ ] In the `OrbitControls` `'end'` event listener (in `ThreeDRenderer.ts` `mount()`), update zoom tracking: update `viewport.zoom = viewport.zoom * camera.zoom`, then reset `camera.zoom = 1` and call `frameCamera()`.
-- [ ] Update `DESIGN.md` in the 3D variations description to document pan controls (right-click drag, shift+left-drag, or two-finger swipe).
-- [ ] In `tests/ThreeDRenderer.test.ts`, write a configuration test using a mock WebGL context and canvas stub to assert that `controls.enablePan === true` after `mount()`.
+- [x] In `ThreeDRenderer.ts` `mount()`, set `this.controls.enablePan = true` on the `OrbitControls` instance.
+- [x] In `ThreeDRenderer.ts` `mount()`, add a listener to the `OrbitControls` `'start'` event: reset `this.camera.zoom = 1` to clear any gesture-onset drift.
+- [x] In the `OrbitControls` `'end'` event listener (in `ThreeDRenderer.ts` `mount()`), update zoom tracking: update `viewport.zoom = viewport.zoom * camera.zoom`, then reset `camera.zoom = 1` and call `frameCamera()`.
+- [x] Update `DESIGN.md` in the 3D variations description to document pan controls (right-click drag, shift+left-drag, or two-finger swipe).
+- [x] In `tests/ThreeDRenderer.test.ts`, write a configuration test using a mock WebGL context and canvas stub to assert that `controls.enablePan === true` after `mount()`.
 
 ## Verification
 
 - [ ] First play press starts audio and visual playhead advances
 - [ ] Verify `audioContext.resume()` is called in the play button handler
 - [ ] Test first play press with a fresh page load (verifying resumption of suspended AudioContext)
-- [ ] Scrubbing during playback updates the playhead position and playback continues upon release
+- [x] Scrubbing during playback updates the playhead position and playback continues upon release (covered by `tests/appPlayback.test.ts` scrub-resume tests; browser drag still needs a manual pass)
 - [ ] Test scrub with mouse drag (input → change sequence) AND keyboard scrub (arrow keys during playback)
-- [ ] Scrubbing while paused seeks to the new position without auto-starting
+- [x] Scrubbing while paused seeks to the new position without auto-starting (covered by `tests/appPlayback.test.ts`)
 - [ ] 3D view responds to pan gestures (two-finger drag or right-click drag)
 - [ ] Existing zoom and rotate still work in 3D
 - [ ] Verify 3D zoom does not drift after repeated pan/zoom cycles
-- [ ] `npm run validate` passes (type-check, tests, production build)
+- [x] `npm run validate` passes (type-check, tests, production build)
 
 ## Completion checklist
 

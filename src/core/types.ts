@@ -245,7 +245,7 @@ export const DEFAULT_VIEWPORT: Readonly<ViewportTransform> = Object.freeze({
   panY: 0,
   autoZoom: true,
   autoZoomMode: 'musical',
-  autoZoomWindowBars: 4,
+  autoZoomWindowBars: 1,
   autoZoomWindowSeconds: 3,
 });
 

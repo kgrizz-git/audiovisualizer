@@ -105,6 +105,7 @@ export class SoundfontPlayer {
       } catch {
         drumKitPatch = null;
       }
+      if (this.generation !== localGen) return;
       if (!drumKitPatch) {
         if (!this.warnedDrumkitMissing) {
           console.warn('Failed to load standard drum kit patch');

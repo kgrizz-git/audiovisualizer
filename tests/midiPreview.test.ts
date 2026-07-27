@@ -43,21 +43,34 @@ describe('selectAudibleTracks', () => {
     tracks: [
       { name: 'a', channel: 0, program: 0, instrumentName: 'p', isPercussion: false, notes: [], sustainEvents: [] },
       { name: 'b', channel: 1, program: 32, instrumentName: 'b', isPercussion: false, notes: [], sustainEvents: [] },
+      { name: 'drums', channel: 9, program: 0, instrumentName: 'd', isPercussion: true, notes: [], sustainEvents: [] },
     ],
   };
 
-  it('filters to allowlisted channels', () => {
+  it('filters to allowlisted channels and skips percussion', () => {
     const voices = new Map([
       [0, defaultVoiceSettings(0)],
       [1, defaultVoiceSettings(1)],
+      [9, defaultVoiceSettings(2)],
     ]);
-    expect(selectAudibleTracks(score, voices, [1]).map((t) => t.channel)).toEqual([1]);
+    expect(selectAudibleTracks(score, voices, [1, 9]).map((t) => t.channel)).toEqual([1]);
+  });
+
+  it('filters by track instances when allowTracks is provided and skips percussion', () => {
+    const voices = new Map([
+      [0, defaultVoiceSettings(0)],
+      [1, defaultVoiceSettings(1)],
+      [9, defaultVoiceSettings(2)],
+    ]);
+    const allowed = [score.tracks[0], score.tracks[2]];
+    expect(selectAudibleTracks(score, voices, undefined, allowed)).toEqual([score.tracks[0]]);
   });
 
   it('respects mute', () => {
     const voices = new Map([
       [0, { ...defaultVoiceSettings(0), muted: true }],
       [1, defaultVoiceSettings(1)],
+      [9, defaultVoiceSettings(2)],
     ]);
     expect(selectAudibleTracks(score, voices).map((t) => t.channel)).toEqual([1]);
   });

@@ -20,8 +20,13 @@ describe('VoiceRouter', () => {
     const b = router.resolveTrackSettings(track(1, 32));
     expect(a.engine).toBe('sample');
     expect(a.soundbank).toBe('FluidR3_GM');
+    expect(a.isPercussion).toBe(false);
     expect(b.engine).toBe('sample');
     expect(b.program).toBe(32);
+    expect(b.isPercussion).toBe(false);
+
+    const c = router.resolveTrackSettings(track(9, 0));
+    expect(c.isPercussion).toBe(true);
   });
 
   it('merges per-channel mix overrides without changing global engine', () => {

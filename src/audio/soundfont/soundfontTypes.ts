@@ -17,6 +17,7 @@ export interface VoiceRouteSettings {
   gain: number;
   muted: boolean;
   solo: boolean;
+  isPercussion: boolean;
 }
 
 import type { LoopPointsByMidi } from './soundfontLoopLoader.js';
@@ -31,5 +32,5 @@ export interface InstrumentPatch {
   loops?: LoopPointsByMidi;
 }
 
-export type PatchStatus = 'loading' | 'loaded' | 'fallback';
+export type PatchStatus = 'loading' | 'loaded' | 'fallback' | 'drumkit' | 'drumkit-missing';
 

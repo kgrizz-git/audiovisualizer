@@ -33,7 +33,7 @@ export class MidiPreviewPlayer {
     score: Score,
     offsetSeconds: number,
     voices: Map<number, VoicePlaybackSettings>,
-    opts?: { channels?: number[] },
+    opts?: { channels?: number[]; tracks?: Score['tracks'] },
   ): Promise<void> {
     this.stop();
     if (!this.context && typeof AudioContext !== 'undefined') {
@@ -43,7 +43,7 @@ export class MidiPreviewPlayer {
     this.masterGain = this.context?.createGain() ?? null;
     if (this.masterGain && this.context) this.masterGain.connect(this.context.destination);
     const now = (this.context?.currentTime ?? 0) + 0.03;
-    const tracks = selectAudibleTracks(score, voices, opts?.channels);
+    const tracks = selectAudibleTracks(score, voices, opts?.channels, opts?.tracks);
     const scorePlaybackEnd = playbackEndTime(score);
     const tasks: TimedTask[] = [];
     for (const track of tracks) {
@@ -135,11 +135,15 @@ export function selectAudibleTracks(
   score: Score,
   voices: Map<number, VoicePlaybackSettings>,
   channels?: number[],
+  allowTracks?: Score['tracks'],
 ): Score['tracks'] {
   const hasSolo = [...voices.values()].some((settings) => settings.solo);
-  const allow = channels ? new Set(channels) : null;
+  const allowChannels = channels ? new Set(channels) : null;
+  const allowTracksSet = allowTracks ? new Set(allowTracks) : null;
   return score.tracks.filter((track, index) => {
-    if (allow && !allow.has(track.channel)) return false;
+    if (track.isPercussion) return false;
+    if (allowChannels && !allowChannels.has(track.channel)) return false;
+    if (allowTracksSet && !allowTracksSet.has(track)) return false;
     const settings = voices.get(track.channel) ?? defaultVoiceSettings(index);
     if (settings.muted || (hasSolo && !settings.solo)) return false;
     return true;

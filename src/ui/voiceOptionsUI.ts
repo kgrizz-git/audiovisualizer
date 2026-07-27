@@ -26,6 +26,8 @@ export function applyBadge(span: HTMLElement, status: PatchStatus | undefined): 
     loading: '⏳ Loading sample…',
     loaded: '✓ Sample loaded',
     fallback: '⚡ Synth Fallback',
+    drumkit: '🥁 Drum Kit',
+    'drumkit-missing': '❌ Drum Kit Missing',
   };
   span.textContent = status ? map[status] : '—';
 }

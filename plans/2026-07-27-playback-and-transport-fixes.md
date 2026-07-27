@@ -45,21 +45,21 @@ DESIGN.md                             — document pan controls in 3D interactio
 
 ## Phases & checklist
 
-### Phase 1: Fix play first-press bug
+### Task 1: Fix play first-press bug
 
-- [ ] Verify that `audioContext.resume()` is already called downstream inside `SoundfontPlayer.start()` at `src/audio/soundfont/soundfontPlayer.ts:80` (already present, no change required).
-- [ ] Modify the reset check in `startPlayback()` in `src/ui/app.ts` to reset if `this.currentTime >= this.currentScore.duration` (instead of comparing against `completionTime`).
-- [ ] Ensure the first play press correctly starts audio and advances the playhead from 0.
-- [ ] Add integration test: verifying first play press starts audio and resets playhead when it's at the end.
+- [x] Verify that `audioContext.resume()` is already called downstream inside `SoundfontPlayer.start()` at `src/audio/soundfont/soundfontPlayer.ts:80` (already present, no change required).
+- [x] Modify the reset check in `startPlayback()` in `src/ui/app.ts` to reset if `this.currentTime >= this.currentScore.duration` (instead of comparing against `completionTime`).
+- [x] Ensure the first play press correctly starts audio and advances the playhead from 0.
+- [x] Add integration test: verifying first play press starts audio and resets playhead when it's at the end.
 
-### Phase 2: Resume playback after scrub
+### Task 2: Resume playback after scrub
 
 - [ ] Add `wasPlayingBeforeScrub: boolean` state in `src/ui/app.ts`.
 - [ ] In the scrubber `input` listener: if playing, set `wasPlayingBeforeScrub = true` and call `this.pause()`. Update `currentTime` and render frame.
 - [ ] Add a `change` listener on the scrubber. If `wasPlayingBeforeScrub` is true, call `this.startPlayback()` and reset `wasPlayingBeforeScrub = false`.
 - [ ] Add integration test: scrub during playback pauses playhead, and mouseup/release resumes it at the correct position.
 
-### Phase 3: Enable 3D pan & fix zoom tracking
+### Task 3: Enable 3D pan & fix zoom tracking
 
 - [ ] In `ThreeDRenderer.ts` `mount()`, set `this.controls.enablePan = true` on the `OrbitControls` instance.
 - [ ] In `ThreeDRenderer.ts` `mount()`, add a listener to the `OrbitControls` `'start'` event: reset `this.camera.zoom = 1` to clear any gesture-onset drift.

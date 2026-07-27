@@ -23,7 +23,7 @@ import { VARIATIONS, pickRandom } from './launchRandomizer.js';
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
 
-class AudioVisualizerApp {
+export class AudioVisualizerApp {
   private currentScore: Score = generateDemoScore();
   private currentConfig: RuleConfig = { ...DEFAULT_CONFIG };
   private canvasRenderer: CanvasRenderer;
@@ -387,8 +387,7 @@ class AudioVisualizerApp {
   }
 
   private async startPlayback(): Promise<void> {
-    const completionTime = noteSourceStopTime(playbackEndTime(this.currentScore));
-    if (this.currentTime >= completionTime) this.currentTime = 0;
+    if (this.currentTime >= this.currentScore.duration) this.currentTime = 0;
     try {
       this.audioContext ??= new AudioContext();
       this.soundfontPlayer ??= new SoundfontPlayer({
@@ -742,4 +741,6 @@ class AudioVisualizerApp {
 }
 
 function formatTime(seconds: number): string { const whole = Math.max(0, Math.floor(seconds)); return `${String(Math.floor(whole / 60)).padStart(2, '0')}:${String(whole % 60).padStart(2, '0')}`; }
-window.addEventListener('DOMContentLoaded', () => { new AudioVisualizerApp(); });
+if (typeof window !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', () => { new AudioVisualizerApp(); });
+}

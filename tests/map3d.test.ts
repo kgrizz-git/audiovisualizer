@@ -34,6 +34,10 @@ describe('base2DVariation', () => {
     expect(base2DVariation('3d_note_halos')).toBe('circles');
     expect(base2DVariation('3d_note_spheres')).toBe('circles');
   });
+
+  it('maps 3d_radial_voice_paths to radial_voice_paths', () => {
+    expect(base2DVariation('3d_radial_voice_paths')).toBe('radial_voice_paths');
+  });
 });
 
 describe('3D viewport defaults', () => {
@@ -260,6 +264,118 @@ describe('map3DGeometry', () => {
       ]);
       const a = map3DGeometry(score, walk3dConfig, 800, 800);
       const b = map3DGeometry(score, walk3dConfig, 800, 800);
+      expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    });
+  });
+
+  describe('3d_radial_voice_paths', () => {
+    const radial3dConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_radial_voice_paths', zScale: 150 };
+
+    function drumScore(notes: NoteEvent[], duration = 4): Score {
+      return {
+        title: 'Drums',
+        duration,
+        bpm: 120,
+        tracks: [{ name: 'Drums', channel: 9, program: 0, instrumentName: 'Drum Kit', isPercussion: true, notes }],
+      };
+    }
+
+    it('tags geometry as 3d and preserves the requested variation in config', () => {
+      const geo = map3DGeometry(scoreOf([note({ id: 'a', pitch: 60, onset: 0, duration: 1 })]), radial3dConfig, 800, 800);
+      expect(geo.kind).toBe('3d');
+      expect(geo.config.variation).toBe('3d_radial_voice_paths');
+    });
+
+    it('preserves the 2D radial_voice_paths XY geometry exactly (front view matches fitted 2D)', () => {
+      const score: Score = {
+        title: 'Two voices', duration: 4, bpm: 120,
+        tracks: [
+          { name: 'Bass', channel: 0, program: 32, instrumentName: 'Bass', isPercussion: false, notes: [note({ id: 'a', pitch: 40, onset: 0, duration: 1 })] },
+          { name: 'Violin', channel: 1, program: 40, instrumentName: 'Violin', isPercussion: false, notes: [note({ id: 'b', pitch: 84, onset: 1, duration: 1 })] },
+        ],
+      };
+      const geo3d = map3DGeometry(score, radial3dConfig, 800, 800);
+      const geo2d = fitGeometryToCanvas(
+        mapScoreToGeometry(score, { ...radial3dConfig, variation: 'radial_voice_paths' }, 800, 800),
+        800,
+        800,
+      );
+
+      const flat2d = geo2d.voicePaths.flatMap((p) => p.segments);
+      expect(geo3d.segments.length).toBe(flat2d.length);
+      geo3d.segments.forEach((seg, i) => {
+        expect(seg.startX).toBeCloseTo(flat2d[i].start.x);
+        expect(seg.startY).toBeCloseTo(flat2d[i].start.y);
+        expect(seg.endX).toBeCloseTo(flat2d[i].end.x);
+        expect(seg.endY).toBeCloseTo(flat2d[i].end.y);
+      });
+    });
+
+    it('maps segment Z to note onset and offset × zScale', () => {
+      const score = scoreOf([note({ id: 'a', pitch: 60, onset: 0.5, duration: 2 })]);
+      const geo = map3DGeometry(score, radial3dConfig, 800, 800);
+      const geo2d = fitGeometryToCanvas(mapScoreToGeometry(score, { ...radial3dConfig, variation: 'radial_voice_paths' }, 800, 800), 800, 800);
+      const fittedSpan = computeFittedSpan(geo2d);
+      const effZ = effectiveZScale(score.duration, fittedSpan, radial3dConfig);
+
+      expect(geo.zScale).toBeCloseTo(effZ);
+      const seg = geo.segments[0];
+      expect(seg.startZ).toBeCloseTo(0.5 * effZ);
+      expect(seg.endZ).toBeCloseTo(2.5 * effZ);
+    });
+
+    it('lifts percussion rings to discs at onset depth instead of dropping them', () => {
+      const score = drumScore([
+        note({ id: 'k1', pitch: 36, onset: 1, duration: 0.5 }),
+        note({ id: 'k2', pitch: 36, onset: 2, duration: 0.5 }),
+      ]);
+      const geo = map3DGeometry(score, radial3dConfig, 800, 800);
+      const geo2d = fitGeometryToCanvas(mapScoreToGeometry(score, { ...radial3dConfig, variation: 'radial_voice_paths' }, 800, 800), 800, 800);
+      const effZ = effectiveZScale(score.duration, computeFittedSpan(geo2d), radial3dConfig);
+
+      expect(geo.segments).toHaveLength(0);
+      expect(geo.discs).toHaveLength(2);
+      expect(geo.discs[0].cz).toBeCloseTo(1 * effZ);
+      expect(geo.discs[1].cz).toBeCloseTo(2 * effZ);
+      expect(geo.discs[0].czExtent).toBeCloseTo(0.5 * effZ / 2);
+      // Radii carry the fitted 2D ring radii across unchanged.
+      const rings2d = geo2d.voicePaths.flatMap((p) => p.circles);
+      expect(geo.discs[0].radius).toBeCloseTo(rings2d[0].radius);
+      expect(geo.discs[1].radius).toBeCloseTo(rings2d[1].radius);
+    });
+
+    it('colors percussion discs from the ring stroke (family) color, not the transparent fill', () => {
+      const score = drumScore([note({ id: 'k', pitch: 36, onset: 1, duration: 0.5 })]);
+      const geo = map3DGeometry(score, radial3dConfig, 800, 800);
+      const ring = fitGeometryToCanvas(mapScoreToGeometry(score, { ...radial3dConfig, variation: 'radial_voice_paths' }, 800, 800), 800, 800)
+        .voicePaths.flatMap((p) => p.circles)[0];
+      expect(ring.fillColor).toBe('none');
+      expect(geo.discs[0].fillColor).toBe(ring.strokeColor);
+    });
+
+    it('produces segments and discs together for a mixed pitched + percussion score', () => {
+      const score: Score = {
+        title: 'Mixed', duration: 4, bpm: 120,
+        tracks: [
+          { name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [note({ id: 'a', pitch: 60, onset: 0, duration: 1 })] },
+          { name: 'Drums', channel: 9, program: 0, instrumentName: 'Drum Kit', isPercussion: true, notes: [note({ id: 'k', pitch: 36, onset: 1, duration: 0.5 })] },
+        ],
+      };
+      const geo = map3DGeometry(score, radial3dConfig, 800, 800);
+      expect(geo.segments.length).toBe(1);
+      expect(geo.discs.length).toBe(1);
+    });
+
+    it('is completely deterministic', () => {
+      const score: Score = {
+        title: 'Mixed', duration: 4, bpm: 120,
+        tracks: [
+          { name: 'Bass', channel: 0, program: 32, instrumentName: 'Bass', isPercussion: false, notes: [note({ id: 'a', pitch: 40, onset: 0, duration: 1 }), note({ id: 'b', pitch: 43, onset: 1.5, duration: 0.5 })] },
+          { name: 'Drums', channel: 9, program: 0, instrumentName: 'Drum Kit', isPercussion: true, notes: [note({ id: 'k', pitch: 36, onset: 1, duration: 0.1 }), note({ id: 'h', pitch: 42, onset: 2, duration: 0.1 })] },
+        ],
+      };
+      const a = map3DGeometry(score, radial3dConfig, 800, 800);
+      const b = map3DGeometry(score, radial3dConfig, 800, 800);
       expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     });
   });

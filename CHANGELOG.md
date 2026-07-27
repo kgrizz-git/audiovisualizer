@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Radial voice-path modes (2D `radial_voice_paths` and 3D `3d_radial_voice_paths`): every pitched voice owns a fixed radial spoke direction derived from its register (bass down, treble up, middle voices fanning laterally), with notes radiating outward so onset maps to distance from the center and duration to segment length. Percussion renders as concentric time rings colored by General MIDI family (kick red, snare orange, hi-hat cyan, cymbals yellow, toms green); in 3D the rings lift to discs at their onset depth. Available in the CLI (`--mode radial_voice_paths`, 2D only) and the launch randomizer. SemVer: **MINOR**.
 - Polar walk modes (2D `polar_walk` and 3D `3d_polar_walk`): pitch class maps to absolute direction and duration to segment length, starting at the canvas center and walking continuously. Under polyphony, chord notes fan from the current cursor and subsequent notes join at the centroid of active tips; silence advances the cursor in the direction of the last played note. Standard Canvas applies a color-matched line glow. SemVer: **MINOR**.
 - Randomized visual mode and bundled MIDI file selection on app launch to showcase visual variety and demo scores available in the application. SemVer: **MINOR**.
 - Channel-10 Standard drum kit support for General MIDI percussion on zero-indexed channel 9, utilizing bundled FluidR3 Standard drum kit samples. SemVer: **MINOR**.

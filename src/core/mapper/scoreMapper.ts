@@ -151,6 +151,10 @@ export function mapScoreToGeometry(
     };
   }
 
+    if (config.variation === 'radial_voice_paths') {
+    return mapRadialVoicePaths(score, config, targetWidth, targetHeight);
+  }
+
   const voicePaths: GeometryVoicePath[] = [];
 
   score.tracks.forEach((track) => {
@@ -374,6 +378,164 @@ function quantizeNote(note: NoteEvent, bpm: number, config: RuleConfig): NoteEve
   if (!config.quantizeOnset || bpm <= 0 || config.quantizeSubdivision <= 0) return note;
   const gridSeconds = 60 / bpm / config.quantizeSubdivision;
   return { ...note, onset: Math.round(note.onset / gridSeconds) * gridSeconds };
+}
+
+/** General MIDI percussion families → ring stroke colors for radial_voice_paths. */
+const PERCUSSION_FAMILY_COLORS: ReadonlyArray<{ pitches: readonly number[]; color: string }> = [
+  { pitches: [35, 36], color: 'hsl(0, 85%, 60%)' },                   // kick/bass drum — red
+  { pitches: [38, 39, 40], color: 'hsl(30, 85%, 60%)' },              // snare/clap — orange
+  { pitches: [42, 44, 46], color: 'hsl(190, 85%, 60%)' },             // hi-hat — cyan
+  { pitches: [49, 51, 53], color: 'hsl(55, 85%, 60%)' },              // cymbals — yellow
+  { pitches: [41, 43, 45, 47, 48, 50], color: 'hsl(140, 85%, 60%)' }, // toms — green
+];
+
+/** Best-effort GM percussion family color; unknown percussion values fall back to grey. */
+export function getPercussionColor(pitch: number): string {
+  for (const family of PERCUSSION_FAMILY_COLORS) {
+    if (family.pitches.includes(pitch)) return family.color;
+  }
+  return 'hsl(0, 0%, 62%)';
+}
+
+export interface RadialSpoke {
+  /** Spoke direction in degrees, y-up math convention (90 = screen top, 270 = screen bottom). */
+  angle: number;
+  /** Number of voices sharing this spoke's base angle (drives 1/n opacity scaling). */
+  voicesOnSpoke: number;
+}
+
+/**
+ * Assigns each pitched voice a fixed radial spoke direction from its median pitch.
+ * Voices are ranked by median pitch: the lowest register points down (270°), the
+ * highest points up (90°), and intermediate registers alternate between the right
+ * (270° → 90° through 0°) and left (270° → 90° through 180°) branches so the
+ * vertical component rises with register on both sides. Voices sharing a median
+ * pitch share a spoke and are fanned apart by ±2° steps; when more than 12 distinct
+ * medians exist, neighbours are grouped into 12 spoke slots the same way. A single
+ * voice (or a single shared median) points laterally right (0°). Deterministic:
+ * ties in median pitch are broken by voice id.
+ */
+export function computeRadialVoiceAngles(
+  voices: ReadonlyArray<{ voice: number; medianPitch: number }>,
+): Map<number, RadialSpoke> {
+  const result = new Map<number, RadialSpoke>();
+  if (voices.length === 0) return result;
+  const sorted = [...voices].sort((a, b) => a.medianPitch - b.medianPitch || a.voice - b.voice);
+  const distinctMedians = [...new Set(sorted.map((entry) => entry.medianPitch))];
+  const slotCount = Math.min(distinctMedians.length, 12);
+  const slotOfMedian = new Map<number, number>();
+  distinctMedians.forEach((median, k) => {
+    slotOfMedian.set(median, distinctMedians.length > 12 ? Math.floor((k * slotCount) / distinctMedians.length) : k);
+  });
+
+  const slots = new Map<number, number[]>();
+  sorted.forEach((entry) => {
+    const slot = slotOfMedian.get(entry.medianPitch)!;
+    const members = slots.get(slot);
+    if (members) members.push(entry.voice);
+    else slots.set(slot, [entry.voice]);
+  });
+
+  slots.forEach((members, slot) => {
+    const t = slotCount === 1 ? 0.5 : slot / (slotCount - 1);
+    const baseAngle = slot % 2 === 0 ? (270 + 180 * t) % 360 : (270 - 180 * t + 360) % 360;
+    members.forEach((voice, j) => {
+      result.set(voice, {
+        angle: baseAngle + (j - (members.length - 1) / 2) * 4,
+        voicesOnSpoke: members.length,
+      });
+    });
+  });
+  return result;
+}
+
+/** Median of the visual (transposed) pitches of a voice's notes. */
+function medianVisualPitch(notes: NoteEvent[], config: RuleConfig): number {
+  const pitches = notes.map((note) => getVisualPitch(note, config)).sort((a, b) => a - b);
+  const mid = Math.floor(pitches.length / 2);
+  return pitches.length % 2 === 1 ? pitches[mid] : (pitches[mid - 1] + pitches[mid]) / 2;
+}
+
+/**
+ * Radial voice-path layout: every pitched voice owns a fixed spoke direction derived
+ * from its register (bass down, treble up — see computeRadialVoiceAngles), and each
+ * note becomes a standard GeometrySegment along that spoke: radial start/end encode
+ * onset/offset as a fraction of the score duration, and a ±5°-clamped angular offset
+ * (1° per semitone from the voice's median) fans chords and runs slightly apart.
+ * Percussion voices (channel 10 or the track percussion flag) skip spoke assignment
+ * entirely and render as stroke-only concentric GeometryCircle rings centered on the
+ * canvas, radius proportional to onset time and color keyed to the GM family.
+ */
+export function mapRadialVoicePaths(
+  score: Score,
+  config: RuleConfig,
+  targetWidth: number,
+  targetHeight: number,
+): RenderedGeometry {
+  const origin: Point2D = { x: targetWidth / 2, y: targetHeight / 2 };
+  const maxRadius = Math.min(targetWidth, targetHeight) * 0.45;
+  const scoreDuration = Math.max(score.duration, 0.01);
+
+  const prepared = score.tracks
+    .filter((track) => track.notes.length > 0 && (config.voiceFilter === null || config.voiceFilter.includes(track.channel)))
+    .map((track) => ({
+      track,
+      isPercussion: track.isPercussion || track.channel === 9,
+      notes: [...track.notes]
+        .sort((a, b) => a.onset - b.onset || a.id.localeCompare(b.id))
+        .map((note) => quantizeNote(note, score.bpm, config)),
+    }));
+
+  const pitched = prepared.filter((entry) => !entry.isPercussion);
+  const medians = pitched.map((entry, index) => ({ voice: index, medianPitch: medianVisualPitch(entry.notes, config) }));
+  const spokes = computeRadialVoiceAngles(medians);
+
+  const voicePaths: GeometryVoicePath[] = prepared.map((entry) => {
+    const segments: GeometrySegment[] = [];
+    const circles: GeometryCircle[] = [];
+
+    if (entry.isPercussion) {
+      entry.notes.forEach((note) => {
+        circles.push({
+          center: { ...origin },
+          // Floor keeps beat-one hits (onset 0) visible as a small central ring.
+          radius: Math.max(4, (note.onset / scoreDuration) * maxRadius),
+          fillColor: 'none',
+          strokeColor: getPercussionColor(note.pitch),
+          strokeWidth: Math.max(1, config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale),
+          opacity: 0.85,
+          note,
+          isPercussion: true,
+        });
+      });
+    } else {
+      const pitchedIndex = pitched.indexOf(entry);
+      const spoke = spokes.get(pitchedIndex)!;
+      const median = medians[pitchedIndex].medianPitch;
+      entry.notes.forEach((note) => {
+        // 1° per semitone from the voice median, clamped to ±5° to keep the spoke coherent.
+        const pitchOffset = Math.max(-5, Math.min(5, getVisualPitch(note, config) - median));
+        const radians = ((spoke.angle + pitchOffset) * Math.PI) / 180;
+        // Angles use the y-up convention; canvas y grows downward, hence the negated sin.
+        const direction = { x: Math.cos(radians), y: -Math.sin(radians) };
+        const rStart = (note.onset / scoreDuration) * maxRadius;
+        const rEnd = ((note.onset + note.duration) / scoreDuration) * maxRadius;
+        segments.push({
+          start: { x: origin.x + direction.x * rStart, y: origin.y + direction.y * rStart },
+          end: { x: origin.x + direction.x * rEnd, y: origin.y + direction.y * rEnd },
+          color: getNoteColor(note, config),
+          width: config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale,
+          // Dense shared spokes dim proportionally so sparse voices stay legible.
+          opacity: 0.9 / spoke.voicesOnSpoke,
+          note,
+        });
+      });
+    }
+
+    return { voice: entry.track.channel, voiceName: entry.track.name, segments, circles };
+  });
+
+  return { width: targetWidth, height: targetHeight, voicePaths, bands: [], config, bpm: score.bpm };
 }
 
 function getGapDuration(previous: NoteEvent | null, next: NoteEvent): number {

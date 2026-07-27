@@ -4,11 +4,11 @@ import { VARIATIONS, pickRandom } from '../src/ui/launchRandomizer.js';
 
 describe('launchRandomizer', () => {
   describe('VARIATIONS', () => {
-    it('has exactly 12 variations', () => {
-      expect(VARIATIONS.length).toBe(12);
+    it('has exactly 14 variations', () => {
+      expect(VARIATIONS.length).toBe(14);
     });
 
-    it('contains all 12 expected variation values', () => {
+    it('contains all 14 expected variation values', () => {
       const expected: Variation[] = [
         'lines',
         'circles',
@@ -16,12 +16,14 @@ describe('launchRandomizer', () => {
         'tonal_time_lines',
         'polar_fan',
         'polar_walk',
+        'radial_voice_paths',
         '3d_lines',
         '3d_note_halos',
         '3d_note_spheres',
         '3d_piano_roll',
         '3d_polar_fan',
         '3d_polar_walk',
+        '3d_radial_voice_paths',
       ];
       expect(Array.from(VARIATIONS)).toEqual(expected);
     });

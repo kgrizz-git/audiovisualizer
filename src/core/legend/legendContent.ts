@@ -123,6 +123,19 @@ export function getLegendContent(config: RuleConfig): LegendContent {
         ],
         swatches,
       };
+    case 'radial_voice_paths':
+      return {
+        title: 'RADIAL VOICE PATHS',
+        lines: [
+          hue,
+          ...transpose,
+          'Voice register → spoke direction (bass ↓, treble ↑)',
+          'Onset → distance from center; duration → length',
+          'Velocity → stroke weight',
+          'Percussion → concentric rings (family → color)',
+        ],
+        swatches,
+      };
     case '3d_polar_fan':
       return {
         title: '3D POLAR OCTAVE FAN',
@@ -145,6 +158,19 @@ export function getLegendContent(config: RuleConfig): LegendContent {
           'X / Y → polar walk (pitch class × 30°)',
           'Z (depth) → onset time',
           'Duration → segment length',
+          'Now-plane → current playback moment',
+        ],
+        swatches,
+      };
+    case '3d_radial_voice_paths':
+      return {
+        title: '3D RADIAL VOICE PATHS',
+        lines: [
+          hue,
+          ...transpose,
+          'X / Y → voice spokes (register → direction)',
+          'Z (depth) → onset time',
+          'Percussion → time rings lifted to discs',
           'Now-plane → current playback moment',
         ],
         swatches,

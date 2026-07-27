@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SoundfontPlayer } from '../src/audio/soundfont/soundfontPlayer.js';
 import { VoiceRouter } from '../src/audio/soundfont/voiceRouter.js';
 import { Score } from '../src/core/types.js';
+import { resetCachedDrumKit } from '../src/audio/soundfont/drumkitLoader.js';
 
 function demoScore(): Score {
   return {
@@ -22,6 +23,13 @@ function demoScore(): Score {
 }
 
 describe('SoundfontPlayer', () => {
+  beforeEach(() => {
+    resetCachedDrumKit();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
   it('calls fallback start once with all channels when every patch is null', async () => {
     const fallbackStart = vi.fn(async (..._args: unknown[]) => {});
     const fallbackStop = vi.fn();
@@ -33,8 +41,8 @@ describe('SoundfontPlayer', () => {
     const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
     await player.start(demoScore(), 0, { router });
     expect(fallbackStart).toHaveBeenCalledTimes(1);
-    const opts = fallbackStart.mock.calls[0][3] as { channels?: number[] };
-    expect(opts.channels?.sort()).toEqual([0, 1]);
+    const opts = fallbackStart.mock.calls[0][3] as { tracks?: Score['tracks'] };
+    expect(opts.tracks?.map((t) => t.channel).sort()).toEqual([0, 1]);
   });
 
   it('passes only miss channels to fallback when some patches load', async () => {
@@ -56,8 +64,8 @@ describe('SoundfontPlayer', () => {
     const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
     await player.start(demoScore(), 0, { router });
     expect(fallbackStart).toHaveBeenCalledTimes(1);
-    const opts = fallbackStart.mock.calls[0][3] as { channels?: number[] };
-    expect(opts.channels).toEqual([1]);
+    const opts = fallbackStart.mock.calls[0][3] as { tracks?: Score['tracks'] };
+    expect(opts.tracks?.map((t) => t.channel)).toEqual([1]);
   });
 
   it('stop invokes fallback stop', async () => {
@@ -164,8 +172,8 @@ describe('SoundfontPlayer', () => {
       const status = player.getStatusMap();
       expect(status.get(0)).toBe('fallback');
       expect(status.get(1)).toBe('fallback');
-      const opts = fallbackStart.mock.calls[0][3] as { channels?: number[] };
-      expect(opts.channels?.sort()).toEqual([0, 1]);
+      const opts = fallbackStart.mock.calls[0][3] as { tracks?: Score['tracks'] };
+      expect(opts.tracks?.map((t) => t.channel).sort()).toEqual([0, 1]);
     });
   });
 
@@ -276,5 +284,163 @@ describe('SoundfontPlayer', () => {
     await player.start(demoScore(), 0, { router, context: mockContext });
     expect(createdSources.length).toBeGreaterThan(0);
     expect(createdSources[0].loop).toBe(false);
+  });
+
+  describe('Routing, drum kit, and track-scoped fallback', () => {
+    it('handles collision regression: two split tracks sharing one channel load distinct patches', async () => {
+      const loadPatch = vi.fn(async (bank: string, program: number) => ({
+        bank: bank as any,
+        program,
+        slug: program === 0 ? 'piano' : 'organ',
+        buffers: { C4: {} as AudioBuffer }
+      }));
+      const player = new SoundfontPlayer({
+        loader: { loadPatch } as never,
+        createFallback: () => ({ start: vi.fn(), stop: vi.fn() }) as never,
+      });
+      const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+      // Tracks share channel 0, but have different program overrides or source programs
+      const score: Score = {
+        title: 'collision', duration: 1, bpm: 120,
+        tracks: [
+          { name: 'piano', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [], sustainEvents: [] },
+          { name: 'organ', channel: 0, program: 19, instrumentName: 'Organ', isPercussion: false, notes: [], sustainEvents: [] },
+        ]
+      };
+      await player.start(score, 0, { router });
+      expect(loadPatch).toHaveBeenCalledTimes(2);
+      expect(loadPatch).toHaveBeenCalledWith('FluidR3_GM', 0);
+      expect(loadPatch).toHaveBeenCalledWith('FluidR3_GM', 19);
+      expect(player.getStatusMap().get(0)).toBe('loaded');
+    });
+
+    it('drum routing: channel 9 track loads standard drum kit, sets status to drumkit', async () => {
+      const script = `
+        MIDI.Soundfont.marimba = {
+          "C2": "data:audio/mp3;base64,AAAA"
+        };
+      `;
+      vi.stubGlobal('fetch', vi.fn(async () => ({
+        ok: true,
+        text: async () => script
+      } as Response)));
+      
+      const loadPatch = vi.fn();
+      const decode = vi.fn(async () => ({ duration: 0.1 } as AudioBuffer));
+      const player = new SoundfontPlayer({
+        loader: { loadPatch, decode } as never,
+        createFallback: () => ({ start: vi.fn(), stop: vi.fn() }) as never,
+      });
+      const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+      const score: Score = {
+        title: 'drum-route', duration: 1, bpm: 120,
+        tracks: [
+          { name: 'drums', channel: 9, program: 0, instrumentName: 'Drums', isPercussion: true, notes: [], sustainEvents: [] },
+        ]
+      };
+      await player.start(score, 0, { router });
+      expect(player.getStatusMap().get(9)).toBe('drumkit');
+    });
+
+    it('oscillator carve-out: melodic tracks fall back to oscillator, percussion track still loads drumkit', async () => {
+      const fallbackStart = vi.fn();
+      const script = `
+        MIDI.Soundfont.marimba = {
+          "C2": "data:audio/mp3;base64,AAAA"
+        };
+      `;
+      vi.stubGlobal('fetch', vi.fn(async () => ({
+        ok: true,
+        text: async () => script
+      } as Response)));
+
+      const loadPatch = vi.fn();
+      const decode = vi.fn(async () => ({ duration: 0.1 } as AudioBuffer));
+      const player = new SoundfontPlayer({
+        loader: { loadPatch, decode } as never,
+        createFallback: () => ({ start: fallbackStart, stop: vi.fn() }) as never,
+      });
+      // Set engine to oscillator
+      const router = new VoiceRouter({ engine: 'oscillator', soundbank: 'FluidR3_GM' });
+      const score: Score = {
+        title: 'carve-out', duration: 1, bpm: 120,
+        tracks: [
+          { name: 'piano', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [], sustainEvents: [] },
+          { name: 'drums', channel: 9, program: 0, instrumentName: 'Drums', isPercussion: true, notes: [], sustainEvents: [] },
+        ]
+      };
+      await player.start(score, 0, { router });
+      // Melodic track status should be fallback, drums should be drumkit
+      expect(player.getStatusMap().get(0)).toBe('fallback');
+      expect(player.getStatusMap().get(9)).toBe('drumkit');
+      
+      // Melodic fallback should be started with the melodic track only
+      expect(fallbackStart).toHaveBeenCalledTimes(1);
+      const opts = fallbackStart.mock.calls[0][3] as { tracks?: Score['tracks'] };
+      expect(opts.tracks?.map(t => t.name)).toEqual(['piano']);
+    });
+
+    it('drumkit-missing: status is set to drumkit-missing on failed drum kit load, percussion is silent', async () => {
+      // Fetch returns 404 for drumkit
+      vi.stubGlobal('fetch', vi.fn(async () => ({
+        ok: false,
+        status: 404
+      } as Response)));
+
+      const loadPatch = vi.fn();
+      const decode = vi.fn();
+      const player = new SoundfontPlayer({
+        loader: { loadPatch, decode } as never,
+        createFallback: () => ({ start: vi.fn(), stop: vi.fn() }) as never,
+      });
+      const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+      const score: Score = {
+        title: 'drum-missing', duration: 1, bpm: 120,
+        tracks: [
+          { name: 'drums', channel: 9, program: 0, instrumentName: 'Drums', isPercussion: true, notes: [], sustainEvents: [] },
+        ]
+      };
+      await player.start(score, 0, { router });
+      expect(player.getStatusMap().get(9)).toBe('drumkit-missing');
+    });
+
+    it('piano loads / organ misses on same channel -> only organ notes fall back to oscillator', async () => {
+      const fallbackStart = vi.fn();
+      // Mock loader so piano (program 0) loads, but organ (program 19) fails (returns null)
+      const loadPatch = vi.fn(async (bank: string, program: number) => {
+        if (program === 0) {
+          return {
+            bank: bank as any,
+            program,
+            slug: 'piano',
+            buffers: { C4: {} as AudioBuffer }
+          };
+        }
+        return null;
+      });
+
+      const player = new SoundfontPlayer({
+        loader: { loadPatch } as never,
+        createFallback: () => ({ start: fallbackStart, stop: vi.fn() }) as never,
+      });
+      const router = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
+      // Both share channel 0
+      const score: Score = {
+        title: 'partial-miss', duration: 1, bpm: 120,
+        tracks: [
+          { name: 'piano', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes: [], sustainEvents: [] },
+          { name: 'organ', channel: 0, program: 19, instrumentName: 'Organ', isPercussion: false, notes: [], sustainEvents: [] },
+        ]
+      };
+      await player.start(score, 0, { router });
+      
+      // The channel status becomes 'fallback' because organ failed
+      expect(player.getStatusMap().get(0)).toBe('fallback');
+      
+      // Fallback start should be called with only the organ track
+      expect(fallbackStart).toHaveBeenCalledTimes(1);
+      const opts = fallbackStart.mock.calls[0][3] as { tracks?: Score['tracks'] };
+      expect(opts.tracks?.map(t => t.name)).toEqual(['organ']);
+    });
   });
 });

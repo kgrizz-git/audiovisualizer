@@ -51,7 +51,7 @@ export function dataUriToArrayBuffer(dataUri: string): ArrayBuffer {
 export class SoundfontPatchLoader {
   private cache = new Map<string, InstrumentPatch | null>();
 
-  constructor(private readonly decode: AudioDecoder) {}
+  constructor(public readonly decode: AudioDecoder) {}
 
   async loadPatch(bank: SoundbankPreset, program: number): Promise<InstrumentPatch | null> {
     const slug = getInstrumentSlug(program);

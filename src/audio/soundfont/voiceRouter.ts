@@ -51,6 +51,7 @@ export class VoiceRouter {
       gain: mix.gain,
       muted: mix.muted,
       solo: mix.solo,
+      isPercussion: track.isPercussion,
     };
   }
 

@@ -29,6 +29,7 @@ import { fitGeometryToCanvas } from '../layout/fitGeometry.js';
 export function base2DVariation(variation: Variation): Variation {
   if (variation === '3d_note_halos' || variation === '3d_note_spheres') return 'circles';
   if (variation === '3d_polar_fan') return 'polar_fan';
+  if (variation === '3d_polar_walk') return 'polar_walk';
   return 'lines';
 }
 

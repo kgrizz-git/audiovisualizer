@@ -98,7 +98,7 @@ export class CanvasRenderer {
     this.ctx.lineCap = 'round';
     this.ctx.setLineDash(segment.dashArray?.split(' ').map(Number) || []);
     this.ctx.globalAlpha = segment.opacity;
-    const glow = variation === 'lines' || variation === 'polar_fan';
+    const glow = variation === 'lines' || variation === 'polar_fan' || variation === 'polar_walk';
     this.ctx.shadowColor = glow ? segment.color : 'transparent';
     this.ctx.shadowBlur = glow ? Math.max(7, segment.width * 3) : 0;
     this.ctx.stroke();

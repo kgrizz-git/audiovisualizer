@@ -213,6 +213,56 @@ describe('map3DGeometry', () => {
       expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     });
   });
+
+  describe('3d_polar_walk', () => {
+    const walk3dConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_polar_walk', zScale: 150 };
+
+    it('preserves the 2D polar_walk XY geometry exactly (front view matches fitted 2D polar_walk)', () => {
+      const notes = [
+        note({ id: 'a', pitch: 60, onset: 0, duration: 1 }),
+        note({ id: 'b', pitch: 67, onset: 1, duration: 1 }),
+      ];
+      const score = scoreOf(notes);
+      const geo3d = map3DGeometry(score, walk3dConfig, 800, 800);
+      const geo2d = fitGeometryToCanvas(
+        mapScoreToGeometry(score, { ...walk3dConfig, variation: 'polar_walk' }, 800, 800),
+        800,
+        800,
+      );
+
+      const flat2d = geo2d.voicePaths.flatMap((p) => p.segments);
+      expect(geo3d.segments.length).toBe(flat2d.length);
+      geo3d.segments.forEach((seg, i) => {
+        expect(seg.startX).toBeCloseTo(flat2d[i].start.x);
+        expect(seg.startY).toBeCloseTo(flat2d[i].start.y);
+        expect(seg.endX).toBeCloseTo(flat2d[i].end.x);
+        expect(seg.endY).toBeCloseTo(flat2d[i].end.y);
+      });
+    });
+
+    it('maps segment Z to note onset and offset × zScale', () => {
+      const score = scoreOf([note({ id: 'a', pitch: 60, onset: 0.5, duration: 2 })]);
+      const geo = map3DGeometry(score, walk3dConfig, 800, 800);
+      const geo2d = fitGeometryToCanvas(mapScoreToGeometry(score, { ...walk3dConfig, variation: 'polar_walk' }, 800, 800), 800, 800);
+      const fittedSpan = computeFittedSpan(geo2d);
+      const effZ = effectiveZScale(score.duration, fittedSpan, walk3dConfig);
+
+      expect(geo.zScale).toBeCloseTo(effZ);
+      const seg = geo.segments[0];
+      expect(seg.startZ).toBeCloseTo(0.5 * effZ);
+      expect(seg.endZ).toBeCloseTo(2.5 * effZ);
+    });
+
+    it('is completely deterministic', () => {
+      const score = scoreOf([
+        note({ id: 'a', pitch: 60, onset: 0, duration: 1 }),
+        note({ id: 'b', pitch: 64, onset: 0.5, duration: 1.5 }),
+      ]);
+      const a = map3DGeometry(score, walk3dConfig, 800, 800);
+      const b = map3DGeometry(score, walk3dConfig, 800, 800);
+      expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    });
+  });
 });
 
 describe('liftGeometryTo3D', () => {

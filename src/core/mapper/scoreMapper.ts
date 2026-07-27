@@ -9,7 +9,7 @@ import {
   Point2D,
   NoteEvent,
 } from '../types.js';
-import { mapPolyphonicLineSegments } from './polyphonicLines.js';
+import { mapPolyphonicLineSegments, clusterNotesByOnset, centroid, tipPointAt } from './polyphonicLines.js';
 
 export const DEFAULT_CONFIG: RuleConfig = {
   variation: 'lines',
@@ -161,7 +161,9 @@ export function mapScoreToGeometry(
     const circles: GeometryCircle[] = [];
 
     // Calculate initial cursor based on origin mode
-    let cursor: Point2D = getInitialCursor(config.originMode, targetWidth, targetHeight, track.channel);
+    let cursor: Point2D = config.variation === 'polar_walk'
+      ? { x: targetWidth / 2, y: targetHeight / 2 }
+      : getInitialCursor(config.originMode, targetWidth, targetHeight, track.channel);
     let headingAngle = getInitialHeading(config.originMode, track.channel);
 
     let prevNote: NoteEvent | null = null;
@@ -174,6 +176,9 @@ export function mapScoreToGeometry(
       const origin = getInitialCursor(config.originMode, targetWidth, targetHeight, track.channel);
       const heading = getInitialHeading(config.originMode, track.channel);
       segments.push(...mapPolyphonicLineSegments(notes, config, origin, heading));
+    } else if (config.variation === 'polar_walk' && config.chordLayout === 'polyphony') {
+      const origin = { x: targetWidth / 2, y: targetHeight / 2 };
+      segments.push(...mapPolyphonicPolarWalkSegments(notes, config, origin));
     } else {
     notes.forEach((note) => {
       const color = getNoteColor(note, config);
@@ -247,6 +252,55 @@ export function mapScoreToGeometry(
           opacity: 0.9,
           note,
         });
+      } else if (config.variation === 'polar_walk') {
+        const visualPitch = getVisualPitch(note, config);
+        const transposedPitchClass = visualPitch % 12;
+        const angle = (transposedPitchClass * 30 * Math.PI) / 180;
+        const length = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
+
+        if (prevNote !== null) {
+          const gapDuration = getGapDuration(prevNote, note);
+          if (gapDuration > 0) {
+            const prevVisualPitch = getVisualPitch(prevNote, config);
+            const prevAngle = ((prevVisualPitch % 12) * 30 * Math.PI) / 180;
+            const gapLength = gapDuration * config.lengthScale;
+            const gapEnd: Point2D = {
+              x: cursor.x + Math.cos(prevAngle) * gapLength,
+              y: cursor.y + Math.sin(prevAngle) * gapLength,
+            };
+
+            if (config.gapPolicy !== 'lift_pen') {
+              const gapNote: NoteEvent = { ...prevNote, id: `${prevNote.id}-gap`, onset: prevNote.onset + prevNote.duration, duration: gapDuration };
+              segments.push({
+                start: { ...cursor },
+                end: gapEnd,
+                note: gapNote,
+                role: 'gap',
+                color: config.gapPolicy === 'ghost' ? '#94a3b8' : getNoteColor(prevNote, config),
+                width: Math.max(1, config.strokeWidthBase * 0.75),
+                opacity: config.gapPolicy === 'ghost' ? 0.18 : 0.32,
+                dashArray: config.gapPolicy === 'ghost' ? '3 8' : undefined,
+              });
+            }
+            cursor = gapEnd;
+          }
+        }
+
+        const endPoint: Point2D = {
+          x: cursor.x + Math.cos(angle) * length,
+          y: cursor.y + Math.sin(angle) * length,
+        };
+
+        segments.push({
+          start: { ...cursor },
+          end: { ...endPoint },
+          color,
+          width: strokeWidth,
+          opacity: 0.9,
+          note,
+        });
+
+        cursor = endPoint;
       } else {
         throw new Error(`Unhandled variation: ${config.variation}`);
       }
@@ -386,3 +440,111 @@ function getInitialHeading(mode: string, channel: number): number {
   }
   return 0; // 0 degrees = right
 }
+
+export function mapPolyphonicPolarWalkSegments(
+  notes: NoteEvent[],
+  config: RuleConfig,
+  origin: Point2D
+): GeometrySegment[] {
+  const segments: GeometrySegment[] = [];
+  const clusters = clusterNotesByOnset(notes);
+  let activeTips: {
+    noteId: string;
+    start: Point2D;
+    end: Point2D;
+    soundingUntil: number;
+    note: NoteEvent;
+  }[] = [];
+
+  let cursor = { ...origin };
+  let lastSoundingEnd: number | null = null;
+  let lastNoteForGap: NoteEvent | null = null;
+
+  for (const cluster of clusters) {
+    const t = cluster[0].onset;
+
+    // Drop notes that have finished sounding
+    const dropped = activeTips.filter((tip) => tip.soundingUntil <= t);
+    if (dropped.length > 0) {
+      activeTips = activeTips.filter((tip) => tip.soundingUntil > t);
+      const droppedEnd = Math.max(...dropped.map((tip) => tip.soundingUntil));
+      lastSoundingEnd = lastSoundingEnd === null ? droppedEnd : Math.max(lastSoundingEnd, droppedEnd);
+      if (activeTips.length === 0) {
+        cursor = centroid(dropped.map((tip) => tip.end));
+      }
+    }
+
+    let join: Point2D;
+    if (activeTips.length === 0) {
+      // Gap handling: if no active tips, check if there was a rest since the last sounding note ended
+      if (lastSoundingEnd !== null && t > lastSoundingEnd && lastNoteForGap !== null) {
+        const gapDuration = t - lastSoundingEnd;
+        const prevVisualPitch = getVisualPitch(lastNoteForGap, config);
+        const prevAngle = ((prevVisualPitch % 12) * 30 * Math.PI) / 180;
+        const gapLength = gapDuration * config.lengthScale;
+        const gapEnd: Point2D = {
+          x: cursor.x + Math.cos(prevAngle) * gapLength,
+          y: cursor.y + Math.sin(prevAngle) * gapLength,
+        };
+
+        if (config.gapPolicy !== 'lift_pen') {
+          const gapNote: NoteEvent = { ...lastNoteForGap, id: `${lastNoteForGap.id}-gap`, onset: lastSoundingEnd, duration: gapDuration };
+          segments.push({
+            start: { ...cursor },
+            end: gapEnd,
+            note: gapNote,
+            role: 'gap',
+            color: config.gapPolicy === 'ghost' ? '#94a3b8' : getNoteColor(lastNoteForGap, config),
+            width: Math.max(1, config.strokeWidthBase * 0.75),
+            opacity: config.gapPolicy === 'ghost' ? 0.18 : 0.32,
+            dashArray: config.gapPolicy === 'ghost' ? '3 8' : undefined,
+          });
+        }
+        cursor = gapEnd;
+      }
+      join = { ...cursor };
+    } else if (activeTips.length === 1) {
+      const tip = activeTips[0];
+      join = tipPointAt(tip.start, tip.end, tip.note.onset, tip.note.duration, t);
+    } else {
+      join = centroid(
+        activeTips.map((tip) => tipPointAt(tip.start, tip.end, tip.note.onset, tip.note.duration, t))
+      );
+    }
+
+    for (const note of cluster) {
+      const visualPitch = getVisualPitch(note, config);
+      const transposedPitchClass = visualPitch % 12;
+      const angle = (transposedPitchClass * 30 * Math.PI) / 180;
+      const length = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
+
+      const end: Point2D = {
+        x: join.x + Math.cos(angle) * length,
+        y: join.y + Math.sin(angle) * length,
+      };
+
+      const strokeWidth = config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale;
+      segments.push({
+        start: { ...join },
+        end,
+        color: getNoteColor(note, config),
+        width: strokeWidth,
+        opacity: 0.9,
+        note,
+      });
+
+      activeTips.push({
+        noteId: note.id,
+        start: { ...join },
+        end,
+        soundingUntil: note.onset + note.duration,
+        note,
+      });
+
+      lastNoteForGap = note;
+    }
+  }
+
+  return segments;
+}
+

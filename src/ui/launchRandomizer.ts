@@ -6,11 +6,13 @@ export const VARIATIONS: readonly Variation[] = [
   'vertical_tone',
   'tonal_time_lines',
   'polar_fan',
+  'polar_walk',
   '3d_lines',
   '3d_note_halos',
   '3d_note_spheres',
   '3d_piano_roll',
   '3d_polar_fan',
+  '3d_polar_walk',
 ] as const;
 
 /**

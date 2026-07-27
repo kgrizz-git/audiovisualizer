@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Polar walk modes (2D `polar_walk` and 3D `3d_polar_walk`): pitch class maps to absolute direction and duration to segment length, starting at the canvas center and walking continuously. Under polyphony, chord notes fan from the current cursor and subsequent notes join at the centroid of active tips; silence advances the cursor in the direction of the last played note. Standard Canvas applies a color-matched line glow. SemVer: **MINOR**.
 - Randomized visual mode and bundled MIDI file selection on app launch to showcase visual variety and demo scores available in the application. SemVer: **MINOR**.
 - Channel-10 Standard drum kit support for General MIDI percussion on zero-indexed channel 9, utilizing bundled FluidR3 Standard drum kit samples. SemVer: **MINOR**.
 - Polar octave-fan modes (2D `polar_fan` and 3D `3d_polar_fan`): pitch class maps to spoke angle (an octave spans 360°, clockwise from +X) and duration to segment length, fanning outward from the canvas center. Voices share a static center origin and chords fan simultaneously, creating a wind-rose visual layout of tonal centers and octave equivalence. SemVer: **MINOR**.

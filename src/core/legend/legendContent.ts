@@ -109,6 +109,20 @@ export function getLegendContent(config: RuleConfig): LegendContent {
           'Now-plane → current playback moment',
         ], swatches,
       };
+    case 'polar_walk':
+      return {
+        title: 'POLAR WALK',
+        lines: [
+          hue,
+          ...transpose,
+          'Pitch class → absolute path direction (30° per st)',
+          'Duration → segment length',
+          'Velocity → stroke weight',
+          'Voice path starts at center and walks continuously',
+          `Rests → ${format(config.gapPolicy)}`,
+        ],
+        swatches,
+      };
     case '3d_polar_fan':
       return {
         title: '3D POLAR OCTAVE FAN',
@@ -116,6 +130,19 @@ export function getLegendContent(config: RuleConfig): LegendContent {
           hue,
           ...transpose,
           'X / Y → polar fan (pitch class × 30°)',
+          'Z (depth) → onset time',
+          'Duration → segment length',
+          'Now-plane → current playback moment',
+        ],
+        swatches,
+      };
+    case '3d_polar_walk':
+      return {
+        title: '3D POLAR WALK',
+        lines: [
+          hue,
+          ...transpose,
+          'X / Y → polar walk (pitch class × 30°)',
           'Z (depth) → onset time',
           'Duration → segment length',
           'Now-plane → current playback moment',

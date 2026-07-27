@@ -4,11 +4,13 @@ export type Variation =
   | 'vertical_tone'
   | 'tonal_time_lines'
   | 'polar_fan'
+  | 'polar_walk'
   | '3d_lines'
   | '3d_note_halos'
   | '3d_note_spheres'
   | '3d_piano_roll'
-  | '3d_polar_fan';
+  | '3d_polar_fan'
+  | '3d_polar_walk';
 
 /** True when the variation is rendered by the Three.js 3D renderer rather than Canvas/SVG. */
 export function is3DVariation(variation: Variation): boolean {
@@ -17,7 +19,8 @@ export function is3DVariation(variation: Variation): boolean {
     variation === '3d_note_halos' ||
     variation === '3d_note_spheres' ||
     variation === '3d_piano_roll' ||
-    variation === '3d_polar_fan'
+    variation === '3d_polar_fan' ||
+    variation === '3d_polar_walk'
   );
 }
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';

@@ -11,6 +11,7 @@ Last reviewed: 2026-07-24
 - Refactored oversized files to pass the 800-line hook: extracted SoundFont library UI (`src/ui/soundfontLibraryUI.ts`), audio voice options row builder (`src/ui/voiceOptionsUI.ts`), 3D geometry builders (`src/renderers/three/geometryBuilders.ts`), onset pulses (`src/renderers/three/onsetPulses.ts`), and scene atmosphere (`src/renderers/three/sceneAtmosphere.ts`) into sibling modules. Both `src/ui/app.ts` (714 lines) and `src/renderers/three/ThreeDRenderer.ts` (499 lines) now pass comfortably without exemptions.
 
 ### Added
+- Added plan assessment for Polar Walk Mode in [assessments/2026-07-27-polar-walk-mode-assessment.md](assessments/2026-07-27-polar-walk-mode-assessment.md).
 - Pre-commit git hook: runs `check_file_size.py`, `check_todo_limits.py`, and
   `check_doc_freshness.py` on staged files at commit time.
 - Pre-push git hook: runs `npm run validate` (type-check + test + build) before push.

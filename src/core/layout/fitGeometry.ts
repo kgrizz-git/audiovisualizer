@@ -2,7 +2,7 @@ import { GeometryCircle, GeometrySegment, RenderedGeometry } from '../types.js';
 
 /** Uniformly frames mapped geometry inside a target canvas without changing its rule data. */
 export function fitGeometryToCanvas(geometry: RenderedGeometry, width: number, height: number, padding = 56): RenderedGeometry {
-  if (geometry.config.variation === 'polar_fan') {
+  if (geometry.config.variation === 'polar_fan' || geometry.config.variation === 'polar_walk') {
     const segments = geometry.voicePaths.flatMap((path) => path.segments);
     if (segments.length === 0) return { ...geometry, width, height };
 

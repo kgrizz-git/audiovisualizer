@@ -26,7 +26,7 @@ Usage:
   npm run render -- --input song.mid --output artwork.svg [options]
 
 Options:
-  --mode <lines|circles|vertical_tone|tonal_time_lines|polar_fan>
+  --mode <lines|circles|vertical_tone|tonal_time_lines|polar_fan|polar_walk>
   --width <pixels> --height <pixels>    Output dimensions (default: 1200 × 1200)
   --density <0.5-2>                     Time-line bands per output row (default: 1)
   --hue <pitch_class|register_spiral|voice_palette> Color rule
@@ -64,7 +64,7 @@ export function parseCli(argv: string[]): CliOptions | null {
   if (!input) throw new Error('--input is required.');
   const output = values.get('output') ?? input.replace(/\.(mid|midi)$/i, '') + '.svg';
   if (!/\.(svg|png)$/i.test(output)) throw new Error('--output must end in .svg or .png.');
-  const mode = enumValue(values.get('mode') ?? DEFAULT_CONFIG.variation, ['lines', 'circles', 'vertical_tone', 'tonal_time_lines', 'polar_fan'], '--mode');
+  const mode = enumValue(values.get('mode') ?? DEFAULT_CONFIG.variation, ['lines', 'circles', 'vertical_tone', 'tonal_time_lines', 'polar_fan', 'polar_walk'], '--mode');
   const hue = enumValue(values.get('hue') ?? DEFAULT_CONFIG.pitchHueMode, ['pitch_class', 'register_spiral', 'voice_palette'], '--hue');
   const origin = enumValue(values.get('origin') ?? DEFAULT_CONFIG.originMode, ['left_to_right', 'center_outward', 'outside_inward'], '--origin');
   const width = positiveNumber(values.get('width') ?? '1200', '--width');

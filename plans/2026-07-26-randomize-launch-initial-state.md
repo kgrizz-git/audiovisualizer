@@ -129,25 +129,25 @@ tests/launchRandomizer.test.ts — Automated tests validating pickRandom, VARIAT
 
 ## Phases & checklist
 
-### Phase 1: Add randomization utilities and data structures
+### Task 1: Phase 1: Add randomization utilities and data structures
 
-- [ ] Create `src/ui/launchRandomizer.ts`:
+- [x] Create `src/ui/launchRandomizer.ts`:
   - Define `VARIATIONS` array containing all 10 `Variation` options.
   - Implement `pickRandom<T>(arr: readonly T[], rand: () => number): T` helper. Throw an error if the array is empty.
-- [ ] Create `tests/launchRandomizer.test.ts`:
+- [x] Create `tests/launchRandomizer.test.ts`:
   - Unit test `pickRandom` (normal arrays, single-item, empty array throws).
   - Verify all items in `VARIATIONS` are valid elements of the `Variation` union type.
   - Assert `VARIATIONS.length === 10` to catch drift when new variations are added to `types.ts`.
   - Mock a select element and test that options are correctly read and randomized.
 
-### Phase 2: Integrate randomization into app initialization
+### Task 2: Phase 2: Integrate randomization into app initialization
 
 - [ ] Modify app constructor to follow the sequencing sketch: retrieve DOM options, select random states, apply and sync select values, call `updateCanvasMode()`, `updateScoreUi()`, `render()`, and load MIDI.
 - [ ] Remove `DEFAULT_DEMO_URL` and `DEFAULT_DEMO_TITLE` constants from `app.ts` (they are replaced by the randomizer).
 - [ ] Remove the `selected` attribute from the Bach `<option>` in `index.html` (line 19) to prevent a brief flash of the old default before the randomizer syncs the dropdown.
 - [ ] Update `render3D()` in `src/ui/app.ts` to implement the graceful fallback: on catch, if `currentConfig.variation` is still a 3D variation, log the error, display status, set variation to `'lines'`, update canvas mode, update `variation-select.value` element, and re-render.
 
-### Phase 3: Verification and edge cases
+#### Phase 3: Verification and edge cases
 
 - [ ] Verify that manual dropdown selections still function correctly post-randomization.
 - [ ] Verify 3D dynamic imports load smoothly and fall back to 2D `lines` mode if dynamic import or WebGL fails.

@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Randomized visual mode and bundled MIDI file selection on app launch to showcase visual variety and demo scores available in the application. SemVer: **MINOR**.
 - Channel-10 Standard drum kit support for General MIDI percussion on zero-indexed channel 9, utilizing bundled FluidR3 Standard drum kit samples. SemVer: **MINOR**.
 - Polar octave-fan modes (2D `polar_fan` and 3D `3d_polar_fan`): pitch class maps to spoke angle (an octave spans 360°, clockwise from +X) and duration to segment length, fanning outward from the canvas center. Voices share a static center origin and chords fan simultaneously, creating a wind-rose visual layout of tonal centers and octave equivalence. SemVer: **MINOR**.
 - Per-voice color palettes, compact Canvas/SVG palette swatches, and visual-only semitone

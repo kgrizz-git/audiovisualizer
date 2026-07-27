@@ -18,11 +18,10 @@ import { AUTO_ZOOM_BAR_LABELS, AUTO_ZOOM_BAR_STEPS, AUTO_ZOOM_SECOND_STEPS, View
 import { ViewportGestures } from './viewportGestures.js';
 import { clearLibraryCache, dismissLibraryPrompt, downloadLibrary, LibraryUIContext, maybeShowLibraryPrompt, refreshCacheStatus } from './soundfontLibraryUI.js';
 import { applyBadge, buildAudioVoiceRow, VoiceRowContext } from './voiceOptionsUI.js';
+import { VARIATIONS, pickRandom } from './launchRandomizer.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
-const DEFAULT_DEMO_URL = './demo-midi/bach_prelude_c_full.mid';
-const DEFAULT_DEMO_TITLE = 'Bach Prelude in C · full score (2:20)';
 
 class AudioVisualizerApp {
   private currentScore: Score = generateDemoScore();
@@ -57,10 +56,34 @@ class AudioVisualizerApp {
     this.voicePlayback = new Map(this.currentScore.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
     this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
     this.bindEvents();
+
+    const demoSelect = this.element<HTMLSelectElement>('demo-midi-select');
+    let initialMidiUrl = '';
+    let initialMidiTitle = '';
+    let randomVariation: Variation = 'lines';
+
+    if (demoSelect.options.length > 0) {
+      const demoOptions = Array.from(demoSelect.options).map((opt) => ({
+        url: opt.value,
+        title: opt.text,
+      }));
+      randomVariation = pickRandom(VARIATIONS, Math.random);
+      const randomDemo = pickRandom(demoOptions, Math.random);
+      initialMidiUrl = randomDemo.url;
+      initialMidiTitle = randomDemo.title;
+
+      demoSelect.value = initialMidiUrl;
+    }
+
+    this.currentConfig.variation = randomVariation;
+    this.element<HTMLSelectElement>('variation-select').value = randomVariation;
+    this.updateCanvasMode();
     this.updateScoreUi();
     this.render();
-    // Boot with the Bach prelude rather than the generative study.
-    void this.loadUrl(DEFAULT_DEMO_URL, DEFAULT_DEMO_TITLE);
+
+    if (initialMidiUrl) {
+      void this.loadUrl(initialMidiUrl, initialMidiTitle);
+    }
     void this.refreshCacheStatus();
     this.maybeShowLibraryPrompt();
   }
@@ -625,8 +648,15 @@ class AudioVisualizerApp {
           this.animationFrameId = requestAnimationFrame(this.tick);
         }
       }
-    } catch {
+    } catch (err) {
+      console.error('3D rendering failed:', err);
       this.setStatus('3D rendering could not start (WebGL unavailable).', true);
+      if (is3DVariation(this.currentConfig.variation)) {
+        this.currentConfig.variation = 'lines';
+        this.element<HTMLSelectElement>('variation-select').value = 'lines';
+        this.updateCanvasMode();
+        this.render();
+      }
     }
   }
 

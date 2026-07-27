@@ -1,5 +1,7 @@
 # AudioVisualizer — Music → Visual Score Art
 
+Last reviewed: 2026-07-26
+
 This repository was bootstrapped and cloned from the [template-repo-v1](https://github.com/kgrizz-git/template-repo-v1) seed template.
 
 AudioVisualizer parses MIDI music files into deterministic, reproducible geometric artwork and animations driven by explicit pitch, duration, interval, velocity, and voice mappings.
@@ -30,13 +32,17 @@ npm run validate
 
 ### SoundFont audio preview
 
-AudioVisualizer includes a sample-based General MIDI SoundFont engine alongside its oscillator preview. To bundle standard FluidR3 GM soundfont samples for offline use, run:
+AudioVisualizer includes a sample-based General MIDI SoundFont engine alongside its oscillator preview. Multi-program tracks on shared channels load distinct instrument patches automatically based on their assigned programs. Percussion tracks (MIDI channel 10, zero-indexed channel 9) render using the bundled FluidR3 Standard drum kit. Support for additional drum kit variants (Room, Power, Electronic, Jazz, Brush, etc.) is deferred to the upcoming SF2 synth engine plan.
+
+To bundle standard FluidR3 GM soundfont samples and the Standard drum kit for offline use, run:
 
 ```bash
 npm run bundle:soundfonts
 ```
 
-Other presets (MusyngKite, FatBoy) fetch audio samples on demand from CDN when selected in the studio controls.
+Other soundbank presets (MusyngKite, FatBoy) fetch audio samples on demand from CDN when selected in the studio controls.
+
+Bundled soundfont audio samples and the FluidR3 Standard drum kit are derived from the Fluid R3 SoundFont by Frank Wen, licensed under [Creative Commons Attribution 3.0 (CC-BY 3.0)](https://creativecommons.org/licenses/by/3.0/). See [`public/soundfonts/LICENSE.txt`](public/soundfonts/LICENSE.txt) for details.
 
 Each voice row identifies both the MIDI file's source instrument and the effective preview
 route. Changing a voice route while playing restarts the preview at the current playhead so

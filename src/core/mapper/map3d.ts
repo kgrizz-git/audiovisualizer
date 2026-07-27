@@ -30,6 +30,7 @@ export function base2DVariation(variation: Variation): Variation {
   if (variation === '3d_note_halos' || variation === '3d_note_spheres') return 'circles';
   if (variation === '3d_polar_fan') return 'polar_fan';
   if (variation === '3d_polar_walk') return 'polar_walk';
+  if (variation === '3d_radial_voice_paths') return 'radial_voice_paths';
   return 'lines';
 }
 
@@ -78,7 +79,9 @@ export function liftGeometryTo3D(
         cz,
         czExtent,
         radius: circle.radius,
-        fillColor: circle.fillColor,
+        // Percussion rings are stroke-only in 2D (fillColor 'none'); the disc builder
+        // colors instances from fillColor, so carry the ring's stroke color across.
+        fillColor: circle.isPercussion ? circle.strokeColor : circle.fillColor,
         strokeColor: circle.strokeColor,
         strokeWidth: circle.strokeWidth,
         opacity: circle.opacity,

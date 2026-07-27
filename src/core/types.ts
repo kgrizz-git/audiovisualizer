@@ -5,12 +5,14 @@ export type Variation =
   | 'tonal_time_lines'
   | 'polar_fan'
   | 'polar_walk'
+  | 'radial_voice_paths'
   | '3d_lines'
   | '3d_note_halos'
   | '3d_note_spheres'
   | '3d_piano_roll'
   | '3d_polar_fan'
-  | '3d_polar_walk';
+  | '3d_polar_walk'
+  | '3d_radial_voice_paths';
 
 /** True when the variation is rendered by the Three.js 3D renderer rather than Canvas/SVG. */
 export function is3DVariation(variation: Variation): boolean {
@@ -20,7 +22,8 @@ export function is3DVariation(variation: Variation): boolean {
     variation === '3d_note_spheres' ||
     variation === '3d_piano_roll' ||
     variation === '3d_polar_fan' ||
-    variation === '3d_polar_walk'
+    variation === '3d_polar_walk' ||
+    variation === '3d_radial_voice_paths'
   );
 }
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
@@ -108,6 +111,8 @@ export interface GeometryCircle {
   strokeWidth: number;
   opacity: number;
   note: NoteEvent;
+  /** True for the stroke-only concentric percussion rings of radial_voice_paths. */
+  isPercussion?: boolean;
 }
 
 /** A full-width time slice used by the tonal time-lines variation. */

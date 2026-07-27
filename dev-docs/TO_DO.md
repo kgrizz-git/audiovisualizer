@@ -31,12 +31,3 @@ Last updated: 2026-07-27
 - [ ] **Velocity-proportional color saturation or glow**: Option where color saturation or glow intensity are proportional to note velocity. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
 - [ ] **Constant line thickness option**: Option for line thickness to be constant instead of proportional to duration. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
 
-## New layout: Radial voice paths
-
-- [ ] **Radial voice-path layout (polar walk variant)**: Each voice gets assigned to a radial path. Each line for a voice starts along that path. See [`plans/2026-07-27-radial-voice-path-layout.md`](../plans/2026-07-27-radial-voice-path-layout.md).
-  - Angle and color of line = note.
-  - Length = duration.
-  - Radial start position = time when note starts.
-  - Percussion rendered as concentric circles with radius proportional to time; color represents different percussion types.
-  - Voices in low register assigned to downward directions; high register assigned to upward directions (e.g., bass down, cello middle, violin/piccolo up).
-

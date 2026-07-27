@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateDemoScore } from '../src/core/midi/parser.js';
-import { getAverageScoreBackground, getDominantScoreAccent, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor } from '../src/core/mapper/scoreMapper.js';
+import { getAverageScoreBackground, getDominantScoreAccent, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor, computeRadialVoiceAngles, getPercussionColor } from '../src/core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../src/core/layout/fitGeometry.js';
 import { NoteEvent, Score } from '../src/core/types.js';
 
@@ -324,5 +324,207 @@ describe('Score Mapper Unit Tests', () => {
       expect(segments).toHaveLength(2); // no gap segments
       expect(segments.filter(s => s.role === 'gap')).toHaveLength(0);
     });
+  });
+});
+
+describe('radial_voice_paths mapping', () => {
+  const config = { ...DEFAULT_CONFIG, variation: 'radial_voice_paths' as const };
+
+  function rvNote(id: string, pitch: number, onset: number, duration: number, velocity = 100): NoteEvent {
+    return { id, pitch, onset, duration, velocity, voice: 0, pitchClass: pitch % 12 };
+  }
+
+  function rvScore(tracks: Score['tracks'], duration = 4): Score {
+    return { title: 'Radial fixture', duration, bpm: 120, tracks };
+  }
+
+  function pitchedTrack(name: string, channel: number, notes: NoteEvent[]): Score['tracks'][0] {
+    return { name, channel, program: 0, instrumentName: 'Piano', isPercussion: false, notes };
+  }
+
+  function drumTrack(notes: NoteEvent[]): Score['tracks'][0] {
+    return { name: 'Drums', channel: 9, program: 0, instrumentName: 'Drum Kit', isPercussion: true, notes };
+  }
+
+  /** Angle of a segment's outward direction from the 800×800 center, in y-up degrees [0, 360). */
+  function segmentAngle(segment: { start: { x: number; y: number }; end: { x: number; y: number } }): number {
+    const deg = (Math.atan2(-(segment.end.y - 400), segment.end.x - 400) * 180) / Math.PI;
+    return (deg + 360) % 360;
+  }
+
+  describe('computeRadialVoiceAngles', () => {
+    it('points the lowest voice down (270°) and the highest up (90°)', () => {
+      const spokes = computeRadialVoiceAngles([
+        { voice: 0, medianPitch: 40 },
+        { voice: 1, medianPitch: 84 },
+      ]);
+      expect(spokes.get(0)!.angle).toBeCloseTo(270);
+      expect(spokes.get(1)!.angle).toBeCloseTo(90);
+    });
+
+    it('distributes intermediate voices between the vertical extremes', () => {
+      const spokes = computeRadialVoiceAngles([
+        { voice: 0, medianPitch: 40 },
+        { voice: 1, medianPitch: 60 },
+        { voice: 2, medianPitch: 84 },
+      ]);
+      expect(spokes.get(0)!.angle).toBeCloseTo(270); // bass down
+      expect(spokes.get(1)!.angle).toBeCloseTo(180); // middle lateral
+      expect(spokes.get(2)!.angle).toBeCloseTo(90); // treble up
+    });
+
+    it('points a single voice laterally right (0°)', () => {
+      const spokes = computeRadialVoiceAngles([{ voice: 0, medianPitch: 60 }]);
+      expect(spokes.get(0)!.angle).toBeCloseTo(0);
+    });
+
+    it('fans voices sharing a median pitch apart instead of overlapping them', () => {
+      const spokes = computeRadialVoiceAngles([
+        { voice: 0, medianPitch: 60 },
+        { voice: 1, medianPitch: 60 },
+      ]);
+      const a = spokes.get(0)!;
+      const b = spokes.get(1)!;
+      expect(a.angle).not.toBeCloseTo(b.angle);
+      expect(Math.abs(a.angle - b.angle)).toBeCloseTo(4); // ±2° around the shared spoke
+      expect(a.voicesOnSpoke).toBe(2);
+      expect(b.voicesOnSpoke).toBe(2);
+    });
+
+    it('groups voices into at most 12 spoke slots when many registers are present', () => {
+      const voices = Array.from({ length: 24 }, (_, i) => ({ voice: i, medianPitch: 30 + i * 2 }));
+      const spokes = computeRadialVoiceAngles(voices);
+      expect(spokes.size).toBe(24);
+      // 24 distinct medians squeeze into 12 slots, so every spoke is shared by 2 voices.
+      spokes.forEach((spoke) => expect(spoke.voicesOnSpoke).toBe(2));
+    });
+
+    it('returns an empty map for no voices', () => {
+      expect(computeRadialVoiceAngles([]).size).toBe(0);
+    });
+  });
+
+  describe('pitched voice segments', () => {
+    it('renders bass in the bottom half and violin in the top half of the canvas', () => {
+      const score = rvScore([
+        pitchedTrack('Bass', 0, [rvNote('b1', 40, 1, 1)]),
+        pitchedTrack('Violin', 1, [rvNote('v1', 84, 1, 1)]),
+      ]);
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      const bass = geometry.voicePaths[0].segments[0];
+      const violin = geometry.voicePaths[1].segments[0];
+      expect(bass.end.y).toBeGreaterThan(400); // below center
+      expect(violin.end.y).toBeLessThan(400); // above center
+    });
+
+    it('maps onset/offset to radial start/end distances from the center', () => {
+      const score = rvScore([pitchedTrack('Lead', 0, [rvNote('a', 60, 1, 2)])], 4);
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      const segment = geometry.voicePaths[0].segments[0];
+      const maxRadius = 800 * 0.45;
+      expect(Math.hypot(segment.start.x - 400, segment.start.y - 400)).toBeCloseTo((1 / 4) * maxRadius);
+      expect(Math.hypot(segment.end.x - 400, segment.end.y - 400)).toBeCloseTo((3 / 4) * maxRadius);
+    });
+
+    it('fans notes ±1° per semitone from the voice median, clamped to ±5°', () => {
+      const score = rvScore([
+        pitchedTrack('Lead', 0, [
+          rvNote('low', 60, 0.5, 1),
+          rvNote('mid', 60, 1.5, 1),
+          rvNote('far', 80, 2.5, 1), // 20 semitones above median 60 → clamped to +5°
+        ]),
+      ]);
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      const [low, , far] = geometry.voicePaths[0].segments;
+      expect(segmentAngle(low)).toBeCloseTo(0); // at the median: straight along the spoke
+      expect(segmentAngle(far)).toBeCloseTo(5); // clamped, not 20°
+    });
+
+    it('scales opacity as 1/n for voices sharing a spoke', () => {
+      const solo = mapScoreToGeometry(rvScore([pitchedTrack('Solo', 0, [rvNote('a', 60, 1, 1)])]), config, 800, 800);
+      const shared = mapScoreToGeometry(
+        rvScore([
+          pitchedTrack('T1', 0, [rvNote('a', 60, 1, 1)]),
+          pitchedTrack('T2', 1, [rvNote('b', 60, 1, 1)]),
+        ]),
+        config,
+        800,
+        800,
+      );
+      const soloOpacity = solo.voicePaths[0].segments[0].opacity;
+      expect(shared.voicePaths[0].segments[0].opacity).toBeCloseTo(soloOpacity / 2);
+      expect(shared.voicePaths[1].segments[0].opacity).toBeCloseTo(soloOpacity / 2);
+    });
+
+    it('maps velocity to stroke width', () => {
+      const score = rvScore([
+        pitchedTrack('Lead', 0, [rvNote('soft', 60, 0.5, 1, 20), rvNote('loud', 60, 2, 1, 127)]),
+      ]);
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      const [soft, loud] = geometry.voicePaths[0].segments;
+      expect(loud.width).toBeGreaterThan(soft.width);
+      expect(loud.width).toBeCloseTo(config.strokeWidthBase + config.strokeWidthScale);
+    });
+  });
+
+  describe('percussion concentric rings', () => {
+    it('routes percussion to circles only, never spoke segments', () => {
+      const score = rvScore([
+        pitchedTrack('Lead', 0, [rvNote('a', 60, 1, 1)]),
+        drumTrack([rvNote('k', 36, 2, 0.1)]),
+      ]);
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      expect(geometry.voicePaths[0].segments.length).toBe(1);
+      expect(geometry.voicePaths[0].circles.length).toBe(0);
+      expect(geometry.voicePaths[1].segments.length).toBe(0);
+      expect(geometry.voicePaths[1].circles.length).toBe(1);
+    });
+
+    it('renders rings centered on the canvas with radius proportional to onset', () => {
+      const score = rvScore([drumTrack([rvNote('k1', 36, 1, 0.1), rvNote('k2', 36, 2, 0.1)])], 4);
+      const geometry = mapScoreToGeometry(score, config, 800, 800);
+      const [first, second] = geometry.voicePaths[0].circles;
+      const maxRadius = 800 * 0.45;
+      expect(first.center).toEqual({ x: 400, y: 400 });
+      expect(first.radius).toBeCloseTo((1 / 4) * maxRadius);
+      expect(second.radius).toBeCloseTo((2 / 4) * maxRadius);
+    });
+
+    it('emits stroke-only rings flagged as percussion', () => {
+      const score = rvScore([drumTrack([rvNote('k', 36, 1, 0.1)])]);
+      const circle = mapScoreToGeometry(score, config, 800, 800).voicePaths[0].circles[0];
+      expect(circle.fillColor).toBe('none');
+      expect(circle.isPercussion).toBe(true);
+    });
+
+    it('keeps beat-one hits visible with a minimum ring radius', () => {
+      const score = rvScore([drumTrack([rvNote('k', 36, 0, 0.1)])]);
+      const circle = mapScoreToGeometry(score, config, 800, 800).voicePaths[0].circles[0];
+      expect(circle.radius).toBeGreaterThan(0);
+    });
+
+    it('colors rings by General MIDI percussion family with a grey fallback', () => {
+      expect(getPercussionColor(36)).toBe('hsl(0, 85%, 60%)'); // kick — red
+      expect(getPercussionColor(38)).toBe('hsl(30, 85%, 60%)'); // snare — orange
+      expect(getPercussionColor(42)).toBe('hsl(190, 85%, 60%)'); // hi-hat — cyan
+      expect(getPercussionColor(49)).toBe('hsl(55, 85%, 60%)'); // cymbal — yellow
+      expect(getPercussionColor(45)).toBe('hsl(140, 85%, 60%)'); // tom — green
+      expect(getPercussionColor(75)).toBe('hsl(0, 0%, 62%)'); // unknown — grey
+      const score = rvScore([drumTrack([rvNote('k', 36, 1, 0.1), rvNote('h', 42, 2, 0.1)])]);
+      const circles = mapScoreToGeometry(score, config, 800, 800).voicePaths[0].circles;
+      expect(circles[0].strokeColor).toBe(getPercussionColor(36));
+      expect(circles[1].strokeColor).toBe(getPercussionColor(42));
+    });
+  });
+
+  it('is completely deterministic', () => {
+    const score = rvScore([
+      pitchedTrack('Bass', 0, [rvNote('b1', 40, 0, 1), rvNote('b2', 43, 1.5, 0.5)]),
+      pitchedTrack('Violin', 1, [rvNote('v1', 84, 0.25, 1)]),
+      drumTrack([rvNote('k', 36, 1, 0.1), rvNote('h', 42, 2, 0.1)]),
+    ]);
+    const geo1 = mapScoreToGeometry(score, config, 800, 800);
+    const geo2 = mapScoreToGeometry(score, config, 800, 800);
+    expect(geo1).toEqual(geo2);
   });
 });

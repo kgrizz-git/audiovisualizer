@@ -2,16 +2,24 @@ import { GeometryCircle, GeometrySegment, RenderedGeometry } from '../types.js';
 
 /** Uniformly frames mapped geometry inside a target canvas without changing its rule data. */
 export function fitGeometryToCanvas(geometry: RenderedGeometry, width: number, height: number, padding = 56): RenderedGeometry {
-  if (geometry.config.variation === 'polar_fan' || geometry.config.variation === 'polar_walk') {
+  if (geometry.config.variation === 'polar_fan' || geometry.config.variation === 'polar_walk' || geometry.config.variation === 'radial_voice_paths') {
     const segments = geometry.voicePaths.flatMap((path) => path.segments);
-    if (segments.length === 0) return { ...geometry, width, height };
+    const circles = geometry.voicePaths.flatMap((path) => path.circles);
+    if (segments.length === 0 && circles.length === 0) return { ...geometry, width, height };
 
     const origin = { x: geometry.width / 2, y: geometry.height / 2 };
-    const maxRadius = segments.reduce((max, seg) => {
-      const distStart = Math.hypot(seg.start.x - origin.x, seg.start.y - origin.y);
-      const distEnd = Math.hypot(seg.end.x - origin.x, seg.end.y - origin.y);
-      return Math.max(max, distStart, distEnd);
-    }, 0);
+    // Radius must cover both segment endpoints and the outer edge of concentric
+    // percussion rings, or fitting would clip the rings of radial_voice_paths.
+    const maxRadius = Math.max(
+      segments.reduce((max, seg) => {
+        const distStart = Math.hypot(seg.start.x - origin.x, seg.start.y - origin.y);
+        const distEnd = Math.hypot(seg.end.x - origin.x, seg.end.y - origin.y);
+        return Math.max(max, distStart, distEnd);
+      }, 0),
+      circles.reduce((max, circle) => {
+        return Math.max(max, Math.hypot(circle.center.x - origin.x, circle.center.y - origin.y) + circle.radius);
+      }, 0),
+    );
 
     if (maxRadius === 0) return { ...geometry, width, height };
 
@@ -34,7 +42,12 @@ export function fitGeometryToCanvas(geometry: RenderedGeometry, width: number, h
           end: point(segment.end.x, segment.end.y),
           width: Math.max(0.5, segment.width * scale),
         })),
-        circles: [],
+        circles: path.circles.map((circle) => ({
+          ...circle,
+          center: point(circle.center.x, circle.center.y),
+          radius: circle.radius * scale,
+          strokeWidth: Math.max(0.5, circle.strokeWidth * scale),
+        })),
       })),
     };
   }

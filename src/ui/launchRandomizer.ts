@@ -7,12 +7,14 @@ export const VARIATIONS: readonly Variation[] = [
   'tonal_time_lines',
   'polar_fan',
   'polar_walk',
+  'radial_voice_paths',
   '3d_lines',
   '3d_note_halos',
   '3d_note_spheres',
   '3d_piano_roll',
   '3d_polar_fan',
   '3d_polar_walk',
+  '3d_radial_voice_paths',
 ] as const;
 
 /**

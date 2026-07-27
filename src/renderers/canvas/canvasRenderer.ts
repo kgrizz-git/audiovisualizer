@@ -51,11 +51,14 @@ export class CanvasRenderer {
         const glow = geometry.config.variation === 'circles';
         this.ctx.beginPath();
         this.ctx.arc(circle.center.x, circle.center.y, circle.radius, 0, Math.PI * 2);
-        this.ctx.fillStyle = circle.fillColor;
         this.ctx.globalAlpha = circle.opacity;
         this.ctx.shadowColor = glow ? circle.fillColor : 'transparent';
         this.ctx.shadowBlur = glow ? Math.max(8, circle.radius * 0.55) : 0;
-        this.ctx.fill();
+        // Percussion rings use fillColor 'none' (invalid for canvas): stroke-only.
+        if (circle.fillColor !== 'none') {
+          this.ctx.fillStyle = circle.fillColor;
+          this.ctx.fill();
+        }
         this.ctx.strokeStyle = circle.strokeColor;
         this.ctx.lineWidth = circle.strokeWidth;
         this.ctx.stroke();
@@ -98,7 +101,7 @@ export class CanvasRenderer {
     this.ctx.lineCap = 'round';
     this.ctx.setLineDash(segment.dashArray?.split(' ').map(Number) || []);
     this.ctx.globalAlpha = segment.opacity;
-    const glow = variation === 'lines' || variation === 'polar_fan' || variation === 'polar_walk';
+    const glow = variation === 'lines' || variation === 'polar_fan' || variation === 'polar_walk' || variation === 'radial_voice_paths';
     this.ctx.shadowColor = glow ? segment.color : 'transparent';
     this.ctx.shadowBlur = glow ? Math.max(7, segment.width * 3) : 0;
     this.ctx.stroke();

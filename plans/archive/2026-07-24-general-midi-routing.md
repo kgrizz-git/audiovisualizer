@@ -3,7 +3,8 @@
 Last reviewed: 2026-07-26
 Date: 2026-07-24
 Author: Codex (revised after parser/router audit)
-Status: draft
+Status: complete
+Completed: 2026-07-26
 Linked issue/PR: n/a
 SemVer impact: **MINOR**
 - **Fixed:** `SoundfontPlayer` keys patches by `(channel, program)` so multi-program
@@ -235,10 +236,10 @@ Hand-built `TrackScore` literals across tests must add `isPercussion: false`
 
 ### Task 2: Routing + drum kit + track-scoped fallback
 
-- [ ] Add `'drumkit' | 'drumkit-missing'` to `PatchStatus`.
-- [ ] Implement `drumkitLoader.ts` per Decision 3 (local → canonical CDN;
+- [x] Add `'drumkit' | 'drumkit-missing'` to `PatchStatus`.
+- [x] Implement `drumkitLoader.ts` per Decision 3 (local → canonical CDN;
       re-key slug; CacheStorage by CDN URL).
-- [ ] `SoundfontPlayer.start`:
+- [x] `SoundfontPlayer.start`:
   - Oscillator carve-out (melodic → preview player; percussion → drum kit).
   - `patchByChannelProgram` keyed `` `${channel}:${resolvedProgram}` ``.
   - Load drum kit once for any audible percussion track.
@@ -246,53 +247,53 @@ Hand-built `TrackScore` literals across tests must add `isPercussion: false`
   - Melodic misses: pass **miss tracks** into `MidiPreviewPlayer`, not bare
     channel lists that would double-schedule loaded split-tracks.
   - Drum-kit null → `'drumkit-missing'`, silent channel-10, one warn.
-- [ ] `MidiPreviewPlayer` / `selectAudibleTracks`: skip `isPercussion`; support
+- [x] `MidiPreviewPlayer` / `selectAudibleTracks`: skip `isPercussion`; support
       track-scoped filter for miss playback.
-- [ ] `VoiceRouter.resolveTrackSettings` returns `isPercussion`.
-- [ ] Tests covering Decision 1 collision, drum routing, oscillator carve-out,
+- [x] `VoiceRouter.resolveTrackSettings` returns `isPercussion`.
+- [x] Tests covering Decision 1 collision, drum routing, oscillator carve-out,
       drumkit-missing isolation, and “piano loads / organ misses on same channel
       → only organ notes fall back to oscillator.”
 
 ### Task 3: UI
 
-- [ ] Percussion row: read-only drum label; badges for `'drumkit'` /
+- [x] Percussion row: read-only drum label; badges for `'drumkit'` /
       `'drumkit-missing'`; mute/solo/gain kept.
-- [ ] `app.ts` passes `isPercussion: (t) => t.isPercussion`.
-- [ ] Tests: percussion row has no `onProgramChange`; melodic row unchanged.
+- [x] `app.ts` passes `isPercussion: (t) => t.isPercussion`.
+- [x] Tests: percussion row has no `onProgramChange`; melodic row unchanged.
 
 ### Task 4: Bundler, docs, changelog, validate
 
-- [ ] Bundler downloads Standard kit into
+- [x] Bundler downloads Standard kit into
       `public/soundfonts/FluidR3_GM/percussion/`; sha256 in manifest; `--verify`
       accepts it. Prefer raw.githubusercontent.com as download source.
-- [ ] ARCHITECTURE.md: `isPercussion`, `patchByChannelProgram`,
+- [x] ARCHITECTURE.md: `isPercussion`, `patchByChannelProgram`,
       `loadDrumKitPatch` / `drumkit-standard`, statuses, oscillator carve-out,
       track-scoped miss fallback, zero-indexed channel-10. Note Type-0 is already
       handled by `splitTracks`.
-- [ ] README.md: channel-10 via Standard kit; other kits → SF2 plan; multi-program
+- [x] README.md: channel-10 via Standard kit; other kits → SF2 plan; multi-program
       channels load distinct patches. Attribute FluidR3 (CC-BY 3.0) for the bundled
       drum kit alongside existing soundfont attribution.
-- [ ] CHANGELOG.md Unreleased: **Fixed** channel-collision; **Added** channel-10
+- [x] CHANGELOG.md Unreleased: **Fixed** channel-collision; **Added** channel-10
       Standard kit. SemVer MINOR.
-- [ ] After merge: remove this item from `dev-docs/TO_DO.md` (SF2 item remains).
+- [x] After merge: remove this item from `dev-docs/TO_DO.md` (SF2 item remains).
 
 ## Verification
 
-- [ ] Parser: channel 9 `isPercussion === true`; others false; demo score typed.
-- [ ] Router returns `isPercussion`.
-- [ ] Collision regression: two TracksScores, channel 0, programs 0 and 19 → two
+- [x] Parser: channel 9 `isPercussion === true`; others false; demo score typed.
+- [x] Router returns `isPercussion`.
+- [x] Collision regression: two TracksScores, channel 0, programs 0 and 19 → two
       `loadPatch` calls and correct per-track scheduling.
-- [ ] Override: `setProgram(0, 40)` → both split-tracks load/lookup program 40
+- [x] Override: `setProgram(0, 40)` → both split-tracks load/lookup program 40
       via resolved program (no silent miss).
-- [ ] Partial miss: program 0 loads, program 19 null on same channel → only the
+- [x] Partial miss: program 0 loads, program 19 null on same channel → only the
       program-19 track goes to oscillator; piano notes are not doubled.
-- [ ] Drum loader: parse, `drumkit-standard` slug, no melodic-marimba cache clash,
+- [x] Drum loader: parse, `drumkit-standard` slug, no melodic-marimba cache clash,
       local→CDN, SPA rejection.
-- [ ] Player: channel 9 → `loadDrumKitPatch` only; `'drumkit'` status; oscillator
+- [x] Player: channel 9 → `loadDrumKitPatch` only; `'drumkit'` status; oscillator
       engine still plays drums via kit; null kit → `'drumkit-missing'`.
-- [ ] UI: drum label; no `onProgramChange` on channel 9.
-- [ ] Bundler `--verify` ok.
-- [ ] Manual smoke:
+- [x] UI: drum label; no `onProgramChange` on channel 9.
+- [x] Bundler `--verify` ok.
+- [x] Manual smoke:
   - Mid-track program change audibly switches timbre.
   - Existing `public/demo-midi/house_four_on_floor_style.mid` (already has
     channel-9 drums) plays melodic samples + recognizable kit hits — not piano
@@ -301,7 +302,7 @@ Hand-built `TrackScore` literals across tests must add `isPercussion: false`
     `mixed_piano_drums.mid` via `scripts/generate_demo_midis.js` if useful.
   - Delete local `Standard-mp3.js` → `'drumkit-missing'` badge; restore via
     `npm run bundle:soundfonts`.
-- [ ] `npm run validate` passes.
+- [x] `npm run validate` passes.
 
 ### Test data
 
@@ -347,7 +348,7 @@ Hand-built `TrackScore` literals across tests must add `isPercussion: false`
 
 When all phases and verification are done:
 
-- [ ] Status → `complete` with completion date
-- [ ] Move plan to `plans/archive/`
-- [ ] CHANGELOG.md Unreleased entry present
-- [ ] Remove completed item from `dev-docs/TO_DO.md`
+- [x] Status → `complete` with completion date
+- [x] Move plan to `plans/archive/`
+- [x] CHANGELOG.md Unreleased entry present
+- [x] Remove completed item from `dev-docs/TO_DO.md`

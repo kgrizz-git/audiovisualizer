@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Channel-10 Standard drum kit support for General MIDI percussion on zero-indexed channel 9, utilizing bundled FluidR3 Standard drum kit samples. SemVer: **MINOR**.
 - Polar octave-fan modes (2D `polar_fan` and 3D `3d_polar_fan`): pitch class maps to spoke angle (an octave spans 360°, clockwise from +X) and duration to segment length, fanning outward from the canvas center. Voices share a static center origin and chords fan simultaneously, creating a wind-rose visual layout of tonal centers and octave equivalence. SemVer: **MINOR**.
 - Per-voice color palettes, compact Canvas/SVG palette swatches, and visual-only semitone
   transposition (including reproducible CLI `--hue` and `--transpose` options). SemVer: **MINOR**.
@@ -31,6 +32,7 @@ uses [Semantic Versioning](https://semver.org/).
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- Fixed multi-program channel SoundFont patch collisions by keying cached patches on both channel and resolved program (`${channel}:${program}`). SemVer: **PATCH**.
 - 3D piano-roll slab no longer renders blank — boxes were being shaded black by a `vertexColors: true` material pointing at a `BoxGeometry` with no color attribute; instance colors now pass through correctly. SemVer: **PATCH**.
 - The canvas preview legend overlay has been moved from the bottom-left to the bottom-right corner to prevent overlapping with the viewport navigation HUD overlay. SemVer: **PATCH**.
 - The 3D idle turntable has been fixed to rotate around the Z-axis (musical time/depth) always, including for the 'Time up' preset where it previously did nothing. It has also been updated to animate continuously when playback is paused. SemVer: **PATCH**.

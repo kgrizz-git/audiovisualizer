@@ -352,6 +352,14 @@
       "url": "https://goldst.dev/midi-js-soundfonts/FluidR3_GM/synth_strings_1-loop.json",
       "sha256": "d1fb158e9ac0e836820c2845a815cb838d9179a67209344fb4b052cacba9bec2",
       "bytes": 1369
+    },
+    {
+      "slug": "drumkit-standard",
+      "kind": "percussion",
+      "file": "percussion/Standard-mp3.js",
+      "url": "https://raw.githubusercontent.com/henrikvilhelmberglund/midi-js-compat-soundfonts/gh-pages/GM-soundfonts/FluidR3_GM/drumkits/Standard-mp3.js",
+      "sha256": "68981509e1d98057be777e4d9934d82816029e6043fb7b00d90440da37b95998",
+      "bytes": 5707310
     }
   ]
 }

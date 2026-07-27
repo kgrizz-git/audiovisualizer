@@ -169,6 +169,19 @@ async function main() {
     }));
   }
 
+  const PERCUSSION_OUT = path.join(OUT, 'percussion');
+  await mkdir(PERCUSSION_OUT, { recursive: true });
+  const drumFile = 'percussion/Standard-mp3.js';
+  const drumDest = path.join(OUT, 'percussion', 'Standard-mp3.js');
+  files.push(await ensureFile({
+    slug: 'drumkit-standard',
+    kind: 'percussion',
+    file: drumFile,
+    url: 'https://raw.githubusercontent.com/henrikvilhelmberglund/midi-js-compat-soundfonts/gh-pages/GM-soundfonts/FluidR3_GM/drumkits/Standard-mp3.js',
+    dest: drumDest,
+    manifestFiles: manifest.files,
+  }));
+
   if (!verifyOnly) {
     await writeFile(MANIFEST, JSON.stringify({ bank: BANK, files }, null, 2));
     console.log('wrote', MANIFEST);

@@ -34,6 +34,7 @@ uses [Semantic Versioning](https://semver.org/).
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- Fixed play button first-press behavior so pressing play on initial score load or track completion correctly resets playback time to 0 and starts audio from the beginning. SemVer: **PATCH**.
 - Fixed multi-program channel SoundFont patch collisions by keying cached patches on both channel and resolved program (`${channel}:${program}`). SemVer: **PATCH**.
 - 3D piano-roll slab no longer renders blank — boxes were being shaded black by a `vertexColors: true` material pointing at a `BoxGeometry` with no color attribute; instance colors now pass through correctly. SemVer: **PATCH**.
 - The canvas preview legend overlay has been moved from the bottom-left to the bottom-right corner to prevent overlapping with the viewport navigation HUD overlay. SemVer: **PATCH**.

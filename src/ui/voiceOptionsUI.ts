@@ -7,6 +7,7 @@ export interface VoiceRowContext {
   engine: PlaybackEngine;
   soundbank: SoundbankPreset;
   statusMap?: Map<number, PatchStatus>;
+  isPercussion?: (track: TrackScore) => boolean;
   getProgram?: (track: TrackScore) => number;
   onProgramChange(channel: number, program: number): void;
   onTimbreChange(channel: number, timbre: VoicePlaybackSettings['timbre']): void;
@@ -38,6 +39,42 @@ export function soundbankLabel(soundbank: SoundbankPreset): string {
     MusyngKite: 'MusyngKite',
     FatBoy: 'FatBoy',
   }[soundbank];
+}
+
+function createBadgeSpan(status: PatchStatus | undefined): HTMLSpanElement {
+  const badgeSpan = document.createElement('span');
+  badgeSpan.className = 'patch-badge';
+  applyBadge(badgeSpan, status);
+  return badgeSpan;
+}
+
+function createGainControl(
+  track: TrackScore,
+  settings: VoicePlaybackSettings,
+  context: VoiceRowContext
+): HTMLInputElement {
+  const gain = document.createElement('input');
+  gain.type = 'range';
+  gain.min = '0';
+  gain.max = '1.5';
+  gain.step = '0.05';
+  gain.value = String(settings.gain);
+  gain.setAttribute('aria-label', `${track.name} volume`);
+
+  gain.addEventListener('input', () => {
+    const newGain = Number(gain.value);
+    if (context.onGainInput) {
+      context.onGainInput(track.channel, newGain);
+    } else {
+      settings.gain = newGain;
+      context.onMixChange(track.channel, settings);
+    }
+  });
+  gain.addEventListener('change', () => {
+    settings.gain = Number(gain.value);
+    context.onMixChange(track.channel, settings);
+  });
+  return gain;
 }
 
 function createAudioToggle(
@@ -74,33 +111,33 @@ export function buildAudioVoiceRow(
   const effectiveRoute = document.createElement('span');
   effectiveRoute.className = 'voice-effective-route';
 
-  let timbreOrGmSelect: HTMLElement;
+  let timbreOrGmSelect: HTMLElement | null = null;
   let badgeSpan: HTMLSpanElement | null = null;
 
-  if (context.engine === 'sample') {
+  const isPercussion = context.isPercussion ? context.isPercussion(track) : Boolean(track.isPercussion);
+
+  if (isPercussion) {
+    effectiveRoute.textContent = 'Playback: Drum kit · FluidR3 Standard';
+    badgeSpan = createBadgeSpan(context.statusMap?.get(track.channel));
+  } else if (context.engine === 'sample') {
     const currentProgram = context.getProgram ? context.getProgram(track) : track.program;
     effectiveRoute.textContent = `Playback: ${gmLabel(currentProgram)} · ${soundbankLabel(context.soundbank)}`;
     const gmSelect = document.createElement('select');
     gmSelect.setAttribute('aria-label', `${track.name} playback instrument`);
     GM_INSTRUMENT_SLUGS.forEach((_, pIndex) => {
-      const option = new Option(gmLabel(pIndex), String(pIndex), false, pIndex === currentProgram);
-      gmSelect.add(option);
+      gmSelect.add(new Option(gmLabel(pIndex), String(pIndex), false, pIndex === currentProgram));
     });
     gmSelect.addEventListener('change', () => {
       context.onProgramChange(track.channel, Number(gmSelect.value));
     });
     timbreOrGmSelect = gmSelect;
-
-    badgeSpan = document.createElement('span');
-    badgeSpan.className = 'patch-badge';
-    applyBadge(badgeSpan, context.statusMap?.get(track.channel));
+    badgeSpan = createBadgeSpan(context.statusMap?.get(track.channel));
   } else {
     effectiveRoute.textContent = `Playback: ${settings.timbre} oscillator`;
     const timbreSelect = document.createElement('select');
     timbreSelect.setAttribute('aria-label', `${track.name} timbre`);
     (['sine', 'triangle', 'sawtooth', 'square'] as const).forEach((value) => {
-      const option = new Option(value, value, false, settings.timbre === value);
-      timbreSelect.add(option);
+      timbreSelect.add(new Option(value, value, false, settings.timbre === value));
     });
     timbreSelect.addEventListener('change', () => {
       context.onTimbreChange(track.channel, timbreSelect.value as VoicePlaybackSettings['timbre']);
@@ -108,40 +145,15 @@ export function buildAudioVoiceRow(
     timbreOrGmSelect = timbreSelect;
   }
 
-  const gain = document.createElement('input');
-  gain.type = 'range';
-  gain.min = '0';
-  gain.max = '1.5';
-  gain.step = '0.05';
-  gain.value = String(settings.gain);
-  gain.setAttribute('aria-label', `${track.name} volume`);
+  const gain = createGainControl(track, settings, context);
+  const mute = createAudioToggle('M', settings.muted, `${track.name} mute`, (c) => context.onMute(track.channel, c));
+  const solo = createAudioToggle('S', settings.solo, `${track.name} solo`, (c) => context.onSolo(track.channel, c));
 
-  gain.addEventListener('input', () => {
-    const newGain = Number(gain.value);
-    if (context.onGainInput) {
-      context.onGainInput(track.channel, newGain);
-    } else {
-      settings.gain = newGain;
-      context.onMixChange(track.channel, settings);
-    }
-  });
-  gain.addEventListener('change', () => {
-    settings.gain = Number(gain.value);
-    context.onMixChange(track.channel, settings);
-  });
-
-  const mute = createAudioToggle('M', settings.muted, `${track.name} mute`, (checked) => {
-    context.onMute(track.channel, checked);
-  });
-  const solo = createAudioToggle('S', settings.solo, `${track.name} solo`, (checked) => {
-    context.onSolo(track.channel, checked);
-  });
-
-  if (badgeSpan) {
-    row.append(name, effectiveRoute, timbreOrGmSelect, badgeSpan, gain, mute, solo);
-  } else {
-    row.append(name, effectiveRoute, timbreOrGmSelect, gain, mute, solo);
-  }
+  const children: HTMLElement[] = [name, effectiveRoute];
+  if (timbreOrGmSelect) children.push(timbreOrGmSelect);
+  if (badgeSpan) children.push(badgeSpan);
+  children.push(gain, mute, solo);
+  row.append(...children);
 
   return row;
 }

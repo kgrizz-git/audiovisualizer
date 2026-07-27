@@ -296,6 +296,7 @@ class AudioVisualizerApp {
       engine: defaults.engine,
       soundbank: defaults.soundbank,
       statusMap,
+      isPercussion: (t) => t.isPercussion,
       getProgram: (track) => this.voiceRouter.resolveTrackSettings(track).program,
       onProgramChange: (channel, program) => {
         this.voiceRouter.setProgram(channel, program);

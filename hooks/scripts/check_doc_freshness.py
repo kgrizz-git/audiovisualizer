@@ -29,7 +29,7 @@ WARN_DAYS = int(os.getenv("POLICY_FRESHNESS_WARN_DAYS", "180"))
 HARD_DAYS = int(os.getenv("POLICY_FRESHNESS_HARD_DAYS", "365"))
 
 # ── Paths that MUST carry the marker ─────────────────────────────────────────
-REQUIRED_DIRS: set[str] = {"policies", "templates", "inventory"}
+REQUIRED_DIRS: set[str] = {"policies", "templates", "inventory", "docs"}
 ROOT_REQUIRED: set[str] = {"README.md", "AGENTS.md"}
 
 # ── Exempt path fragments ─────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ def check(filepath: str) -> tuple[list[str], list[str]]:
         if is_required(path):
             errors.append(
                 f"{filepath}: missing 'Last reviewed: YYYY-MM-DD' marker. "
-                "Required in policies/, templates/, inventory/, and root agent docs."
+                "Required in policies/, templates/, inventory/, docs/, and root agent docs."
             )
         return errors, warnings
 

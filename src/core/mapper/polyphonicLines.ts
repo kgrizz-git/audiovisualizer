@@ -72,6 +72,10 @@ function getNoteColorLocal(note: NoteEvent, config: RuleConfig): string {
   return config.velocityGlow ? modulateColorByVelocity(color, note.velocity) : color;
 }
 
+function getNoteOpacityLocal(note: NoteEvent, config: RuleConfig): number {
+  return config.velocityOpacity ? 0.6 + 0.4 * (Math.min(127, Math.max(0, note.velocity)) / 127) : 0.9;
+}
+
 function buildLocalHsl(note: NoteEvent, config: RuleConfig): string {
   if (config.pitchHueMode === 'voice_palette') {
     const hues = [12, 196, 146, 282, 42, 326, 98, 234, 166, 8, 270, 62];
@@ -204,7 +208,7 @@ export function mapPolyphonicLineSegments(
         end: { ...end },
         color: getNoteColorLocal(note, config),
         width: strokeWidth,
-        opacity: 0.9,
+        opacity: getNoteOpacityLocal(note, config),
         note,
       });
       activeTips.push({

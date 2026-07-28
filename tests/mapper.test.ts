@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateDemoScore } from '../src/core/midi/parser.js';
-import { getAverageScoreBackground, getDominantScoreAccent, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor, computeRadialVoiceAngles, getPercussionColor, modulateColorByVelocity } from '../src/core/mapper/scoreMapper.js';
+import { getAverageScoreBackground, getDominantScoreAccent, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor, computeRadialVoiceAngles, getPercussionColor, modulateColorByVelocity, getRadialSpokeAutoScale } from '../src/core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../src/core/layout/fitGeometry.js';
 import { NoteEvent, RuleConfig, Score } from '../src/core/types.js';
 
@@ -503,24 +503,24 @@ describe('radial_voice_paths mapping', () => {
       expect(circle.radius).toBeGreaterThan(0);
     });
 
-    it('draws thin rings whose thickness tracks a 1/32→1/16 note scaled by velocity', () => {
+    it('draws thin rings whose thickness tracks a 1/64→1/32 note scaled by velocity', () => {
       const score = rvScore([drumTrack([rvNote('loud', 36, 1, 0.1, 127), rvNote('soft', 38, 2, 0.1, 1)])]);
       const [loud, soft] = mapScoreToGeometry(score, config, 800, 800).voicePaths[0].circles;
       const maxRadius = 800 * 0.45;
       const secondsPerBeat = 60 / 120;
-      const sixteenthSec = secondsPerBeat / 4;
       const thirtySecondSec = secondsPerBeat / 8;
+      const sixtyFourthSec = secondsPerBeat / 16;
       const expectedFor = (velocity: number) => {
         const v = Math.min(127, Math.max(0, velocity)) / 127;
-        const sec = thirtySecondSec + v * (sixteenthSec - thirtySecondSec);
+        const sec = sixtyFourthSec + v * (thirtySecondSec - sixtyFourthSec);
         return Math.max(0.4, (sec / 4) * maxRadius);
       };
       expect(loud.strokeWidth).toBeCloseTo(expectedFor(127));
       expect(soft.strokeWidth).toBeCloseTo(expectedFor(1));
-      const expectedOpacityFor = (velocity: number) => 0.5 + 0.35 * (Math.min(127, Math.max(0, velocity)) / 127);
+      const expectedOpacityFor = (velocity: number) => 0.35 + 0.45 * (Math.min(127, Math.max(0, velocity)) / 127);
       expect(loud.opacity).toBeCloseTo(expectedOpacityFor(127));
       expect(soft.opacity).toBeCloseTo(expectedOpacityFor(1));
-      // Thickness scales with velocity (loud > soft) and stays within a 1/32 → 1/16 band.
+      // Thickness scales with velocity (loud > soft) and stays within a 1/64 → 1/32 band.
       expect(loud.strokeWidth).toBeGreaterThan(soft.strokeWidth);
     });
 
@@ -550,6 +550,71 @@ describe('radial_voice_paths mapping', () => {
   });
 });
 
+describe('radial_pitch_spokes mapping', () => {
+  const note = (id: string, pitch: number, onset: number, duration: number): NoteEvent =>
+    ({ id, pitch, onset, duration, velocity: 100, voice: 0, pitchClass: pitch % 12 });
+  const track = (name: string, channel: number, notes: NoteEvent[]): Score['tracks'][0] =>
+    ({ name, channel, program: 0, instrumentName: name, isPercussion: false, notes });
+  const angle = (segment: { start: { x: number; y: number }; end: { x: number; y: number } }) =>
+    (Math.atan2(-(segment.end.y - segment.start.y), segment.end.x - segment.start.x) * 180 / Math.PI + 360) % 360;
+
+  it('uses absolute octave-class directions and yellow-to-violet pitch colors', () => {
+    const score: Score = {
+      title: 'C and G', duration: 4, bpm: 120,
+      tracks: [track('Bass', 0, [note('c', 48, 1, 1)]), track('Piccolo', 1, [note('g', 91, 1, 1)])],
+    };
+    const geometry = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'radial_pitch_spokes' }, 800, 800);
+    const [c] = geometry.voicePaths[0].segments;
+    const [g] = geometry.voicePaths[1].segments;
+    expect(angle(c)).toBeCloseTo(90); // C points up
+    expect(angle(g)).toBeCloseTo(300); // G points down-right
+    expect(c.color).toBe('hsl(60, 85%, 60%)');
+    expect(g.color).toBe('hsl(270, 85%, 60%)');
+    expect(c.start.y).toBeGreaterThan(400); // bass placement below center
+    expect(g.start.y).toBeLessThan(400); // piccolo placement above center
+  });
+
+  it('keeps same pitch classes parallel and pitch classes six semitones apart antiparallel', () => {
+    const score: Score = {
+      title: 'Parallel classes', duration: 4, bpm: 120,
+      tracks: [
+        track('Bass', 0, [note('c-low', 48, 1, 1), note('fs-low', 54, 2, 1)]),
+        track('Piccolo', 1, [note('c-high', 84, 1, 1), note('fs-high', 90, 2, 1)]),
+      ],
+    };
+    const segments = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'radial_pitch_spokes' }, 800, 800)
+      .voicePaths.flatMap((path) => path.segments);
+    const cAngles = segments.filter((segment) => segment.note.pitchClass === 0).map(angle);
+    const fsAngles = segments.filter((segment) => segment.note.pitchClass === 6).map(angle);
+    expect(cAngles[0]).toBeCloseTo(cAngles[1]);
+    expect(Math.abs(cAngles[0] - fsAngles[0])).toBeCloseTo(180);
+  });
+
+  it('automatically makes long-score spokes visible and caps short-spoke width', () => {
+    const score: Score = {
+      title: 'Long score', duration: 320, bpm: 120,
+      tracks: [track('Lead', 0, [note('short', 60, 40, 0.05), note('typical', 67, 120, 0.2)])],
+    };
+    const config = { ...DEFAULT_CONFIG, variation: 'radial_pitch_spokes' as const };
+    const autoScale = getRadialSpokeAutoScale(score.tracks[0].notes, score.duration, 360, config);
+    expect(autoScale).toBe(96);
+    const segments = mapScoreToGeometry(score, config, 800, 800).voicePaths[0].segments;
+    const typical = segments.find((segment) => segment.note.id === 'typical')!;
+    const short = segments.find((segment) => segment.note.id === 'short')!;
+    expect(Math.hypot(typical.end.x - typical.start.x, typical.end.y - typical.start.y)).toBeGreaterThan(20);
+    expect(short.width).toBeLessThanOrEqual(Math.hypot(short.end.x - short.start.x, short.end.y - short.start.y) * 0.28);
+  });
+
+  it('applies the explicit spoke multiplier after the automatic baseline', () => {
+    const score: Score = { title: 'Scale', duration: 40, bpm: 120, tracks: [track('Lead', 0, [note('c', 60, 10, 0.5)])] };
+    const length = (scale: number) => {
+      const segment = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'radial_pitch_spokes', radialSpokeScale: scale }, 800, 800).voicePaths[0].segments[0];
+      return Math.hypot(segment.end.x - segment.start.x, segment.end.y - segment.start.y);
+    };
+    expect(length(0.5)).toBeCloseTo(length(1) / 2);
+  });
+});
+
 describe('Visual property options', () => {
   const fixtureNote = (id: string, velocity: number, onset: number): NoteEvent => ({
     id, pitch: 60, onset, duration: 1, velocity, voice: 0, pitchClass: 0,
@@ -560,6 +625,26 @@ describe('Visual property options', () => {
   });
   const segmentLength = (segment: { start: { x: number; y: number }; end: { x: number; y: number } }): number =>
     Math.hypot(segment.end.x - segment.start.x, segment.end.y - segment.start.y);
+
+  describe('velocityOpacity', () => {
+    it('maps normal note opacity from 0.6 at velocity zero to 1.0 at velocity 127', () => {
+      const score = scoreWith([fixtureNote('soft', 0, 0), fixtureNote('loud', 127, 2)]);
+      const config = { ...DEFAULT_CONFIG, chordLayout: 'chain' as const, velocityOpacity: true };
+      const segments = mapScoreToGeometry(score, config, 800, 800).voicePaths[0].segments;
+      expect(segments[0].opacity).toBeCloseTo(0.6);
+      expect(segments[1].opacity).toBeCloseTo(1);
+    });
+
+    it('applies the same velocity opacity to note halos and overlap-weighted tonal bands', () => {
+      const score = scoreWith([fixtureNote('soft', 0, 0), fixtureNote('loud', 127, 2)]);
+      const circles = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'circles', velocityOpacity: true }, 800, 800).voicePaths[0].circles;
+      expect(circles[0].opacity).toBeCloseTo(0.6);
+      expect(circles[1].opacity).toBeCloseTo(1);
+      const bands = mapScoreToGeometry(score, { ...DEFAULT_CONFIG, variation: 'tonal_time_lines', velocityOpacity: true }, 800, 4).bands;
+      expect(bands[0].opacity).toBeCloseTo(0.6);
+      expect(bands[2].opacity).toBeCloseTo(1);
+    });
+  });
 
   describe('lengthProportionalTo', () => {
     it('scales segment length with velocity when set to velocity', () => {

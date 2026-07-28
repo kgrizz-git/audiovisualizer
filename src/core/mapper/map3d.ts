@@ -20,7 +20,21 @@ import {
   GeometryDisc3D,
   GeometryBox3D,
 } from '../types.js';
-import { mapScoreToGeometry, getNoteColor, getVisualPitch, getVisualDuration } from './scoreMapper.js';
+import {
+  mapScoreToGeometry,
+  getNoteColor,
+  getVisualPitch,
+  getVisualDuration,
+  getAbsolutePitchColor,
+  getAbsolutePitchDirection,
+  getNoteOpacity,
+  getPercussionColor,
+  computeRadialVoiceAngles,
+  medianVisualPitch,
+  getRadialSpokeAutoScale,
+  getRadialSpokeLength,
+  getRadialSpokeStrokeWidth,
+} from './scoreMapper.js';
 import { fitGeometryToCanvas } from '../layout/fitGeometry.js';
 
 /** Maps a 3D variation to the 2D variation whose XY geometry it reuses.
@@ -32,6 +46,92 @@ export function base2DVariation(variation: Variation): Variation {
   if (variation === '3d_polar_walk') return 'polar_walk';
   if (variation === '3d_radial_voice_paths') return 'radial_voice_paths';
   return 'lines';
+}
+
+/** Maps the dedicated 3D voice towers: a fixed XY tower per voice, time on Z, and
+ * octave-class spokes extending horizontally from each tower. */
+export function mapVoiceTowers3D(
+  score: Score,
+  config: RuleConfig,
+  targetWidth: number,
+  targetHeight: number,
+): RenderedGeometry3D {
+  const origin = { x: targetWidth / 2, y: targetHeight / 2 };
+  const scoreDuration = Math.max(score.duration, 0.01);
+  const maxRadius = Math.min(targetWidth, targetHeight) * 0.34;
+  const zScale = effectiveZScale(scoreDuration, Math.min(targetWidth, targetHeight) * 0.8, config);
+  const prepared = score.tracks
+    .filter((track) => track.notes.length > 0 && (config.voiceFilter === null || config.voiceFilter.includes(track.channel)))
+    .map((track) => ({
+      track,
+      isPercussion: track.isPercussion || track.channel === 9,
+      notes: [...track.notes].sort((a, b) => a.onset - b.onset || a.id.localeCompare(b.id)),
+    }));
+  const pitched = prepared.filter((entry) => !entry.isPercussion);
+  const spokeLengthRadius = Math.min(targetWidth, targetHeight) * 0.45;
+  const radialSpokeAutoScale = getRadialSpokeAutoScale(
+    pitched.flatMap((entry) => entry.notes), scoreDuration, spokeLengthRadius, config,
+  );
+  const medians = pitched.map((entry, index) => ({ voice: index, medianPitch: medianVisualPitch(entry.notes, config) }));
+  const spokes = computeRadialVoiceAngles(medians);
+  const segments: GeometrySegment3D[] = [];
+  const discs: GeometryDisc3D[] = [];
+
+  prepared.forEach((entry) => {
+    if (entry.isPercussion) {
+      entry.notes.forEach((note) => {
+        const velocity = Math.min(127, Math.max(0, note.velocity)) / 127;
+        discs.push({
+          cx: origin.x,
+          cy: origin.y,
+          cz: note.onset * zScale,
+          czExtent: (note.duration * zScale) / 2,
+          radius: Math.max(4, (note.onset / scoreDuration) * (Math.min(targetWidth, targetHeight) * 0.45)),
+          fillColor: getPercussionColor(note.pitch),
+          strokeColor: getPercussionColor(note.pitch),
+          strokeWidth: Math.max(0.4, ((60 / (score.bpm > 0 ? score.bpm : 120) / 16) + velocity * (60 / (score.bpm > 0 ? score.bpm : 120) / 16)) / scoreDuration * (Math.min(targetWidth, targetHeight) * 0.45)),
+          opacity: 0.35 + 0.45 * velocity,
+          note,
+        });
+      });
+      return;
+    }
+
+    const pitchedIndex = pitched.indexOf(entry);
+    const spoke = spokes.get(pitchedIndex)!;
+    const towerRadians = spoke.angle * Math.PI / 180;
+    const towerX = origin.x + Math.cos(towerRadians) * maxRadius;
+    const towerY = origin.y - Math.sin(towerRadians) * maxRadius;
+    // A faint, deterministic guide makes the otherwise implicit fixed XY location read
+    // as a tower through musical time. It is not a MIDI note and is excluded from pulses.
+    const towerNote = { ...entry.notes[0], id: `${entry.notes[0].id}-tower`, onset: 0, duration: scoreDuration };
+    segments.push({
+      startX: towerX, startY: towerY, startZ: 0,
+      endX: towerX, endY: towerY, endZ: scoreDuration * zScale,
+      color: '#64748b', width: 1, opacity: 0.18, note: towerNote, role: 'tower',
+    });
+    entry.notes.forEach((note) => {
+      const directionRadians = getAbsolutePitchDirection(note, config) * Math.PI / 180;
+      const length = getRadialSpokeLength(note, scoreDuration, spokeLengthRadius, radialSpokeAutoScale, config);
+      segments.push({
+        startX: towerX,
+        startY: towerY,
+        startZ: note.onset * zScale,
+        endX: towerX + Math.cos(directionRadians) * length,
+        endY: towerY - Math.sin(directionRadians) * length,
+        endZ: note.onset * zScale,
+        color: getAbsolutePitchColor(note, config),
+        width: getRadialSpokeStrokeWidth(note, length, config),
+        opacity: getNoteOpacity(note, config, 0.9) / spoke.voicesOnSpoke,
+        note,
+      });
+    });
+  });
+
+  return {
+    kind: '3d', width: targetWidth, height: targetHeight, depth: scoreDuration * zScale, zScale,
+    segments, discs, boxes: [], config, bpm: score.bpm,
+  };
 }
 
 /**
@@ -176,7 +276,9 @@ export function mapPianoRoll3D(
         sy: laneHeight * 0.7,
         sz: Math.max(2, zEnd - zStart),
         color: getNoteColor(note, config),
-        opacity: 0.55 + (note.velocity / 127) * 0.4,
+        // Preserve piano roll's historical dynamics by default; the shared toggle gives
+        // it the same requested 0.6→1.0 curve as every other note mode when enabled.
+        opacity: config.velocityOpacity ? getNoteOpacity(note, config, 0.95) : 0.55 + (note.velocity / 127) * 0.4,
         note,
       });
     }
@@ -209,6 +311,9 @@ export function map3DGeometry(
 ): RenderedGeometry3D {
   if (config.variation === '3d_piano_roll') {
     return mapPianoRoll3D(score, config, targetWidth, targetHeight);
+  }
+  if (config.variation === '3d_voice_towers') {
+    return mapVoiceTowers3D(score, config, targetWidth, targetHeight);
   }
   const config2d: RuleConfig = { ...config, variation: base2DVariation(config.variation) };
   // Frame XY into the canvas box (same as the 2D preview) so radii, stroke widths, and

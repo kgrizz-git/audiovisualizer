@@ -8,6 +8,7 @@ export const VARIATIONS: readonly Variation[] = [
   'polar_fan',
   'polar_walk',
   'radial_voice_paths',
+  'radial_pitch_spokes',
   '3d_lines',
   '3d_note_halos',
   '3d_note_spheres',
@@ -15,6 +16,7 @@ export const VARIATIONS: readonly Variation[] = [
   '3d_polar_fan',
   '3d_polar_walk',
   '3d_radial_voice_paths',
+  '3d_voice_towers',
 ] as const;
 
 /**
@@ -36,6 +38,7 @@ export interface RandomVisualOptions {
   velocityGlow: boolean;
   constantStrokeWidth: boolean;
   ringFlashes3D: boolean;
+  velocityOpacity: boolean;
 }
 
 /**
@@ -49,5 +52,6 @@ export function randomVisualOptions(rand: () => number): RandomVisualOptions {
     velocityGlow: pickRandom([false, true], rand),
     constantStrokeWidth: pickRandom([false, true], rand),
     ringFlashes3D: pickRandom([true, false], rand),
+    velocityOpacity: pickRandom([false, true], rand),
   };
 }

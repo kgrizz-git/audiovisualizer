@@ -5,11 +5,11 @@ import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
 describe('launchRandomizer', () => {
   describe('VARIATIONS', () => {
-    it('has exactly 14 variations', () => {
-      expect(VARIATIONS.length).toBe(14);
+    it('has exactly 16 variations', () => {
+      expect(VARIATIONS.length).toBe(16);
     });
 
-    it('contains all 14 expected variation values', () => {
+    it('contains all 16 expected variation values', () => {
       const expected: Variation[] = [
         'lines',
         'circles',
@@ -18,6 +18,7 @@ describe('launchRandomizer', () => {
         'polar_fan',
         'polar_walk',
         'radial_voice_paths',
+        'radial_pitch_spokes',
         '3d_lines',
         '3d_note_halos',
         '3d_note_spheres',
@@ -25,6 +26,7 @@ describe('launchRandomizer', () => {
         '3d_polar_fan',
         '3d_polar_walk',
         '3d_radial_voice_paths',
+        '3d_voice_towers',
       ];
       expect(Array.from(VARIATIONS)).toEqual(expected);
     });
@@ -81,6 +83,7 @@ describe('launchRandomizer', () => {
         velocityGlow: DEFAULT_CONFIG.velocityGlow,
         constantStrokeWidth: DEFAULT_CONFIG.constantStrokeWidth,
         ringFlashes3D: DEFAULT_CONFIG.ringFlashes3D,
+        velocityOpacity: DEFAULT_CONFIG.velocityOpacity,
       });
     });
 
@@ -91,19 +94,21 @@ describe('launchRandomizer', () => {
         velocityGlow: true,
         constantStrokeWidth: true,
         ringFlashes3D: false,
+        velocityOpacity: true,
       });
     });
 
     it('rolls each option independently from successive rand values', () => {
-      const rolls = [0.9, 0.1, 0.9, 0.1];
+      const rolls = [0.9, 0.1, 0.9, 0.1, 0.9];
       let call = 0;
       const options = randomVisualOptions(() => rolls[call++]);
-      expect(call).toBe(4);
+      expect(call).toBe(5);
       expect(options).toEqual({
         lengthProportionalTo: 'velocity',
         velocityGlow: false,
         constantStrokeWidth: true,
         ringFlashes3D: true,
+        velocityOpacity: true,
       });
     });
   });

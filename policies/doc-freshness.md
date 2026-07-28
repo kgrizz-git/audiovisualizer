@@ -1,6 +1,6 @@
 # Policy: Documentation Freshness
 
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-28
 Enforced by: [`hooks/scripts/check_doc_freshness.py`](../hooks/scripts/check_doc_freshness.py)
 
 ## Why
@@ -15,7 +15,7 @@ review marker plus a staleness window keeps durable docs trustworthy.
 | Durable docs carry a freshness marker | `Last reviewed: YYYY-MM-DD` near the top | soft gate |
 | Staleness window before review is due | 180 days | advisory (warn), CI soft gate |
 | Hard-stale threshold | 365 days | hard gate in CI |
-| Marker required in these paths | `policies/`, `templates/`, `inventory/`, root `*.md` | soft gate |
+| Marker required in these paths | `policies/`, `templates/`, `inventory/`, `docs/`, root `*.md` | soft gate |
 | Exempt paths | `.context/`, `CHANGELOG.md`, auto-generated indexes, `notes_and_ideas/`, `inventory/third-party-licenses.md` | n/a |
 
 ### Marker format

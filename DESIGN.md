@@ -1,6 +1,6 @@
 # AudioVisualizer Visual Design
 
-Last reviewed: 2026-07-23
+Last reviewed: 2026-07-28
 
 ## Intent
 
@@ -13,6 +13,8 @@ Every shipped image must be reproducible from a normalized score, a rule configu
 and canvas dimensions. The UI should explain the active rule set plainly enough that a
 viewer can understand why the visual changes. Technical ownership, data contracts, and
 libraries are documented in [ARCHITECTURE.md](ARCHITECTURE.md).
+
+For a complete per-mode and per-control mapping reference, see [docs/modes.md](docs/modes.md).
 
 ## Visual grammar
 
@@ -61,10 +63,12 @@ swatches, while plotter SVG remains color-free.
   detected key or chord. Silent time is a low-contrast neutral band.
 - `polar_fan`: pitch class maps to spoke angle (an octave spans 360°, so 30° per semitone, with transposed C pointing right at 0° and rotating clockwise) and duration maps to segment length, all radiating from the canvas center. Chords fan as multiple spokes simultaneously, and voices share the origin instead of walking forward. In standard Canvas, segments receive a color-matched line glow. Ignored by `gapPolicy` and `originMode`. See [`plans/specs/2026-07-26-polar-octave-fan-modes.md`](plans/specs/2026-07-26-polar-octave-fan-modes.md).
 - `polar_walk`: pitch class maps to absolute direction (30° per semitone, with transposed C pointing right at 0° and rotating clockwise) and duration maps to segment length. The voice path starts at the center and walks continuously, where each note starts at the endpoint of the previous note or gap segment. In standard Canvas, segments receive a color-matched line glow. Ignored by `originMode`.
-- `radial_voice_paths`: each pitched voice owns a fixed radial spoke direction derived from its register — the lowest median pitch points down (270°), the highest points up (90°), and intermediate voices alternate between the right and left branches so the vertical component rises with register (a single voice points laterally right at 0°). Voices sharing a median pitch fan ±2° apart, and more than 12 distinct registers group into 12 spoke slots with per-spoke opacity scaled by `1/n`. Each note is a segment along its voice's spoke: radial start/end encode onset/offset as a fraction of the score duration, and pitch offsets the angle ±1° per semitone from the voice median, clamped to ±5°. Percussion voices (channel 10 / percussion flag) render instead as stroke-only concentric rings centered on the canvas with radius proportional to onset time, a radial thickness scaled to a 1/32 note at zero velocity up to a 1/16 note at full velocity (so full-composition rings stay deliberately thin relative to the pitched spokes), opacity scaled with velocity (`0.5 + 0.35·(v/127)`, so soft hits read at half strength and full-velocity hits at 0.85), and stroke color from the General MIDI family (kick red, snare/clap orange, hi-hat cyan, cymbals yellow, toms green, other grey). Rings render underneath the pitched note lines so the spokes read on top. In standard Canvas, segments receive a color-matched line glow. Ignored by `gapPolicy` and `originMode`.
+- `radial_voice_paths`: each pitched voice owns a fixed radial spoke direction derived from its register — the lowest median pitch points down (270°), the highest points up (90°), and intermediate voices alternate between the right and left branches so the vertical component rises with register (a single voice points laterally right at 0°). Voices sharing a median pitch fan ±2° apart, and more than 12 distinct registers group into 12 spoke slots with per-spoke opacity scaled by `1/n`. Each note is a segment along its voice's spoke: radial start/end encode onset/offset as a fraction of the score duration, and pitch offsets the angle ±1° per semitone from the voice median, clamped to ±5°. Percussion voices (channel 10 / percussion flag) render instead as stroke-only concentric rings centered on the canvas with radius proportional to onset time, a radial thickness scaled from a 1/64 note at zero velocity to a 1/32 note at full velocity, opacity `0.35 + 0.45·(v/127)`, and stroke color from the General MIDI family (kick red, snare/clap orange, hi-hat cyan, cymbals yellow, toms green, other grey). Rings render underneath the pitched note lines so the spokes read on top. In standard Canvas, segments receive a color-matched line glow. Ignored by `gapPolicy` and `originMode`.
+- `radial_pitch_spokes`: keeps the same register-derived voice placement and onset-to-radius rule as radial voice paths, but a note's own pitch class controls its globally absolute segment direction. Transposed C is yellow and points up (90° in y-up coordinates); each semitone advances both direction and hue clockwise by 30°. Every octave-equivalent pitch is therefore parallel and identically colored, and pitch classes six semitones apart are antiparallel. Duration maps to segment length through a deterministic per-score scale that targets a 24px median visible spoke, clamped to 1×–96× and then multiplied by the user `radialSpokeScale`; stroke width is capped at 28% of final length so short notes stay line-like. Percussion uses the same family-colored time rings as `radial_voice_paths`. Ignored by `gapPolicy`, `originMode`, and the configurable generic hue source.
 - `3d_polar_fan`: the `polar_fan` geometry lifted into three dimensions. XY coordinates are identical to 2D `polar_fan` (fitted symmetrically around the canvas center), and musical time onset maps along the Z axis, turning spokes into a fanning calligraphic ribbon threading into depth.
 - `3d_polar_walk`: the `polar_walk` geometry lifted into three dimensions. XY coordinates are identical to 2D `polar_walk` (fitted symmetrically around the canvas center), and musical time onset maps along the Z axis, turning the continuous walk path into a winding calligraphic ribbon threading into depth.
 - `3d_radial_voice_paths`: the `radial_voice_paths` geometry lifted into three dimensions. XY coordinates are identical to the fitted 2D layout, and musical time onset maps along the Z axis, so time reads both as distance from the center (XY) and depth (Z). Percussion rings lift to discs at their onset depth, colored from the ring's family stroke color (their 2D fill is transparent).
+- `3d_voice_towers`: each pitched voice has a fixed register-derived XY tower, marked by a faint guide through the score's Z/time depth. At every note onset, an octave-class-colored spoke extends horizontally from that tower; its direction is the same absolute C-up / +30°-per-semitone rule as `radial_pitch_spokes`, and its length uses the same deterministic 24px-median automatic scale, clamp, user multiplier, and 28%-of-length stroke cap. Percussion rings lift to family-colored discs at their onset depth. It is Three.js-only: PNG and WebM are available; SVG, plotter SVG, and the CLI remain 2D-only.
 - `3d_lines` / `3d_note_halos`: the `lines` and `circles` geometry lifted into three
   dimensions. X/Y are identical to their 2D counterparts (so the Front camera reproduces
   the 2D image); musical time advances along the positive Z axis, turning a path into a
@@ -108,7 +112,7 @@ a deliberately more regular visual rhythm.
 
 ### Velocity- and thickness-driven options
 
-Four optional rules re-weight how dynamics map to the geometry. All default to the
+Five optional rules re-weight how dynamics map to the geometry. All default to the
 established behavior, so existing scores render unchanged unless the viewer opts in.
 
 - **Length source** (`lengthProportionalTo: 'duration' | 'velocity'`, default
@@ -128,6 +132,11 @@ established behavior, so existing scores render unchanged unless the viewer opts
   2D canvas the color-matched shadow glow additionally scales with velocity, capped at
   a `24px` blur radius so dense scores keep acceptable performance; this shadow
   component is 2D-only. Uniform-velocity scores render with uniform saturation.
+- **Velocity opacity** (`velocityOpacity`, default off): normal notes use
+  `0.6 + 0.4 × velocity / 127` opacity. It applies to line segments, halos, polar and
+  radial strokes, pitch timelines, 3D meshes, and tonal-time bands (where velocity is
+  overlap-weighted across active notes). Radial percussion intentionally retains its
+  dedicated `0.35 + 0.45 × velocity / 127` rule.
 - **Uniform stroke** (`constantStrokeWidth`, default off): every note strokes at
   `strokeWidthBase`, skipping the `velocity / 127 × strokeWidthScale` term, for an even
   plotter-like line weight. 3D slab thickness and line materials derive from segment
@@ -137,7 +146,7 @@ established behavior, so existing scores render unchanged unless the viewer opts
   e.g. on the 3D polar fan. Purely a playback effect; geometry and exports are
   unaffected.
 
-The launch randomizer rolls each of these four options independently (uniform pick per
+The launch randomizer rolls each of these five options independently (uniform pick per
 field) alongside the random visual mode and demo MIDI, and syncs the controls to the
 rolled values, so a fresh session showcases the option space as well as the layouts.
 

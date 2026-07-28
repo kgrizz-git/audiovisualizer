@@ -21,7 +21,7 @@ export class OnsetPulseController {
     // Default-on: only an explicit false disables the transient onset rings.
     if (geometry.config.ringFlashes3D === false) return;
     const notes = [
-      ...geometry.segments.map((segment) => ({ note: segment.note, x: segment.startX, y: segment.startY, z: segment.startZ, color: segment.color })),
+      ...geometry.segments.filter((segment) => segment.role !== 'tower').map((segment) => ({ note: segment.note, x: segment.startX, y: segment.startY, z: segment.startZ, color: segment.color })),
       ...geometry.discs.map((disc) => ({ note: disc.note, x: disc.cx, y: disc.cy, z: disc.cz, color: disc.fillColor })),
       ...geometry.boxes.map((box) => ({ note: box.note, x: box.cx, y: box.cy, z: box.cz - box.sz / 2, color: box.color })),
     ];

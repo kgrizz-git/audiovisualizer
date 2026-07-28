@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Last reviewed: 2026-07-24
+Last reviewed: 2026-07-28
 
 AudioVisualizer turns MIDI files into deterministic visual score art. This is the
 single source of truth for coding agents; tool-specific entrypoints point here.
@@ -10,7 +10,7 @@ single source of truth for coding agents; tool-specific entrypoints point here.
 Read these in order for implementation work:
 
 1. [`README.md`](README.md) for local setup and user-facing behavior.
-2. [`DESIGN.md`](DESIGN.md) for visual rules and export aesthetics.
+2. [`DESIGN.md`](DESIGN.md) for visual rules and export aesthetics, then [`docs/modes.md`](docs/modes.md) for the per-mode/control reference.
 3. [`ARCHITECTURE.md`](ARCHITECTURE.md) for domain contracts, stack, and runtime behavior.
 4. [`dev-docs/agent-workflow.md`](dev-docs/agent-workflow.md) for the validation and handoff loop.
 5. The files directly involved in the requested change and their tests.

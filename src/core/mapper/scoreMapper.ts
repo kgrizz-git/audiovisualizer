@@ -1,3 +1,4 @@
+// policy:file-size allow=900 reason=shared deterministic mapper currently centralizes all 2D mode contracts
 import {
   Score,
   RuleConfig,
@@ -39,7 +40,64 @@ export const DEFAULT_CONFIG: RuleConfig = {
   velocityGlow: false,
   constantStrokeWidth: false,
   ringFlashes3D: true,
+  velocityOpacity: false,
+  radialSpokeScale: 1,
 };
+
+/** Target median length for automatically scaled absolute-pitch spokes. */
+export const RADIAL_SPOKE_TARGET_MEDIAN_LENGTH = 24;
+/** Guardrails keep short scores literal and bound amplification of exceptionally long scores. */
+export const RADIAL_SPOKE_AUTO_SCALE_MIN = 1;
+export const RADIAL_SPOKE_AUTO_SCALE_MAX = 96;
+/** A short spoke must remain line-like rather than becoming a round stroke cap/dot. */
+export const RADIAL_SPOKE_WIDTH_TO_LENGTH_MAX = 0.28;
+
+/**
+ * Deterministic per-score baseline for the two absolute pitch-spoke modes. It brings the
+ * median visible pitched note to a readable target while preserving duration ratios.
+ */
+export function getRadialSpokeAutoScale(
+  notes: readonly NoteEvent[],
+  scoreDuration: number,
+  maxRadius: number,
+  config: RuleConfig,
+): number {
+  if (notes.length === 0 || scoreDuration <= 0 || maxRadius <= 0) return RADIAL_SPOKE_AUTO_SCALE_MIN;
+  const lengths = notes
+    .map((note) => (getVisualDuration(note, config) / scoreDuration) * maxRadius)
+    .filter((length) => Number.isFinite(length) && length > 0)
+    .sort((a, b) => a - b);
+  if (lengths.length === 0) return RADIAL_SPOKE_AUTO_SCALE_MIN;
+  const middle = Math.floor(lengths.length / 2);
+  const median = lengths.length % 2 === 0 ? (lengths[middle - 1] + lengths[middle]) / 2 : lengths[middle];
+  return Math.min(RADIAL_SPOKE_AUTO_SCALE_MAX, Math.max(RADIAL_SPOKE_AUTO_SCALE_MIN, RADIAL_SPOKE_TARGET_MEDIAN_LENGTH / median));
+}
+
+/** Applies the readable automatic baseline, then the user's explicit multiplier. */
+export function getRadialSpokeLength(
+  note: NoteEvent,
+  scoreDuration: number,
+  maxRadius: number,
+  autoScale: number,
+  config: RuleConfig,
+): number {
+  const readableLength = Math.max(
+    config.minSegmentLength,
+    (getVisualDuration(note, config) / Math.max(scoreDuration, 0.01)) * maxRadius * autoScale,
+  );
+  return readableLength * config.radialSpokeScale;
+}
+
+/** Caps ordinary velocity-derived width only when an absolute pitch spoke is short. */
+export function getRadialSpokeStrokeWidth(note: NoteEvent, length: number, config: RuleConfig): number {
+  return Math.min(getStrokeWidth(note, config), Math.max(0.75, length * RADIAL_SPOKE_WIDTH_TO_LENGTH_MAX));
+}
+
+/** Normal-note opacity. The opt-in mapping leaves the established per-mode defaults intact. */
+export function getNoteOpacity(note: NoteEvent, config: RuleConfig, defaultOpacity: number): number {
+  if (!config.velocityOpacity) return defaultOpacity;
+  return 0.6 + 0.4 * (Math.min(127, Math.max(0, note.velocity)) / 127);
+}
 
 /**
  * Calculates HSL color from note pitch and rule config. With `velocityGlow` the
@@ -49,6 +107,18 @@ export function getNoteColor(note: NoteEvent, config: RuleConfig): string {
   const hue = getMappedHue(note, config);
   const color = `hsl(${Math.round(hue)}, 85%, 60%)`;
   return config.velocityGlow ? modulateColorByVelocity(color, note.velocity) : color;
+}
+
+/** Absolute octave-class color for radial pitch spokes: C is yellow, then +30° per semitone. */
+export function getAbsolutePitchColor(note: NoteEvent, config: RuleConfig): string {
+  const hue = (60 + (getVisualPitch(note, config) % 12) * 30) % 360;
+  const color = `hsl(${Math.round(hue)}, 85%, 60%)`;
+  return config.velocityGlow ? modulateColorByVelocity(color, note.velocity) : color;
+}
+
+/** Absolute octave-class direction in y-up degrees: C is up, then +30° clockwise per semitone. */
+export function getAbsolutePitchDirection(note: NoteEvent, config: RuleConfig): number {
+  return 90 + (getVisualPitch(note, config) % 12) * 30;
 }
 
 /** Stable rainbow-adjacent hues used when a voice, rather than pitch, owns its color. */
@@ -161,8 +231,11 @@ export function mapScoreToGeometry(
     };
   }
 
-    if (config.variation === 'radial_voice_paths') {
+  if (config.variation === 'radial_voice_paths') {
     return mapRadialVoicePaths(score, config, targetWidth, targetHeight);
+  }
+  if (config.variation === 'radial_pitch_spokes') {
+    return mapRadialPitchSpokes(score, config, targetWidth, targetHeight);
   }
 
   const voicePaths: GeometryVoicePath[] = [];
@@ -217,7 +290,7 @@ export function mapScoreToGeometry(
           end: { ...endPoint },
           color,
           width: strokeWidth,
-          opacity: 0.9,
+          opacity: getNoteOpacity(note, config, 0.9),
           note,
         });
 
@@ -243,7 +316,7 @@ export function mapScoreToGeometry(
           fillColor: color,
           strokeColor: '#ffffff',
           strokeWidth: 1.5,
-          opacity: 0.75,
+          opacity: getNoteOpacity(note, config, 0.75),
           note,
         });
 
@@ -263,7 +336,7 @@ export function mapScoreToGeometry(
           },
           color,
           width: strokeWidth,
-          opacity: 0.9,
+          opacity: getNoteOpacity(note, config, 0.9),
           note,
         });
       } else if (config.variation === 'polar_walk') {
@@ -310,7 +383,7 @@ export function mapScoreToGeometry(
           end: { ...endPoint },
           color,
           width: strokeWidth,
-          opacity: 0.9,
+          opacity: getNoteOpacity(note, config, 0.9),
           note,
         });
 
@@ -359,6 +432,7 @@ function mapTonalTimeBands(score: Score, config: RuleConfig, targetHeight: numbe
     let x = 0;
     let y = 0;
     let totalWeight = 0;
+    let velocityWeight = 0;
 
     notes.forEach((note) => {
       const overlap = Math.max(0, Math.min(end, note.onset + note.duration) - Math.max(onset, note.onset));
@@ -368,6 +442,7 @@ function mapTonalTimeBands(score: Score, config: RuleConfig, targetHeight: numbe
       x += Math.cos(radians) * weight;
       y += Math.sin(radians) * weight;
       totalWeight += weight;
+      velocityWeight += note.velocity * weight;
     });
 
     const silent = totalWeight === 0;
@@ -376,7 +451,9 @@ function mapTonalTimeBands(score: Score, config: RuleConfig, targetHeight: numbe
       y: index * targetHeight / bandCount,
       height: targetHeight / bandCount,
       color: silent ? 'rgb(226, 232, 240)' : `hsl(${Math.round(hue)}, 85%, 60%)`,
-      opacity: silent ? 0.10 : 0.92,
+      opacity: silent ? 0.10 : config.velocityOpacity
+        ? 0.6 + 0.4 * (velocityWeight / totalWeight) / 127
+        : 0.92,
       onset,
       duration: binDuration,
       silent,
@@ -460,7 +537,7 @@ export function computeRadialVoiceAngles(
 }
 
 /** Median of the visual (transposed) pitches of a voice's notes. */
-function medianVisualPitch(notes: NoteEvent[], config: RuleConfig): number {
+export function medianVisualPitch(notes: NoteEvent[], config: RuleConfig): number {
   const pitches = notes.map((note) => getVisualPitch(note, config)).sort((a, b) => a - b);
   const mid = Math.floor(pitches.length / 2);
   return pitches.length % 2 === 1 ? pitches[mid] : (pitches[mid - 1] + pitches[mid]) / 2;
@@ -482,6 +559,29 @@ export function mapRadialVoicePaths(
   targetWidth: number,
   targetHeight: number,
 ): RenderedGeometry {
+  return mapRadialVoiceMode(score, config, targetWidth, targetHeight, false);
+}
+
+/**
+ * Radial pitch spokes: time/register choose where a note starts, while the note's
+ * pitch class chooses an absolute, octave-equivalent direction and color.
+ */
+export function mapRadialPitchSpokes(
+  score: Score,
+  config: RuleConfig,
+  targetWidth: number,
+  targetHeight: number,
+): RenderedGeometry {
+  return mapRadialVoiceMode(score, config, targetWidth, targetHeight, true);
+}
+
+function mapRadialVoiceMode(
+  score: Score,
+  config: RuleConfig,
+  targetWidth: number,
+  targetHeight: number,
+  absolutePitchDirection: boolean,
+): RenderedGeometry {
   const origin: Point2D = { x: targetWidth / 2, y: targetHeight / 2 };
   const maxRadius = Math.min(targetWidth, targetHeight) * 0.45;
   const scoreDuration = Math.max(score.duration, 0.01);
@@ -497,6 +597,9 @@ export function mapRadialVoicePaths(
     }));
 
   const pitched = prepared.filter((entry) => !entry.isPercussion);
+  const radialSpokeAutoScale = absolutePitchDirection
+    ? getRadialSpokeAutoScale(pitched.flatMap((entry) => entry.notes), scoreDuration, maxRadius, config)
+    : 1;
   const medians = pitched.map((entry, index) => ({ voice: index, medianPitch: medianVisualPitch(entry.notes, config) }));
   const spokes = computeRadialVoiceAngles(medians);
 
@@ -506,16 +609,16 @@ export function mapRadialVoicePaths(
 
     if (entry.isPercussion) {
       const secondsPerBeat = score.bpm > 0 ? 60 / score.bpm : 0.5;
+      const sixtyFourthSeconds = secondsPerBeat / 16;
       const thirtySecondSeconds = secondsPerBeat / 8;
-      const sixteenthSeconds = secondsPerBeat / 4;
 
       entry.notes.forEach((note) => {
         const velocityFraction = Math.min(127, Math.max(0, note.velocity)) / 127;
-        // Thickness tracks musical note value: a soft hit reads as a 1/32 note, a
-        // full-velocity hit as a 1/16 note. Converting to the same radius-time scale as
+        // Thickness tracks musical note value: a soft hit reads as a 1/64 note, a
+        // full-velocity hit as a 1/32 note. Converting to the same radius-time scale as
         // the ring's outer radius keeps rings thin relative to the pitched spokes and
         // lets loud accents widen predictably.
-        const thicknessSeconds = thirtySecondSeconds + velocityFraction * (sixteenthSeconds - thirtySecondSeconds);
+        const thicknessSeconds = sixtyFourthSeconds + velocityFraction * (thirtySecondSeconds - sixtyFourthSeconds);
         const thickness = (thicknessSeconds / scoreDuration) * maxRadius;
         circles.push({
           center: { ...origin },
@@ -523,10 +626,10 @@ export function mapRadialVoicePaths(
           radius: Math.max(4, (note.onset / scoreDuration) * maxRadius),
           fillColor: 'none',
           strokeColor: getPercussionColor(note.pitch),
-          // Thin by construction (1/32–1/16 note of radial extent); 0.4px floor keeps
+          // Thin by construction (1/64–1/32 note of radial extent); 0.4px floor keeps
           // very long scores from rendering sub-pixel hairlines.
           strokeWidth: Math.max(0.4, thickness),
-          opacity: 0.5 + 0.35 * (Math.min(127, Math.max(0, note.velocity)) / 127),
+          opacity: 0.35 + 0.45 * velocityFraction,
           note,
           isPercussion: true,
         });
@@ -534,22 +637,34 @@ export function mapRadialVoicePaths(
     } else {
       const pitchedIndex = pitched.indexOf(entry);
       const spoke = spokes.get(pitchedIndex)!;
-      const median = medians[pitchedIndex].medianPitch;
       entry.notes.forEach((note) => {
-        // 1° per semitone from the voice median, clamped to ±5° to keep the spoke coherent.
+        // Existing radial voice paths tilt each note only slightly from its voice spoke.
+        // The absolute mode instead keeps start placement on that spoke, but makes every
+        // same pitch class parallel in global space.
+        const median = medians[pitchedIndex].medianPitch;
         const pitchOffset = Math.max(-5, Math.min(5, getVisualPitch(note, config) - median));
-        const radians = ((spoke.angle + pitchOffset) * Math.PI) / 180;
+        const placementRadians = ((spoke.angle + (absolutePitchDirection ? 0 : pitchOffset)) * Math.PI) / 180;
+        const directionRadians = (absolutePitchDirection
+          ? getAbsolutePitchDirection(note, config)
+          : spoke.angle + pitchOffset) * Math.PI / 180;
         // Angles use the y-up convention; canvas y grows downward, hence the negated sin.
-        const direction = { x: Math.cos(radians), y: -Math.sin(radians) };
+        const placement = { x: Math.cos(placementRadians), y: -Math.sin(placementRadians) };
+        const direction = { x: Math.cos(directionRadians), y: -Math.sin(directionRadians) };
         const rStart = (note.onset / scoreDuration) * maxRadius;
-        const rEnd = ((note.onset + note.duration) / scoreDuration) * maxRadius;
+        const length = absolutePitchDirection
+          ? getRadialSpokeLength(note, scoreDuration, maxRadius, radialSpokeAutoScale, config)
+          : (note.duration / scoreDuration) * maxRadius;
         segments.push({
-          start: { x: origin.x + direction.x * rStart, y: origin.y + direction.y * rStart },
-          end: { x: origin.x + direction.x * rEnd, y: origin.y + direction.y * rEnd },
-          color: getNoteColor(note, config),
-          width: getStrokeWidth(note, config),
+          start: { x: origin.x + placement.x * rStart, y: origin.y + placement.y * rStart },
+          end: absolutePitchDirection
+            ? { x: origin.x + placement.x * rStart + direction.x * length, y: origin.y + placement.y * rStart + direction.y * length }
+            : { x: origin.x + direction.x * (rStart + length), y: origin.y + direction.y * (rStart + length) },
+          color: absolutePitchDirection ? getAbsolutePitchColor(note, config) : getNoteColor(note, config),
+          width: absolutePitchDirection
+            ? getRadialSpokeStrokeWidth(note, length, config)
+            : getStrokeWidth(note, config),
           // Dense shared spokes dim proportionally so sparse voices stay legible.
-          opacity: 0.9 / spoke.voicesOnSpoke,
+          opacity: getNoteOpacity(note, config, 0.9) / spoke.voicesOnSpoke,
           note,
         });
       });
@@ -714,7 +829,7 @@ export function mapPolyphonicPolarWalkSegments(
         end,
         color: getNoteColor(note, config),
         width: strokeWidth,
-        opacity: 0.9,
+        opacity: getNoteOpacity(note, config, 0.9),
         note,
       });
 
@@ -732,4 +847,3 @@ export function mapPolyphonicPolarWalkSegments(
 
   return segments;
 }
-

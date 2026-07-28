@@ -19,7 +19,26 @@ export interface GeometryBuildContext {
   height: number;
 }
 
+function opacityGroups<T extends { opacity: number }>(items: readonly T[]): T[][] {
+  const groups = new Map<string, T[]>();
+  items.forEach((item) => {
+    const key = item.opacity.toFixed(4);
+    const group = groups.get(key);
+    if (group) group.push(item);
+    else groups.set(key, [item]);
+  });
+  return [...groups.values()];
+}
+
 export function buildLines(ctx: GeometryBuildContext, geometry: RenderedGeometry3D): void {
+  opacityGroups(geometry.segments).forEach((segments) => {
+    const layer = { ...geometry, segments };
+    buildLineLayer(ctx, layer, segments[0].opacity);
+    buildLineSlabs(ctx, layer, segments[0].opacity);
+  });
+}
+
+function buildLineLayer(ctx: GeometryBuildContext, geometry: RenderedGeometry3D, opacity: number): void {
   const positions: number[] = [];
   const colors: number[] = [];
   let widthSum = 0;
@@ -45,14 +64,13 @@ export function buildLines(ctx: GeometryBuildContext, geometry: RenderedGeometry
     linewidth: Math.max(2, avgWidth) * 1.5,
     worldUnits: false,
     transparent: true,
-    opacity: 0.95,
+    opacity,
   });
   material.clippingPlanes = [ctx.revealPlane];
   material.resolution.set(ctx.width, ctx.height);
   ctx.lineMaterials.push(material);
 
   ctx.contentGroup.add(new LineSegments2(lineGeometry, material));
-  buildLineSlabs(ctx, geometry);
 }
 
 /**
@@ -61,19 +79,19 @@ export function buildLines(ctx: GeometryBuildContext, geometry: RenderedGeometry
  * slab spans the note's onset→offset on Z (thickness proportional to note duration); a
  * dimmer tail slab over the release fraction gives long notes a gradual fade-out.
  */
-export function buildLineSlabs(ctx: GeometryBuildContext, geometry: RenderedGeometry3D): void {
+export function buildLineSlabs(ctx: GeometryBuildContext, geometry: RenderedGeometry3D, opacity: number): void {
   if (geometry.segments.length === 0) return;
-  buildSlabSet(ctx, geometry, /* tail */ false);
-  buildSlabSet(ctx, geometry, /* tail */ true);
+  buildSlabSet(ctx, geometry, /* tail */ false, opacity);
+  buildSlabSet(ctx, geometry, /* tail */ true, opacity);
 }
 
-export function buildSlabSet(ctx: GeometryBuildContext, geometry: RenderedGeometry3D, tail: boolean): void {
+export function buildSlabSet(ctx: GeometryBuildContext, geometry: RenderedGeometry3D, tail: boolean, opacity: number): void {
   const segs = geometry.segments.filter((seg) => seg.role !== 'gap');
   if (segs.length === 0) return;
   const box = new THREE.BoxGeometry(1, 1, 1);
   const material = new THREE.MeshBasicMaterial({
     transparent: true,
-    opacity: tail ? 0.32 : 0.78,
+    opacity: opacity * (tail ? 0.4 : 0.82),
     vertexColors: false,
     depthWrite: false,
     side: THREE.DoubleSide,
@@ -107,13 +125,17 @@ export function buildSlabSet(ctx: GeometryBuildContext, geometry: RenderedGeomet
 }
 
 export function buildDiscs(ctx: GeometryBuildContext, geometry: RenderedGeometry3D): void {
+  opacityGroups(geometry.discs).forEach((discs) => buildDiscLayer(ctx, { ...geometry, discs }, discs[0].opacity));
+}
+
+function buildDiscLayer(ctx: GeometryBuildContext, geometry: RenderedGeometry3D, opacity: number): void {
   const count = geometry.discs.length;
 
   // Glowing front-facing cap that retains the halo look from the front.
   const capGeometry = new THREE.CircleGeometry(1, 32);
   const capMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
-    opacity: 0.78,
+    opacity,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -128,7 +150,7 @@ export function buildDiscs(ctx: GeometryBuildContext, geometry: RenderedGeometry
   bodyGeometry.rotateX(Math.PI / 2);
   const bodyMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
-    opacity: 0.78,
+    opacity,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -140,7 +162,7 @@ export function buildDiscs(ctx: GeometryBuildContext, geometry: RenderedGeometry
   tailGeometry.rotateX(Math.PI / 2);
   const tailMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
-    opacity: 0.3,
+    opacity: opacity * 0.38,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -151,7 +173,7 @@ export function buildDiscs(ctx: GeometryBuildContext, geometry: RenderedGeometry
   const ringMaterial = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     transparent: true,
-    opacity: 0.6,
+    opacity: opacity * 0.75,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -208,11 +230,15 @@ export function buildDiscs(ctx: GeometryBuildContext, geometry: RenderedGeometry
  * notes remain visible. A dimmer, slightly larger halo sphere gives each note a soft glow.
  */
 export function buildSpheres(ctx: GeometryBuildContext, geometry: RenderedGeometry3D): void {
+  opacityGroups(geometry.discs).forEach((discs) => buildSphereLayer(ctx, { ...geometry, discs }, discs[0].opacity));
+}
+
+function buildSphereLayer(ctx: GeometryBuildContext, geometry: RenderedGeometry3D, opacity: number): void {
   const count = geometry.discs.length;
   const sphereGeometry = new THREE.SphereGeometry(1, 24, 18);
   const coreMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
-    opacity: 0.92,
+    opacity,
     depthWrite: false,
   });
   coreMaterial.clippingPlanes = [ctx.revealPlane];
@@ -220,7 +246,7 @@ export function buildSpheres(ctx: GeometryBuildContext, geometry: RenderedGeomet
 
   const haloMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
-    opacity: 0.22,
+    opacity: opacity * 0.24,
     side: THREE.BackSide,
     depthWrite: false,
   });

@@ -1,19 +1,24 @@
 # AudioVisualizer — Music → Visual Score Art
 
-Last reviewed: 2026-07-26
+Last reviewed: 2026-07-28
 
 This repository was bootstrapped and cloned from the [template-repo-v1](https://github.com/kgrizz-git/template-repo-v1) seed template.
 
 AudioVisualizer parses MIDI music files into deterministic, reproducible geometric artwork and animations driven by explicit pitch, duration, interval, velocity, and voice mappings.
 
 Alongside the 2D SVG-capable modes, the studio includes Three.js 3D line paths, note
-halos, and a piano-roll slab. Drag to orbit, wheel to zoom, right-drag/two-finger pan to
+halos, a piano-roll slab, and voice towers. The radial pitch-spokes mode places voices by
+register and time while making every octave-equivalent pitch parallel and the same color.
+Drag to orbit, wheel to zoom, right-drag/two-finger pan to
 frame the score, choose a now-plane or cumulative playback reveal, and capture the active
 3D view as PNG or a six-second WebM. 3D views are browser raster output; SVG and the CLI
 intentionally remain 2D-only.
 
 The visual language and rule semantics live in [DESIGN.md](DESIGN.md); the stack, data flow,
 offline boundary, CLI, and planned desktop packaging live in [ARCHITECTURE.md](ARCHITECTURE.md).
+For an exact, mode-by-mode and control-by-control mapping reference, see
+[docs/modes.md](docs/modes.md). In the studio, select **Summary** beneath the Compose controls
+to inspect the currently active rule set and values.
 
 ---
 

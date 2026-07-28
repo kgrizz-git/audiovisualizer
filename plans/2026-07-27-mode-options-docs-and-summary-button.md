@@ -26,14 +26,17 @@ Three work streams run in parallel:
 ### A. Docs restructuring
 
 1. **Create `docs/modes.md`** — a focused reference that explains every visual mode
-   (lines, circles, vertical_tone, tonal_time_lines, polar_fan, polar_walk,
-   radial_voice_paths, and 3D variants) and every option (chordLayout, gapPolicy,
-   originMode, pitchHueMode, intervalAngleEnabled, lengthProportionalTo,
-   velocityGlow, constantStrokeWidth, ringFlashes3D, zScale, camera presets,
-   playback cue, auto-zoom, etc.) in detail, with the concrete formulas from the
-   source code. Each mode section has a table of "Musical input → Visual output"
-   plus the relevant parameters and their defaults. This is written for a reader
-   who wants to understand exactly what the image will look like.
+    (lines, circles, vertical_tone, tonal_time_lines, polar_fan, polar_walk,
+    radial_voice_paths, and 3D variants) and every option (chordLayout, gapPolicy,
+    originMode, pitchHueMode, intervalAngleEnabled, lengthProportionalTo,
+    velocityGlow, constantStrokeWidth, ringFlashes3D, zScale, camera presets,
+    playback cue, auto-zoom, etc.) in detail, with the concrete formulas from the
+    source code. Each mode section has a table of "Musical input → Visual output"
+    plus the relevant parameters and their defaults. This is written for a reader
+    who wants to understand exactly what the image will look like.
+
+    The file must cover all **14** `case` branches in `legendContent.ts:21` — one
+    section per mode, no more and no fewer.
 
 2. **Trim DESIGN.md** — remove the detailed mode-by-mode descriptions (they move
     to `docs/modes.md`). Keep the visual grammar table, color system, palette
@@ -56,9 +59,7 @@ Three work streams run in parallel:
 
 ### B. In-app summary button
 
-4. **Add a "Summary" button** in the sidebar, section 02 ("Compose the rule set"),
-   next to the variation selector — a small `ⓘ` or "Summary" button that opens a
-   modal dialog showing the active configuration summary.
+4. **Add a "Summary" button** — append a `<button id="btn-summary" class="btn btn-ghost" type="button" aria-label="Show active configuration summary" title="Summary">Summary</button>` immediately after the `#chord-layout-select` control-item (last element in section 02). This pins the slot explicitly so the implementer does not choose it ad hoc.
 
 5. **Implement the summary modal** — reuse `getLegendContent(config)` from
    `src/core/legend/legendContent.ts` to build the content, since it already
@@ -101,12 +102,12 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
   - **Parameters table** — name, default, range, effect
   - **Formula excerpt** — the key line(s) from source (with file:line reference)
   - **See also** — related modes and options
-- [ ] Write all sections using the template — one section per variation case in `legendContent.ts` (18 cases)
+- [ ] Write all sections using the template — one section per `case` in `legendContent.ts` (14 cases). The 14 modes are: `lines`, `circles`, `vertical_tone`, `tonal_time_lines`, `polar_fan`, `polar_walk`, `radial_voice_paths`, `3d_lines`, `3d_note_halos`, `3d_note_spheres`, `3d_piano_roll`, `3d_polar_fan`, `3d_polar_walk`, `3d_radial_voice_paths`. Each section heading must match the case label exactly (e.g. `## lines`, `## 3d_lines`).
 - [ ] Verify all formulas match the current source (`scoreMapper.ts`, `polyphonicLines.ts`,
   `noteStyle.ts`, `map3d.ts`, `legendContent.ts`)
 - [ ] Verify the doc is reachable from DESIGN.md and README.md via the pointers added in
   Phase 2
-- [ ] Verify `docs/modes.md` contains a section for every mode string in `legendContent.ts`
+- [ ] Verify `docs/modes.md` contains a section heading `## <mode-name>` for each of the 14 `case` literals in `legendContent.ts:21`
 
 ### Phase 2: Restructure DESIGN.md and README.md
 
@@ -122,10 +123,12 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
 
 - [ ] Add summary button element to `index.html` in section 02 with `aria-label="Show active configuration summary"`, `title="Summary"`, and visible focus ring
 - [ ] Add modal HTML structure (reuse `<dialog>` pattern from `library-prompt`)
-- [ ] Wire button click in `app.ts` to open modal with `getLegendContent(config)` output
+- [ ] Wire button click in `app.ts` to open modal with `getLegendContent(config)` output. Render `gapPolicy` values using `legendContent.ts`'s same formatting (`replaceAll('_', ' ')`) so the modal's right column matches `legendContent.ts` output.
 - [ ] Add modal close logic (close button, click-outside, Escape key via
   `dialog.addEventListener('cancel', (e) => { e.preventDefault(); dialog.close(); })`)
+- [ ] Open the modal via `dialog.showModal()` (matching the `library-prompt` idiom in `soundfontLibraryUI.ts:21`) and close via `dialog.close()`
 - [ ] Add modal CSS to `main.css` (frosted glass, responsive, accessible)
+- [ ] Verify `gapPolicy` values render as formatted strings (`lift pen`, not `lift_pen`) to match `legendContent.ts` output on both sides of the modal
 - [ ] Verify modal content updates when config changes (re-render on variation/rule change)
 - [ ] Verify summary button has `aria-label`, visible focus ring, and logical tab order
 - [ ] Verify summary modal does not trap focus — Escape closes it, clicking overlay closes it
@@ -133,19 +136,29 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
 ### Phase 4: Documentation metadata and tracking
 
 - [ ] Update `AGENTS.md` to reference `docs/modes.md`
-- [ ] Add entry to `dev-docs/TO_DO.md`
-- [ ] Update plan status to complete (move to archive after all phases verified)
+- [ ] Add a drift-detection Vitest test (`tests/docs.consistency.test.ts`) that reads every `case '...'` literal from `legendContent.ts` and asserts a matching `## <mode-name>` heading exists in `docs/modes.md`. This turns silent documentation drift into a failing build.
+- [ ] Run a one-shot `rg` sweep across all markdown files to confirm no stale mode lists exist outside `docs/modes.md`, DESIGN.md, and README.md
+- [ ] Resolve open questions by recording defaults in the plan body (listed below)
+- [ ] Update plan `Status:` to complete with completion date
+- [ ] Move plan to `plans/archive/`
+- [ ] Add entry to `CHANGELOG.md` (user-facing: docs, summary button) or `CHANGELOG.dev.md` (internal: doc restructuring)
+- [ ] Remove the completed item from `dev-docs/TO_DO.md`
 
 ## Verification
 
 - [ ] `npm run validate` passes (type-check, tests, build)
-- [ ] `docs/modes.md` contains a section for every mode string in `legendContent.ts` (18 cases)
+- [ ] `docs/modes.md` contains a section heading `## <mode-name>` for each of the 14 `case` literals in `legendContent.ts` — gate enforceable by `tests/docs.consistency.test.ts`
 - [ ] No broken links: all `docs/modes.md` references in DESIGN.md and README.md resolve
 - [ ] Summary modal opens from the button and shows correct content for each mode
 - [ ] Summary modal closes via close button, click-outside, and Escape key
 - [ ] Summary button has `aria-label`, visible focus ring, and logical tab order in sidebar
 - [ ] Summary modal does not trap focus — Escape and overlay click both close it
 - [ ] Summary modal content updates when user changes variation selector
+- [ ] Modal reuses `--ink`, `--line`, `--muted` design tokens (matches `library-prompt`)
+- [ ] Modal use `showModal()` / `close()` idiom from `soundfontLibraryUI.ts`
+- [ ] Numeric `RuleConfig` values render in the modal alongside legend lines (two-column layout)
+- [ ] `gapPolicy` values shown as formatted strings (`lift pen`, not `lift_pen`) to match `legendContent.ts` output
+- [ ] No other markdown file in the repo carries a stale mode list (one-shot `rg` sweep during Phase 4)
 - [ ] DESIGN.md trims only mode sections derivable from source; aesthetic rationale sections preserved
 - [ ] README.md "How to read the summary" callout is accurate to the current modal behavior
 - [ ] Modal styling is consistent with existing `--panel` and `--ink` design tokens
@@ -157,21 +170,18 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
 - [ ] Add entry to `CHANGELOG.md` (user-facing: docs, summary button) or `CHANGELOG.dev.md` (internal: doc restructuring)
 - [ ] Remove the completed item from `dev-docs/TO_DO.md`
 
-## Open questions
+## Open questions — resolved
 
-- [ ] Should the summary modal include the full legend swatches or just the rule lines?
-  (Default: include both, matching the SVG legend style.)
-- [ ] Should the modal show the exact numeric values for sliders (e.g., `angleScale: 180`,
-  `lengthScale: 40`) or only the human-readable descriptions? (Default: both —
-  `legendContent.ts` gives human-readable lines; slider values can be appended from
-  `RuleConfig`.)
-- [ ] Should `docs/modes.md` be listed in a top-level docs index or is the `DESIGN.md`
-  pointer sufficient? (Default: no separate index; DESIGN.md and README.md are the entry points.)
+All three defaults are locked in and recorded here before implementation:
+
+1. **Swatches vs. rule lines?** → Both (matches SVG legend). Strikethrough confirmed.
+2. **Numeric values alongside descriptions?** → Both (two-column layout). Left column = legend lines; right column = key/value list of the numeric `RuleConfig` fields that affect the active variation (`angleScale`, `lengthScale`, `strokeWidthBase`, `transposeSemitones`, `zScale` where applicable). `gapPolicy` values shown as formatted strings (`lift pen`, not `lift_pen`) to match `legendContent.ts` output. Strikethrough confirmed.
+3. **Separate docs index vs. DESIGN.md pointer?** → No separate index; DESIGN.md and README.md are the entry points. Strikethrough confirmed.
 
 ## Risks
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| `docs/modes.md` becomes stale when options change | medium | high | Keep `legendContent.ts` as the single source of truth for the summary modal; add a content template per mode to reduce drift |
+| `docs/modes.md` becomes stale when options change | medium | high | Keep `legendContent.ts` as the single source of truth; add a content template per mode; enforce via `tests/docs.consistency.test.ts` (drift-detection test in Phase 4) |
 | Modal CSS conflicts with existing HUD elements | low | low | Use a dedicated `.modal-overlay` class scoped to the dialog; test on both mobile and desktop viewports |
-| Summary button adds visual clutter to section 02 | low | low | Use a small `ⓘ` icon button at the end of the section header; modal occupies overlay space, not inline |
+| Summary button adds visual clutter to section 02 | low | low | Append the button after the last control in section 02 (`#chord-layout-select`); modal occupies overlay space, not inline |

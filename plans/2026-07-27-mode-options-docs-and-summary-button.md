@@ -123,8 +123,6 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
 - [ ] Add summary button element to `index.html` in section 02 with `aria-label="Show active configuration summary"`, `title="Summary"`, and visible focus ring
 - [ ] Add modal HTML structure (reuse `<dialog>` pattern from `library-prompt`)
 - [ ] Wire button click in `app.ts` to open modal with `getLegendContent(config)` output
-- [ ] Add modal HTML structure (reuse `<dialog>` pattern from `library-prompt`)
-- [ ] Wire button click in `app.ts` to open modal with `getLegendContent(config)` output
 - [ ] Add modal close logic (close button, click-outside, Escape key via
   `dialog.addEventListener('cancel', (e) => { e.preventDefault(); dialog.close(); })`)
 - [ ] Add modal CSS to `main.css` (frosted glass, responsive, accessible)

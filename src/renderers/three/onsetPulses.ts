@@ -18,6 +18,8 @@ export class OnsetPulseController {
     coords: OnsetPulseWorldCoords,
   ): void {
     if (!geometry || previous === null || current < previous) return;
+    // Default-on: only an explicit false disables the transient onset rings.
+    if (geometry.config.ringFlashes3D === false) return;
     const notes = [
       ...geometry.segments.map((segment) => ({ note: segment.note, x: segment.startX, y: segment.startY, z: segment.startZ, color: segment.color })),
       ...geometry.discs.map((disc) => ({ note: disc.note, x: disc.cx, y: disc.cy, z: disc.cz, color: disc.fillColor })),

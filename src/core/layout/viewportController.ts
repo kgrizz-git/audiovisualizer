@@ -36,6 +36,7 @@ export function calculateWindowSeconds(
   return viewport.autoZoomWindowBars * barSeconds;
 }
 
+// eslint-disable-next-line complexity -- grandfathered (26); refactor when next touched
 export function calculateActiveNotesBoundingBox(
   geometry: RenderedGeometry,
   currentTime: number,

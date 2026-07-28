@@ -8,6 +8,13 @@ Last reviewed: 2026-07-24
 ## Unreleased
 
 ### Changed
+- ESLint `complexity` rule escalated from `warn` to `error` at 15, making the policy's
+  hard cyclomatic-complexity cap a blocking lint/CI gate. Seven pre-existing offenders
+  (max 37) are grandfathered with inline `eslint-disable-next-line complexity` comments
+  tagged for refactor when next touched. Updated `policies/file-size-and-counts.md` to
+  reflect the hard gate and removed the lizard usage recipe in favor of a note on why
+  lizard is not used (TS-only codebase; ESLint covers it without a Python dependency);
+  annotated the lizard row in `inventory/security-quality.md` accordingly.
 - Refactored oversized files to pass the 800-line hook: extracted SoundFont library UI (`src/ui/soundfontLibraryUI.ts`), audio voice options row builder (`src/ui/voiceOptionsUI.ts`), 3D geometry builders (`src/renderers/three/geometryBuilders.ts`), onset pulses (`src/renderers/three/onsetPulses.ts`), and scene atmosphere (`src/renderers/three/sceneAtmosphere.ts`) into sibling modules. Both `src/ui/app.ts` (714 lines) and `src/renderers/three/ThreeDRenderer.ts` (499 lines) now pass comfortably without exemptions.
 
 ### Added

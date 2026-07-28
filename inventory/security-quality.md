@@ -144,7 +144,7 @@ syft . -o spdx-json > sbom.json && grype sbom:sbom.json
 | **ruff** | Python lint + format (replaces flake8, isort, black, pyupgrade) |
 | **basedpyright** / pyright | Python type checking |
 | **radon** | Python cyclomatic complexity + maintainability index |
-| **lizard** | Multi-language cyclomatic complexity and function length analysis |
+| **lizard** | Multi-language complexity analysis — not used here; ESLint `complexity` gates our TS-only code without adding a Python dep |
 | **vulture** | Python dead code detection |
 | **ESLint** + TypeScript | JS/TS lint + types |
 | **Prettier** / biome | JS/TS/CSS formatting |

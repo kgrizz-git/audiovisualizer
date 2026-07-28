@@ -43,6 +43,7 @@ Options:
   --help                                 Show this help
 `;
 
+// eslint-disable-next-line complexity -- grandfathered (22); refactor when next touched
 export function parseCli(argv: string[]): CliOptions | null {
   const values = new Map<string, string>();
   const flags = new Set<string>();

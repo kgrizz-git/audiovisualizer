@@ -29,6 +29,7 @@ export class MidiPreviewPlayer {
     this.context = context ?? null;
   }
 
+  // eslint-disable-next-line complexity -- grandfathered (16); refactor when next touched
   public async start(
     score: Score,
     offsetSeconds: number,

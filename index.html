@@ -62,7 +62,7 @@
           <div class="control-item"><label for="zscale-range">Z / time stretch <output id="val-zscale">100</output></label><input id="zscale-range" type="range" min="10" max="1200" step="5" value="100" /></div>
           <div class="control-item"><label for="bloom-range">Glow <output id="val-bloom">1.4</output></label><input id="bloom-range" type="range" min="0" max="2.5" step="0.1" value="1.4" /></div>
           <div class="control-item"><label for="playback-cue-select">Playback cue</label><select id="playback-cue-select"><option value="now_plane">Now-plane</option><option value="reveal" selected>Reveal through time</option></select></div>
-          <div class="control-grid"><label class="toggle"><input id="threed-autofollow-toggle" type="checkbox"><span>Auto-follow</span></label><label class="toggle"><input id="threed-chase-toggle" type="checkbox"><span>Chase camera</span></label><label class="toggle"><input id="threed-rotate-toggle" type="checkbox"><span>Idle turntable</span></label></div>
+          <div class="control-grid"><label class="toggle"><input id="threed-autofollow-toggle" type="checkbox"><span>Auto-follow</span></label><label class="toggle"><input id="threed-chase-toggle" type="checkbox"><span>Chase camera</span></label><label class="toggle"><input id="threed-rotate-toggle" type="checkbox"><span>Idle turntable</span></label><label class="toggle"><input id="ring-flash-toggle" type="checkbox" checked><span>Onset ring flashes</span></label></div>
           <button type="button" class="btn" id="btn-export-webm">Capture 6s WebM</button>
           <p class="hint">Drag to orbit, wheel to zoom, and right-drag (or two fingers) to pan. Manual navigation suspends auto-follow.</p>
         </div>
@@ -70,7 +70,7 @@
         <div class="control-item"><label for="hue-mode-select">Color source</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option><option value="voice_palette">Voice palette</option></select></div>
         <div class="control-item"><label for="transpose-range">Visual transpose <output id="val-transpose">0 st</output></label><input id="transpose-range" type="range" min="-24" max="24" step="1" value="0" /></div>
         <div class="control-item"><label for="background-select">Canvas background</label><select id="background-select"><option value="black">Black</option><option value="average">Average pitch color</option></select></div>
-        <div class="control-grid"><label class="toggle"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label></div>
+        <div class="control-grid"><label class="toggle"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label><label class="toggle"><input id="velocity-glow-toggle" type="checkbox"><span>Velocity glow</span></label><label class="toggle"><input id="constant-stroke-toggle" type="checkbox"><span>Uniform stroke</span></label></div>
         <div class="control-item"><label for="gap-policy-select">Rest treatment</label><select id="gap-policy-select"><option value="lift_pen">Lift pen</option><option value="faint_line">Faint connection</option><option value="ghost">Ghost trace</option></select></div>
         <div class="control-item">
           <label for="chord-layout-select">Chord layout</label>
@@ -83,6 +83,7 @@
 
       <section class="control-group"><h2><span>03</span> Refine</h2>
         <div class="control-item"><label for="length-scale">Duration scale <output id="val-length">40</output></label><input id="length-scale" type="range" min="10" max="150" value="40" /></div>
+        <div class="control-item"><label for="length-source-select">Length source</label><select id="length-source-select"><option value="duration" selected>Duration</option><option value="velocity">Velocity</option></select></div>
         <div class="control-item"><label for="angle-scale">Turn per octave <output id="val-angle">180°/oct (15°/semitone)</output></label><input id="angle-scale" type="range" min="0" max="360" step="15" value="180" /></div>
         <div class="control-item"><label for="spiral-bias">Spiral bias <output id="val-spiral">0°</output></label><input id="spiral-bias" type="range" min="-20" max="20" value="0" /></div>
         <div class="control-item"><label for="stroke-base">Base weight <output id="val-stroke">2px</output></label><input id="stroke-base" type="range" min="1" max="10" value="2" /></div>

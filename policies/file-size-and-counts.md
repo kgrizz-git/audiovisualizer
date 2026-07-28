@@ -1,6 +1,6 @@
 # Policy: File Size & Counts ("file life counts")
 
-Last reviewed: 2026-07-09
+Last reviewed: 2026-07-27
 Enforced by: [`hooks/scripts/check_file_size.py`](../hooks/scripts/check_file_size.py)
 
 ## Why
@@ -17,7 +17,7 @@ variables (see [`hooks/README.md`](../hooks/README.md)) or the script defaults.
 |---|---|---|
 | Max lines per source file | **600** (soft warn), **800** (hard) | soft→hard gate |
 | Max lines per function/method | 60 (soft), 100 (hard) | advisory → soft gate |
-| Max cyclomatic complexity per function | 10 (soft), 15 (hard) | advisory |
+| Max cyclomatic complexity per function | 10 (soft), 15 (hard) | hard gate (ESLint error at 15) |
 | Max bytes per committed file (non-binary) | 500 KB | hard gate |
 | Max files per directory (excl. generated) | 40 | advisory |
 | Disallow committing large binaries | > 5 MB | hard gate (use Git LFS / release assets) |
@@ -33,8 +33,10 @@ variables (see [`hooks/README.md`](../hooks/README.md)) or the script defaults.
 
 ## Function size & complexity
 
-Function length and cyclomatic complexity are enforced via ESLint warnings for JS/TS
-projects (see `eslint.config.js`). Other languages can use the tools below.
+Cyclomatic complexity is enforced as an ESLint **error** at the hard cap (15); function
+length stays a warning (see `eslint.config.js`). Pre-existing offenders are grandfathered
+with an inline `eslint-disable-next-line complexity -- grandfathered (<n>)` comment and
+should be refactored when next touched. Python tooling below applies to hook scripts.
 
 **Python — check with radon or ruff:**
 
@@ -47,18 +49,15 @@ radon cc . --min C --show-complexity   # flag C-and-above
 ruff check --select C901,PLR0912,PLR0915 .
 ```
 
-**Polyglot — check with lizard:**
-
-```bash
-pip install lizard
-lizard . --CCN 10 --length 60
-```
+We do **not** use lizard: this is a TypeScript-only codebase where ESLint already gates
+complexity in lint/CI, and lizard would add a Python dependency to the JS toolchain for
+no extra coverage.
 
 **JavaScript / TypeScript — ESLint:**
 
 ```json
-"complexity": ["warn", 10],
-"max-lines-per-function": ["warn", {"max": 60}]
+"complexity": ["error", 15],
+"max-lines-per-function": ["warn", {"max": 80}]
 ```
 
 **Rationale:** functions over 60 lines usually have more than one responsibility. High

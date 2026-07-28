@@ -20,7 +20,7 @@ import {
   GeometryDisc3D,
   GeometryBox3D,
 } from '../types.js';
-import { mapScoreToGeometry, getNoteColor, getVisualPitch } from './scoreMapper.js';
+import { mapScoreToGeometry, getNoteColor, getVisualPitch, getVisualDuration } from './scoreMapper.js';
 import { fitGeometryToCanvas } from '../layout/fitGeometry.js';
 
 /** Maps a 3D variation to the 2D variation whose XY geometry it reuses.
@@ -52,7 +52,10 @@ export function liftGeometryTo3D(
   for (const path of geometry.voicePaths) {
     for (const segment of path.segments) {
       const startZ = segment.note.onset * zScale;
-      const endZ = (segment.note.onset + segment.note.duration) * zScale;
+      // Z extent honors the visual duration so velocity-proportional length applies in depth
+      // too; gap segments are rests and stay time-true.
+      const visualDuration = segment.role === 'gap' ? segment.note.duration : getVisualDuration(segment.note, config);
+      const endZ = (segment.note.onset + visualDuration) * zScale;
       maxZ = Math.max(maxZ, startZ, endZ);
       segments.push({
         startX: segment.start.x,
@@ -71,7 +74,7 @@ export function liftGeometryTo3D(
     }
     for (const circle of path.circles) {
       const cz = circle.note.onset * zScale;
-      const czExtent = (circle.note.duration * zScale) / 2;
+      const czExtent = (getVisualDuration(circle.note, config) * zScale) / 2;
       maxZ = Math.max(maxZ, cz, cz + czExtent);
       discs.push({
         cx: circle.center.x,

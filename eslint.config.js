@@ -8,10 +8,11 @@ export default tseslint.config(
     // Only lint project source and test files
     files: ["src/**/*.ts", "tests/**/*.ts"],
     rules: {
-      // ── Complexity gates (advisory → warn) ──────────────────────────────
+      // ── Complexity gates ─────────────────────────────────────────────────
       // Policy: file-size-and-counts.md — 10 soft / 15 hard.
-      // Set to warn at 15 to flag truly complex functions without blocking.
-      "complexity": ["warn", 15],
+      // Error at the hard cap; pre-existing offenders carry an inline
+      // eslint-disable with a grandfathered marker until refactored.
+      "complexity": ["error", 15],
 
       // Policy: 60 soft / 100 hard lines per function.
       // Warn at 80 (middle ground); skip blanks and comments.

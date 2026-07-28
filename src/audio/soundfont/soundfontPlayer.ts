@@ -65,6 +65,7 @@ export class SoundfontPlayer {
     this.createFallback = deps.createFallback ?? ((ctx) => new MidiPreviewPlayer(ctx));
   }
 
+  // eslint-disable-next-line complexity -- grandfathered (37); refactor when next touched
   async start(
     score: Score,
     offsetSeconds: number,

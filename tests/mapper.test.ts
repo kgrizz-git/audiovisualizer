@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { generateDemoScore } from '../src/core/midi/parser.js';
-import { getAverageScoreBackground, getDominantScoreAccent, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor, computeRadialVoiceAngles, getPercussionColor } from '../src/core/mapper/scoreMapper.js';
+import { getAverageScoreBackground, getDominantScoreAccent, getTrackAverageAccents, getVisualPitch, mapScoreToGeometry, DEFAULT_CONFIG, getNoteColor, computeRadialVoiceAngles, getPercussionColor, modulateColorByVelocity } from '../src/core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../src/core/layout/fitGeometry.js';
-import { NoteEvent, Score } from '../src/core/types.js';
+import { NoteEvent, RuleConfig, Score } from '../src/core/types.js';
 
 describe('Score Mapper Unit Tests', () => {
   it('calculates deterministic pitch class HSL colors', () => {
@@ -503,6 +503,27 @@ describe('radial_voice_paths mapping', () => {
       expect(circle.radius).toBeGreaterThan(0);
     });
 
+    it('draws thin rings whose thickness tracks a 1/32→1/16 note scaled by velocity', () => {
+      const score = rvScore([drumTrack([rvNote('loud', 36, 1, 0.1, 127), rvNote('soft', 38, 2, 0.1, 1)])]);
+      const [loud, soft] = mapScoreToGeometry(score, config, 800, 800).voicePaths[0].circles;
+      const maxRadius = 800 * 0.45;
+      const secondsPerBeat = 60 / 120;
+      const sixteenthSec = secondsPerBeat / 4;
+      const thirtySecondSec = secondsPerBeat / 8;
+      const expectedFor = (velocity: number) => {
+        const v = Math.min(127, Math.max(0, velocity)) / 127;
+        const sec = thirtySecondSec + v * (sixteenthSec - thirtySecondSec);
+        return Math.max(0.4, (sec / 4) * maxRadius);
+      };
+      expect(loud.strokeWidth).toBeCloseTo(expectedFor(127));
+      expect(soft.strokeWidth).toBeCloseTo(expectedFor(1));
+      const expectedOpacityFor = (velocity: number) => 0.5 + 0.35 * (Math.min(127, Math.max(0, velocity)) / 127);
+      expect(loud.opacity).toBeCloseTo(expectedOpacityFor(127));
+      expect(soft.opacity).toBeCloseTo(expectedOpacityFor(1));
+      // Thickness scales with velocity (loud > soft) and stays within a 1/32 → 1/16 band.
+      expect(loud.strokeWidth).toBeGreaterThan(soft.strokeWidth);
+    });
+
     it('colors rings by General MIDI percussion family with a grey fallback', () => {
       expect(getPercussionColor(36)).toBe('hsl(0, 85%, 60%)'); // kick — red
       expect(getPercussionColor(38)).toBe('hsl(30, 85%, 60%)'); // snare — orange
@@ -526,5 +547,103 @@ describe('radial_voice_paths mapping', () => {
     const geo1 = mapScoreToGeometry(score, config, 800, 800);
     const geo2 = mapScoreToGeometry(score, config, 800, 800);
     expect(geo1).toEqual(geo2);
+  });
+});
+
+describe('Visual property options', () => {
+  const fixtureNote = (id: string, velocity: number, onset: number): NoteEvent => ({
+    id, pitch: 60, onset, duration: 1, velocity, voice: 0, pitchClass: 0,
+  });
+  const scoreWith = (notes: NoteEvent[]): Score => ({
+    title: 'Options fixture', duration: 4, bpm: 120,
+    tracks: [{ name: 'Lead', channel: 0, program: 0, instrumentName: 'Piano', isPercussion: false, notes }],
+  });
+  const segmentLength = (segment: { start: { x: number; y: number }; end: { x: number; y: number } }): number =>
+    Math.hypot(segment.end.x - segment.start.x, segment.end.y - segment.start.y);
+
+  describe('lengthProportionalTo', () => {
+    it('scales segment length with velocity when set to velocity', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, chordLayout: 'chain', lengthProportionalTo: 'velocity' };
+      const geometry = mapScoreToGeometry(scoreWith([fixtureNote('loud', 127, 0), fixtureNote('half', 64, 2)]), config, 800, 800);
+      const [loud, half] = geometry.voicePaths[0].segments.filter((segment) => segment.role !== 'gap');
+      expect(segmentLength(loud)).toBeCloseTo(1 * config.lengthScale);
+      expect(segmentLength(half)).toBeCloseTo((64 / 127) * config.lengthScale);
+    });
+
+    it('keeps very quiet notes visible via the velocityLengthMin floor', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, chordLayout: 'chain', lengthProportionalTo: 'velocity', minSegmentLength: 0 };
+      const geometry = mapScoreToGeometry(scoreWith([fixtureNote('quiet', 1, 0)]), config, 800, 800);
+      expect(segmentLength(geometry.voicePaths[0].segments[0])).toBeCloseTo(config.velocityLengthMin * config.lengthScale);
+    });
+
+    it('applies velocity length in the polyphonic line layout', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, lengthProportionalTo: 'velocity' };
+      const geometry = mapScoreToGeometry(scoreWith([fixtureNote('half', 64, 0)]), config, 800, 800);
+      expect(segmentLength(geometry.voicePaths[0].segments[0])).toBeCloseTo((64 / 127) * config.lengthScale);
+    });
+
+    it('applies velocity length in the polyphonic polar walk', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, variation: 'polar_walk', lengthProportionalTo: 'velocity' };
+      const geometry = mapScoreToGeometry(scoreWith([fixtureNote('half', 64, 0)]), config, 800, 800);
+      expect(segmentLength(geometry.voicePaths[0].segments[0])).toBeCloseTo((64 / 127) * config.lengthScale);
+    });
+
+    it('defaults to duration-proportional length (no regression)', () => {
+      const geometry = mapScoreToGeometry(scoreWith([fixtureNote('quiet', 1, 0)]), { ...DEFAULT_CONFIG, chordLayout: 'chain' }, 800, 800);
+      expect(segmentLength(geometry.voicePaths[0].segments[0])).toBeCloseTo(DEFAULT_CONFIG.lengthScale);
+    });
+  });
+
+  describe('velocityGlow', () => {
+    const noteAt = (velocity: number): NoteEvent => fixtureNote('n', velocity, 0);
+
+    it('scales HSL saturation with velocity when enabled', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, velocityGlow: true };
+      expect(getNoteColor(noteAt(127), config)).toBe('hsl(0, 100%, 60%)');
+      expect(getNoteColor(noteAt(0), config)).toBe('hsl(0, 45%, 60%)');
+    });
+
+    it('keeps the fixed 85% saturation when disabled', () => {
+      expect(getNoteColor(noteAt(127), DEFAULT_CONFIG)).toBe('hsl(0, 85%, 60%)');
+    });
+
+    it('gives identical velocities identical colors', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, velocityGlow: true };
+      expect(getNoteColor(fixtureNote('a', 96, 0), config)).toBe(getNoteColor(fixtureNote('b', 96, 2), config));
+    });
+
+    it('modulateColorByVelocity rewrites hsl saturation and passes other colors through', () => {
+      expect(modulateColorByVelocity('hsl(120, 85%, 60%)', 127)).toBe('hsl(120, 100%, 60%)');
+      expect(modulateColorByVelocity('#94a3b8', 127)).toBe('#94a3b8');
+    });
+
+    it('applies velocity saturation in the polyphonic line layout', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, velocityGlow: true };
+      const geometry = mapScoreToGeometry(scoreWith([fixtureNote('n', 127, 0)]), config, 800, 800);
+      expect(geometry.voicePaths[0].segments[0].color).toBe('hsl(0, 100%, 60%)');
+    });
+  });
+
+  describe('constantStrokeWidth', () => {
+    it('uses the base width for every note when enabled', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, chordLayout: 'chain', constantStrokeWidth: true };
+      const geometry = mapScoreToGeometry(scoreWith([fixtureNote('loud', 127, 0), fixtureNote('soft', 10, 2)]), config, 800, 800);
+      const widths = geometry.voicePaths[0].segments.filter((segment) => segment.role !== 'gap').map((segment) => segment.width);
+      expect(widths).toEqual([config.strokeWidthBase, config.strokeWidthBase]);
+    });
+
+    it('keeps uniform widths across polyphonic chord fans', () => {
+      const config: RuleConfig = { ...DEFAULT_CONFIG, constantStrokeWidth: true };
+      const chord = [fixtureNote('a', 127, 0), { ...fixtureNote('b', 30, 0), pitch: 64, pitchClass: 4 }];
+      const geometry = mapScoreToGeometry(scoreWith(chord), config, 800, 800);
+      const widths = geometry.voicePaths[0].segments.map((segment) => segment.width);
+      expect(new Set(widths).size).toBe(1);
+      expect(widths[0]).toBe(config.strokeWidthBase);
+    });
+
+    it('scales width with velocity by default (no regression)', () => {
+      const geometry = mapScoreToGeometry(scoreWith([fixtureNote('soft', 10, 0)]), { ...DEFAULT_CONFIG, chordLayout: 'chain' }, 800, 800);
+      expect(geometry.voicePaths[0].segments[0].width).toBeCloseTo(DEFAULT_CONFIG.strokeWidthBase + (10 / 127) * DEFAULT_CONFIG.strokeWidthScale);
+    });
   });
 });

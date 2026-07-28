@@ -27,6 +27,7 @@ export function is3DVariation(variation: Variation): boolean {
   );
 }
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
+export type LengthBasis = 'duration' | 'velocity';
 export type PitchHueMode = 'pitch_class' | 'register_spiral' | 'voice_palette';
 export type GapPolicy = 'lift_pen' | 'faint_line' | 'ghost';
 export type ChordLayout = 'chain' | 'polyphony';
@@ -85,6 +86,16 @@ export interface RuleConfig {
   voiceFilter: number[] | null; // null means include every voice
   timeLineDensity: number; // sampled bands per output pixel row
   zScale: number; // 3D time-depth factor: total Z depth ≈ canvas width × zScale / 100
+  /** When 'velocity', line/halo length derives from velocity-weighted duration instead of raw duration. */
+  lengthProportionalTo: LengthBasis;
+  /** Minimum visual duration in seconds under velocity-proportional length, so quiet notes stay visible. */
+  velocityLengthMin: number;
+  /** Scale color saturation (and 2D canvas shadow glow) with note velocity. */
+  velocityGlow: boolean;
+  /** Draw every note at strokeWidthBase, skipping velocity-based width scaling. */
+  constantStrokeWidth: boolean;
+  /** Spawn transient onset ring flashes in the 3D renderer during playback. */
+  ringFlashes3D: boolean;
 }
 
 export interface Point2D {

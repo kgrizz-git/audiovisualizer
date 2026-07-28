@@ -397,3 +397,28 @@ describe('liftGeometryTo3D', () => {
     expect(lifted.segments[0].opacity).toBe(seg2d.opacity);
   });
 });
+
+describe('velocity-proportional length in 3D', () => {
+  it('shortens segment Z extent by velocity when lengthProportionalTo is velocity', () => {
+    const config: RuleConfig = { ...linesConfig, chordLayout: 'chain', lengthProportionalTo: 'velocity' };
+    const score = scoreOf([note({ id: 'a', pitch: 60, onset: 0.5, duration: 2, velocity: 64 })]);
+    const geo = map3DGeometry(score, config, 800, 800);
+    const seg = geo.segments[0];
+    const visualDuration = (64 / 127) * 2;
+    expect(seg.startZ).toBeCloseTo(0.5 * geo.zScale);
+    expect(seg.endZ).toBeCloseTo((0.5 + visualDuration) * geo.zScale);
+  });
+
+  it('floors the halo Z extent for near-silent notes via velocityLengthMin', () => {
+    const config: RuleConfig = { ...halosConfig, lengthProportionalTo: 'velocity' };
+    const score = scoreOf([note({ id: 'a', pitch: 60, onset: 0, duration: 2, velocity: 1 })]);
+    const geo = map3DGeometry(score, config, 800, 800);
+    expect(geo.discs[0].czExtent).toBeCloseTo((config.velocityLengthMin * geo.zScale) / 2);
+  });
+
+  it('keeps raw duration Z extents by default (no regression)', () => {
+    const score = scoreOf([note({ id: 'a', pitch: 60, onset: 0.5, duration: 2, velocity: 64 })]);
+    const geo = map3DGeometry(score, { ...linesConfig, chordLayout: 'chain' }, 800, 800);
+    expect(geo.segments[0].endZ).toBeCloseTo(2.5 * geo.zScale);
+  });
+});

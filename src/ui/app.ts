@@ -3,7 +3,7 @@ import { DEFAULT_CONFIG, getAverageScoreBackground, getDominantScoreAccent, mapS
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
-import { AutoZoomWindowMode, CameraPreset3D, ChordLayout, DEFAULT_VIEWPORT_3D, GapPolicy, is3DVariation, OriginMode, PitchHueMode, PlaybackCue3D, RuleConfig, Score, Variation, ViewportTransform, ViewportTransform3D } from '../core/types.js';
+import { AutoZoomWindowMode, CameraPreset3D, ChordLayout, DEFAULT_VIEWPORT_3D, GapPolicy, is3DVariation, LengthBasis, OriginMode, PitchHueMode, PlaybackCue3D, RuleConfig, Score, Variation, ViewportTransform, ViewportTransform3D } from '../core/types.js';
 import { map3DGeometry } from '../core/mapper/map3d.js';
 import type { I3DRenderer } from '../renderers/three/I3DRenderer.js';
 import { defaultVoiceSettings, VoicePlaybackSettings } from '../audio/midiPreviewPlayer.js';
@@ -18,7 +18,7 @@ import { AUTO_ZOOM_BAR_LABELS, AUTO_ZOOM_BAR_STEPS, AUTO_ZOOM_SECOND_STEPS, View
 import { ViewportGestures } from './viewportGestures.js';
 import { clearLibraryCache, dismissLibraryPrompt, downloadLibrary, LibraryUIContext, maybeShowLibraryPrompt, refreshCacheStatus } from './soundfontLibraryUI.js';
 import { applyBadge, buildAudioVoiceRow, VoiceRowContext } from './voiceOptionsUI.js';
-import { VARIATIONS, pickRandom } from './launchRandomizer.js';
+import { VARIATIONS, pickRandom, randomVisualOptions } from './launchRandomizer.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
@@ -78,6 +78,14 @@ export class AudioVisualizerApp {
 
     this.currentConfig.variation = randomVariation;
     this.element<HTMLSelectElement>('variation-select').value = randomVariation;
+
+    const visualOptions = randomVisualOptions(Math.random);
+    Object.assign(this.currentConfig, visualOptions);
+    this.element<HTMLSelectElement>('length-source-select').value = visualOptions.lengthProportionalTo;
+    this.element<HTMLInputElement>('velocity-glow-toggle').checked = visualOptions.velocityGlow;
+    this.element<HTMLInputElement>('constant-stroke-toggle').checked = visualOptions.constantStrokeWidth;
+    this.element<HTMLInputElement>('ring-flash-toggle').checked = visualOptions.ringFlashes3D;
+
     this.updateCanvasMode();
     this.updateScoreUi();
     this.render();
@@ -138,6 +146,10 @@ export class AudioVisualizerApp {
     this.select<ChordLayout>('chord-layout-select', (value) => { this.currentConfig.chordLayout = value; });
     this.element<HTMLInputElement>('interval-angle-toggle').addEventListener('change', (event) => { this.currentConfig.intervalAngleEnabled = (event.target as HTMLInputElement).checked; this.render(); });
     this.element<HTMLInputElement>('quantize-toggle').addEventListener('change', (event) => { this.currentConfig.quantizeOnset = (event.target as HTMLInputElement).checked; this.render(); });
+    this.element<HTMLInputElement>('velocity-glow-toggle').addEventListener('change', (event) => { this.currentConfig.velocityGlow = (event.target as HTMLInputElement).checked; this.render(); });
+    this.element<HTMLInputElement>('constant-stroke-toggle').addEventListener('change', (event) => { this.currentConfig.constantStrokeWidth = (event.target as HTMLInputElement).checked; this.render(); });
+    this.element<HTMLInputElement>('ring-flash-toggle').addEventListener('change', (event) => { this.currentConfig.ringFlashes3D = (event.target as HTMLInputElement).checked; this.render(); });
+    this.select<LengthBasis>('length-source-select', (value) => { this.currentConfig.lengthProportionalTo = value; });
     this.range('length-scale', 'val-length', (value) => { this.currentConfig.lengthScale = value; }, '');
     this.range('angle-scale', 'val-angle', (value) => { this.currentConfig.angleScale = value; }, '', (value) => {
       const perSemitone = value / 12;

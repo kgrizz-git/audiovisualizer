@@ -1,4 +1,4 @@
-import { GeometryBand, GeometrySegment, RenderedGeometry, ViewportTransform, DEFAULT_VIEWPORT } from '../../core/types.js';
+import { GeometryBand, GeometryCircle, GeometrySegment, RenderedGeometry, RuleConfig, ViewportTransform, DEFAULT_VIEWPORT } from '../../core/types.js';
 import { getLegendContent } from '../../core/legend/legendContent.js';
 
 export interface CanvasRenderOptions {
@@ -44,26 +44,19 @@ export class CanvasRenderer {
 
     geometry.bands.forEach((band) => this.drawBand(band, width, time));
 
+    // Draw percussion rings first so pitched note lines render on top of them.
     voicePaths.forEach((voicePath) => {
-      voicePath.segments.forEach((segment) => this.drawSegment(segment, time, geometry.config.variation));
       voicePath.circles.forEach((circle) => {
-        if (circle.note.onset > time) return;
-        const glow = geometry.config.variation === 'circles';
-        this.ctx.beginPath();
-        this.ctx.arc(circle.center.x, circle.center.y, circle.radius, 0, Math.PI * 2);
-        this.ctx.globalAlpha = circle.opacity;
-        this.ctx.shadowColor = glow ? circle.fillColor : 'transparent';
-        this.ctx.shadowBlur = glow ? Math.max(8, circle.radius * 0.55) : 0;
-        // Percussion rings use fillColor 'none' (invalid for canvas): stroke-only.
-        if (circle.fillColor !== 'none') {
-          this.ctx.fillStyle = circle.fillColor;
-          this.ctx.fill();
-        }
-        this.ctx.strokeStyle = circle.strokeColor;
-        this.ctx.lineWidth = circle.strokeWidth;
-        this.ctx.stroke();
-        this.ctx.shadowBlur = 0;
-        this.ctx.shadowColor = 'transparent';
+        if (!circle.isPercussion || circle.note.onset > time) return;
+        this.drawCircle(circle, false, geometry.config);
+      });
+    });
+
+    voicePaths.forEach((voicePath) => {
+      voicePath.segments.forEach((segment) => this.drawSegment(segment, time, geometry.config));
+      voicePath.circles.forEach((circle) => {
+        if (circle.isPercussion || circle.note.onset > time) return;
+        this.drawCircle(circle, true, geometry.config);
       });
     });
     this.ctx.restore();
@@ -86,7 +79,25 @@ export class CanvasRenderer {
     }, 'image/png');
   }
 
-  private drawSegment(segment: GeometrySegment, time: number, variation: RenderedGeometry['config']['variation']): void {
+  private drawCircle(circle: GeometryCircle, glow: boolean, config: RuleConfig): void {
+    this.ctx.beginPath();
+    this.ctx.arc(circle.center.x, circle.center.y, circle.radius, 0, Math.PI * 2);
+    this.ctx.globalAlpha = circle.opacity;
+    this.ctx.shadowColor = glow ? circle.fillColor : 'transparent';
+    this.ctx.shadowBlur = glow ? this.glowBlur(Math.max(8, circle.radius * 0.55), circle.note.velocity, config) : 0;
+    // Percussion rings use fillColor 'none' (invalid for canvas): stroke-only.
+    if (circle.fillColor !== 'none') {
+      this.ctx.fillStyle = circle.fillColor;
+      this.ctx.fill();
+    }
+    this.ctx.strokeStyle = circle.strokeColor;
+    this.ctx.lineWidth = circle.strokeWidth;
+    this.ctx.stroke();
+    this.ctx.shadowBlur = 0;
+    this.ctx.shadowColor = 'transparent';
+  }
+
+  private drawSegment(segment: GeometrySegment, time: number, config: RuleConfig): void {
     if (segment.note.onset > time) return;
     const noteEnd = segment.note.onset + Math.max(segment.note.duration, 0.01);
     const fraction = Math.min(1, Math.max(0, (time - segment.note.onset) / (noteEnd - segment.note.onset)));
@@ -101,13 +112,21 @@ export class CanvasRenderer {
     this.ctx.lineCap = 'round';
     this.ctx.setLineDash(segment.dashArray?.split(' ').map(Number) || []);
     this.ctx.globalAlpha = segment.opacity;
+    const variation = config.variation;
     const glow = variation === 'lines' || variation === 'polar_fan' || variation === 'polar_walk' || variation === 'radial_voice_paths';
     this.ctx.shadowColor = glow ? segment.color : 'transparent';
-    this.ctx.shadowBlur = glow ? Math.max(7, segment.width * 3) : 0;
+    this.ctx.shadowBlur = glow ? this.glowBlur(Math.max(7, segment.width * 3), segment.note.velocity, config) : 0;
     this.ctx.stroke();
     this.ctx.shadowBlur = 0;
     this.ctx.shadowColor = 'transparent';
     this.ctx.setLineDash([]);
+  }
+
+  /** Shadow-blur radius: baseline glow, or velocity-scaled when velocityGlow is on,
+   *  capped at 24px so dense scores keep acceptable canvas performance. */
+  private glowBlur(baseBlur: number, velocity: number, config: RuleConfig): number {
+    if (!config.velocityGlow) return baseBlur;
+    return Math.min(24, Math.max(2, baseBlur * (velocity / 127)));
   }
 
   private drawBand(band: GeometryBand, width: number, time: number): void {

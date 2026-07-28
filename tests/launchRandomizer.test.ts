@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Variation } from '../src/core/types.js';
-import { VARIATIONS, pickRandom } from '../src/ui/launchRandomizer.js';
+import { VARIATIONS, pickRandom, randomVisualOptions } from '../src/ui/launchRandomizer.js';
+import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 
 describe('launchRandomizer', () => {
   describe('VARIATIONS', () => {
@@ -69,6 +70,41 @@ describe('launchRandomizer', () => {
       expect(() => pickRandom([], () => 0.5)).toThrow(
         'Cannot pick random item from empty array'
       );
+    });
+  });
+
+  describe('randomVisualOptions', () => {
+    it('reproduces the DEFAULT_CONFIG values when rand is pinned to 0', () => {
+      const options = randomVisualOptions(() => 0);
+      expect(options).toEqual({
+        lengthProportionalTo: DEFAULT_CONFIG.lengthProportionalTo,
+        velocityGlow: DEFAULT_CONFIG.velocityGlow,
+        constantStrokeWidth: DEFAULT_CONFIG.constantStrokeWidth,
+        ringFlashes3D: DEFAULT_CONFIG.ringFlashes3D,
+      });
+    });
+
+    it('flips every option away from the default when rand is pinned high', () => {
+      const options = randomVisualOptions(() => 0.999);
+      expect(options).toEqual({
+        lengthProportionalTo: 'velocity',
+        velocityGlow: true,
+        constantStrokeWidth: true,
+        ringFlashes3D: false,
+      });
+    });
+
+    it('rolls each option independently from successive rand values', () => {
+      const rolls = [0.9, 0.1, 0.9, 0.1];
+      let call = 0;
+      const options = randomVisualOptions(() => rolls[call++]);
+      expect(call).toBe(4);
+      expect(options).toEqual({
+        lengthProportionalTo: 'velocity',
+        velocityGlow: false,
+        constantStrokeWidth: true,
+        ringFlashes3D: true,
+      });
     });
   });
 

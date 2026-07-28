@@ -23,11 +23,3 @@ Last updated: 2026-07-27
 ## 3D camera interaction
 
 - [ ] **Allow panning on 3D as well as zoom and rotate**: Add pan (two-finger or modifier-key drag) to the 3D camera alongside existing zoom and rotate. See [`plans/2026-07-27-playback-and-transport-fixes.md`](../plans/2026-07-27-playback-and-transport-fixes.md).
-
-## Visual tweaks
-
-- [ ] **Turn off transient ring flashes on 3D polar fan**: The 3D polar fan layout currently flashes transient rings; disable or make them optional. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
-- [ ] **Note halo/line length proportional to velocity option**: For note halos and lines (2D and 3D), allow length/size to be proportional to velocity instead of duration. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
-- [ ] **Velocity-proportional color saturation or glow**: Option where color saturation or glow intensity are proportional to note velocity. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
-- [ ] **Constant line thickness option**: Option for line thickness to be constant instead of proportional to duration. See [`plans/2026-07-27-visual-property-options.md`](../plans/2026-07-27-visual-property-options.md).
-

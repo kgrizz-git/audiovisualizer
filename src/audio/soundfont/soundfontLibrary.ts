@@ -62,6 +62,7 @@ export async function clearSoundfontCache(): Promise<boolean> {
  * Scripts already cached are skipped. Progress is reported per instrument; pass an
  * AbortSignal to cancel partway through.
  */
+// eslint-disable-next-line complexity -- grandfathered (18); refactor when next touched
 export async function prefetchBank(
   bank: SoundbankPreset,
   onProgress?: (progress: PrefetchProgress) => void,

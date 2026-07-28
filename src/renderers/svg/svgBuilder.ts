@@ -36,6 +36,21 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
     svg += `  <g id="viewport-transform" transform="translate(${width / 2 + viewport.panX}, ${height / 2 + viewport.panY}) scale(${viewport.zoom}) translate(${-width / 2}, ${-height / 2})">\n`;
   }
 
+  // Percussion rings render behind every other note line.
+  voicePaths.forEach((vp) => {
+    vp.circles.forEach((c) => {
+      if (!c.isPercussion) return;
+      const stroke = isPlotter ? '#000000' : c.strokeColor;
+      const fill = isPlotter ? 'none' : c.fillColor;
+      const strokeWidth = isPlotter ? 1 : c.strokeWidth;
+      const opacity = isPlotter ? 1 : c.opacity;
+
+      svg += `    <circle cx="${c.center.x.toFixed(2)}" cy="${c.center.y.toFixed(2)}" ` +
+        `r="${c.radius.toFixed(2)}" fill="${fill}" stroke="${stroke}" ` +
+        `stroke-width="${strokeWidth}" fill-opacity="${opacity}" />\n`;
+    });
+  });
+
   // Draw Voice Paths
   voicePaths.forEach((vp) => {
     svg += `  <!-- Voice: ${escapeComment(vp.voiceName)} (Channel ${vp.voice}) -->\n`;
@@ -54,8 +69,9 @@ export function buildSvg(geometry: RenderedGeometry, options: SvgOptions = {}): 
         `stroke-opacity="${opacity}" />\n`;
     });
 
-    // Circles
+    // Circles (non-percussion only — percussion already drawn above)
     vp.circles.forEach((c) => {
+      if (c.isPercussion) return;
       const stroke = isPlotter ? '#000000' : c.strokeColor;
       const fill = isPlotter ? 'none' : c.fillColor;
       const strokeWidth = isPlotter ? 1 : c.strokeWidth;

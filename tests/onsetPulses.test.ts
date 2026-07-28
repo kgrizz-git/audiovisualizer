@@ -96,4 +96,18 @@ describe('OnsetPulseController', () => {
     expect(controller.count()).toBe(0);
     expect(group.children.length).toBe(0);
   });
+
+  it('spawns no rings when ringFlashes3D is false', () => {
+    const controller = new OnsetPulseController();
+    const group = new THREE.Group();
+    const gatedGeometry: RenderedGeometry3D = {
+      ...dummyGeometry,
+      config: { ...dummyGeometry.config, ringFlashes3D: false },
+    };
+
+    controller.spawn(0, 2.0, gatedGeometry, group, mockCoords);
+
+    expect(controller.count()).toBe(0);
+    expect(group.children.length).toBe(0);
+  });
 });

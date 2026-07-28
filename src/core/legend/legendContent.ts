@@ -7,6 +7,7 @@ export interface LegendContent {
 }
 
 /** Human-readable mapping summary shared by preview and SVG legends. */
+// eslint-disable-next-line complexity -- grandfathered (22); refactor when next touched
 export function getLegendContent(config: RuleConfig): LegendContent {
   const hue = config.pitchHueMode === 'pitch_class'
     ? 'Pitch class → hue'

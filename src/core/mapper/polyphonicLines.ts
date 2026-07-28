@@ -7,6 +7,7 @@
  * Requirements: deterministic, no I/O; cluster window 40ms; fan angles match interval UI.
  */
 import { NoteEvent, Point2D, RuleConfig, GeometrySegment } from '../types.js';
+import { getVisualDuration, getStrokeWidth, modulateColorByVelocity } from './noteStyle.js';
 
 export const CHORD_ONSET_WINDOW_SECONDS = 0.04;
 
@@ -67,6 +68,11 @@ interface ActiveTip {
 }
 
 function getNoteColorLocal(note: NoteEvent, config: RuleConfig): string {
+  const color = buildLocalHsl(note, config);
+  return config.velocityGlow ? modulateColorByVelocity(color, note.velocity) : color;
+}
+
+function buildLocalHsl(note: NoteEvent, config: RuleConfig): string {
   if (config.pitchHueMode === 'voice_palette') {
     const hues = [12, 196, 146, 282, 42, 326, 98, 234, 166, 8, 270, 62];
     return `hsl(${hues[Math.abs(note.voice) % hues.length]}, 85%, 60%)`;
@@ -186,13 +192,13 @@ export function mapPolyphonicLineSegments(
       const heading = config.intervalAngleEnabled
         ? baseHeading + (note.pitch - median) * (config.angleScale / 12)
         : baseHeading;
-      const segmentLen = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
+      const segmentLen = Math.max(config.minSegmentLength, getVisualDuration(note, config) * config.lengthScale);
       const rad = (heading * Math.PI) / 180;
       const end: Point2D = {
         x: join.x + Math.cos(rad) * segmentLen,
         y: join.y + Math.sin(rad) * segmentLen,
       };
-      const strokeWidth = config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale;
+      const strokeWidth = getStrokeWidth(note, config);
       segments.push({
         start: { ...join },
         end: { ...end },

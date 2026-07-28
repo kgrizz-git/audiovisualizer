@@ -10,6 +10,9 @@ import {
   NoteEvent,
 } from '../types.js';
 import { mapPolyphonicLineSegments, clusterNotesByOnset, centroid, tipPointAt } from './polyphonicLines.js';
+import { getVisualDuration, getStrokeWidth, modulateColorByVelocity } from './noteStyle.js';
+
+export { getVisualDuration, getStrokeWidth, modulateColorByVelocity } from './noteStyle.js';
 
 export const DEFAULT_CONFIG: RuleConfig = {
   variation: 'lines',
@@ -31,14 +34,21 @@ export const DEFAULT_CONFIG: RuleConfig = {
   voiceFilter: null,
   timeLineDensity: 1,
   zScale: 100,
+  lengthProportionalTo: 'duration',
+  velocityLengthMin: 0.05,
+  velocityGlow: false,
+  constantStrokeWidth: false,
+  ringFlashes3D: true,
 };
 
 /**
- * Calculates HSL color from note pitch and rule config.
+ * Calculates HSL color from note pitch and rule config. With `velocityGlow` the
+ * saturation additionally tracks velocity via modulateColorByVelocity.
  */
 export function getNoteColor(note: NoteEvent, config: RuleConfig): string {
   const hue = getMappedHue(note, config);
-  return `hsl(${Math.round(hue)}, 85%, 60%)`;
+  const color = `hsl(${Math.round(hue)}, 85%, 60%)`;
+  return config.velocityGlow ? modulateColorByVelocity(color, note.velocity) : color;
 }
 
 /** Stable rainbow-adjacent hues used when a voice, rather than pitch, owns its color. */
@@ -186,8 +196,8 @@ export function mapScoreToGeometry(
     } else {
     notes.forEach((note) => {
       const color = getNoteColor(note, config);
-      const strokeWidth = config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale;
-      const segmentLen = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
+      const strokeWidth = getStrokeWidth(note, config);
+      const segmentLen = Math.max(config.minSegmentLength, getVisualDuration(note, config) * config.lengthScale);
 
       if (config.variation === 'lines') {
         addGapSegment(segments, cursor, prevNote, note, headingAngle, config);
@@ -242,7 +252,7 @@ export function mapScoreToGeometry(
         const visualPitch = getVisualPitch(note, config);
         const transposedPitchClass = visualPitch % 12;
         const angle = (transposedPitchClass * 30 * Math.PI) / 180;
-        const length = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
+        const length = Math.max(config.minSegmentLength, getVisualDuration(note, config) * config.lengthScale);
         const origin = { x: targetWidth / 2, y: targetHeight / 2 };
 
         segments.push({
@@ -260,7 +270,7 @@ export function mapScoreToGeometry(
         const visualPitch = getVisualPitch(note, config);
         const transposedPitchClass = visualPitch % 12;
         const angle = (transposedPitchClass * 30 * Math.PI) / 180;
-        const length = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
+        const length = Math.max(config.minSegmentLength, getVisualDuration(note, config) * config.lengthScale);
 
         if (prevNote !== null) {
           const gapDuration = getGapDuration(prevNote, note);
@@ -495,15 +505,28 @@ export function mapRadialVoicePaths(
     const circles: GeometryCircle[] = [];
 
     if (entry.isPercussion) {
+      const secondsPerBeat = score.bpm > 0 ? 60 / score.bpm : 0.5;
+      const thirtySecondSeconds = secondsPerBeat / 8;
+      const sixteenthSeconds = secondsPerBeat / 4;
+
       entry.notes.forEach((note) => {
+        const velocityFraction = Math.min(127, Math.max(0, note.velocity)) / 127;
+        // Thickness tracks musical note value: a soft hit reads as a 1/32 note, a
+        // full-velocity hit as a 1/16 note. Converting to the same radius-time scale as
+        // the ring's outer radius keeps rings thin relative to the pitched spokes and
+        // lets loud accents widen predictably.
+        const thicknessSeconds = thirtySecondSeconds + velocityFraction * (sixteenthSeconds - thirtySecondSeconds);
+        const thickness = (thicknessSeconds / scoreDuration) * maxRadius;
         circles.push({
           center: { ...origin },
           // Floor keeps beat-one hits (onset 0) visible as a small central ring.
           radius: Math.max(4, (note.onset / scoreDuration) * maxRadius),
           fillColor: 'none',
           strokeColor: getPercussionColor(note.pitch),
-          strokeWidth: Math.max(1, config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale),
-          opacity: 0.85,
+          // Thin by construction (1/32–1/16 note of radial extent); 0.4px floor keeps
+          // very long scores from rendering sub-pixel hairlines.
+          strokeWidth: Math.max(0.4, thickness),
+          opacity: 0.5 + 0.35 * (Math.min(127, Math.max(0, note.velocity)) / 127),
           note,
           isPercussion: true,
         });
@@ -524,7 +547,7 @@ export function mapRadialVoicePaths(
           start: { x: origin.x + direction.x * rStart, y: origin.y + direction.y * rStart },
           end: { x: origin.x + direction.x * rEnd, y: origin.y + direction.y * rEnd },
           color: getNoteColor(note, config),
-          width: config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale,
+          width: getStrokeWidth(note, config),
           // Dense shared spokes dim proportionally so sparse voices stay legible.
           opacity: 0.9 / spoke.voicesOnSpoke,
           note,
@@ -678,14 +701,14 @@ export function mapPolyphonicPolarWalkSegments(
       const visualPitch = getVisualPitch(note, config);
       const transposedPitchClass = visualPitch % 12;
       const angle = (transposedPitchClass * 30 * Math.PI) / 180;
-      const length = Math.max(config.minSegmentLength, note.duration * config.lengthScale);
+      const length = Math.max(config.minSegmentLength, getVisualDuration(note, config) * config.lengthScale);
 
       const end: Point2D = {
         x: join.x + Math.cos(angle) * length,
         y: join.y + Math.sin(angle) * length,
       };
 
-      const strokeWidth = config.strokeWidthBase + (note.velocity / 127) * config.strokeWidthScale;
+      const strokeWidth = getStrokeWidth(note, config);
       segments.push({
         start: { ...join },
         end,

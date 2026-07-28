@@ -157,6 +157,7 @@ export class ThreeDRenderer implements I3DRenderer {
     this.renderOnce();
   }
 
+  // eslint-disable-next-line complexity -- grandfathered (17); refactor when next touched
   public setBackground(backgroundColor: string, atmosphereColors?: string[]): void {
     const colorsChanged = !this.currentAtmosphereColors || !atmosphereColors ||
       this.currentAtmosphereColors.length !== atmosphereColors.length ||
@@ -379,6 +380,7 @@ export class ThreeDRenderer implements I3DRenderer {
   }
 
   private spawnOnsetPulses(previous: number | null, current: number): void {
+    if (this.geometry && this.geometry.config.ringFlashes3D === false) return;
     this.onsetPulseController.spawn(previous, current, this.geometry, this.contentGroup, {
       worldX: (x) => this.worldX(x),
       worldY: (y) => this.worldY(y),

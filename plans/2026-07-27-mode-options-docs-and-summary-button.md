@@ -36,12 +36,18 @@ Three work streams run in parallel:
    who wants to understand exactly what the image will look like.
 
 2. **Trim DESIGN.md** — remove the detailed mode-by-mode descriptions (they move
-   to `docs/modes.md`). Keep the visual grammar table, color system, palette
-   rules, velocity-driven options, canvas/export aesthetic, and design
-   guardrails. Replace each removed mode section with a pointer to `docs/modes.md`.
-   Keep the 3D mode descriptions in DESIGN.md since they are tightly coupled to
-   rendering aesthetics (bloom, fog, camera presets, Z-depth normalization) and
-   belong in the design doc.
+    to `docs/modes.md`). Keep the visual grammar table, color system, palette
+    rules, velocity-driven options, canvas/export aesthetic, and design
+    guardrails. Replace each removed mode section with a pointer to `docs/modes.md`.
+    Keep the 3D mode descriptions in DESIGN.md since they are tightly coupled to
+    rendering aesthetics (bloom, fog, camera presets, Z-depth normalization) and
+    belong in the design doc.
+
+    **Trimming criterion:** Remove any section whose content is derivable from the
+    source (`scoreMapper.ts`, `map3d.ts`) and could be read from those files;
+    preserve sections that explain color rationale, canvas aesthetic choices,
+    export philosophy, and generative patterns. A one-time inventory via
+    `grep -n "^## \|^### " DESIGN.md` can identify candidate sections before trimming.
 
 3. **Update README.md** — simplify the "Primary mapping" and "Variations"
    sections to be a concise overview with a pointer to `docs/modes.md` for the
@@ -89,12 +95,18 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
 
 ### Phase 1: Create docs/modes.md
 
-- [ ] Write comprehensive mode-by-mode reference with tables of musical input → visual
-  output, parameter defaults, and formulas for all variations and options
+- [ ] Add a content template for each mode section:
+  - **Description** — one paragraph of plain language
+  - **Musical input → Visual output table** — at least 3 rows (pitch, time, velocity → x/y/color/shape)
+  - **Parameters table** — name, default, range, effect
+  - **Formula excerpt** — the key line(s) from source (with file:line reference)
+  - **See also** — related modes and options
+- [ ] Write all sections using the template — one section per variation case in `legendContent.ts` (18 cases)
 - [ ] Verify all formulas match the current source (`scoreMapper.ts`, `polyphonicLines.ts`,
   `noteStyle.ts`, `map3d.ts`, `legendContent.ts`)
 - [ ] Verify the doc is reachable from DESIGN.md and README.md via the pointers added in
   Phase 2
+- [ ] Verify `docs/modes.md` contains a section for every mode string in `legendContent.ts`
 
 ### Phase 2: Restructure DESIGN.md and README.md
 
@@ -108,12 +120,17 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
 
 ### Phase 3: Implement summary button and modal
 
-- [ ] Add summary button element to `index.html` in section 02
+- [ ] Add summary button element to `index.html` in section 02 with `aria-label="Show active configuration summary"`, `title="Summary"`, and visible focus ring
 - [ ] Add modal HTML structure (reuse `<dialog>` pattern from `library-prompt`)
 - [ ] Wire button click in `app.ts` to open modal with `getLegendContent(config)` output
-- [ ] Add modal close logic (close button, click-outside, Escape key)
+- [ ] Add modal HTML structure (reuse `<dialog>` pattern from `library-prompt`)
+- [ ] Wire button click in `app.ts` to open modal with `getLegendContent(config)` output
+- [ ] Add modal close logic (close button, click-outside, Escape key via
+  `dialog.addEventListener('cancel', (e) => { e.preventDefault(); dialog.close(); })`)
 - [ ] Add modal CSS to `main.css` (frosted glass, responsive, accessible)
 - [ ] Verify modal content updates when config changes (re-render on variation/rule change)
+- [ ] Verify summary button has `aria-label`, visible focus ring, and logical tab order
+- [ ] Verify summary modal does not trap focus — Escape closes it, clicking overlay closes it
 
 ### Phase 4: Documentation metadata and tracking
 
@@ -124,11 +141,15 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
 ## Verification
 
 - [ ] `npm run validate` passes (type-check, tests, build)
-- [ ] `docs/modes.md` formulas match `legendContent.ts` for all 18 variation cases
+- [ ] `docs/modes.md` contains a section for every mode string in `legendContent.ts` (18 cases)
+- [ ] No broken links: all `docs/modes.md` references in DESIGN.md and README.md resolve
 - [ ] Summary modal opens from the button and shows correct content for each mode
-- [ ] Summary modal closes via button, click-outside, and Escape key
-- [ ] DESIGN.md pointers to `docs/modes.md` are reachable and not broken
-- [ ] README.md overview is accurate and not redundant with `docs/modes.md`
+- [ ] Summary modal closes via close button, click-outside, and Escape key
+- [ ] Summary button has `aria-label`, visible focus ring, and logical tab order in sidebar
+- [ ] Summary modal does not trap focus — Escape and overlay click both close it
+- [ ] Summary modal content updates when user changes variation selector
+- [ ] DESIGN.md trims only mode sections derivable from source; aesthetic rationale sections preserved
+- [ ] README.md "How to read the summary" callout is accurate to the current modal behavior
 - [ ] Modal styling is consistent with existing `--panel` and `--ink` design tokens
 
 ## Completion checklist
@@ -153,6 +174,6 @@ plans/2026-07-27-mode-options-docs-and-summary-button.md — this plan
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| `docs/modes.md` becomes stale when options change | medium | high | Keep `legendContent.ts` as the single source of truth for the summary modal; run `npm run validate` which includes type-check and tests to catch missing mode variants |
+| `docs/modes.md` becomes stale when options change | medium | high | Keep `legendContent.ts` as the single source of truth for the summary modal; add a content template per mode to reduce drift |
 | Modal CSS conflicts with existing HUD elements | low | low | Use a dedicated `.modal-overlay` class scoped to the dialog; test on both mobile and desktop viewports |
 | Summary button adds visual clutter to section 02 | low | low | Use a small `ⓘ` icon button at the end of the section header; modal occupies overlay space, not inline |

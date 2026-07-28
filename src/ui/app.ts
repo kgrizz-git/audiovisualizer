@@ -1,5 +1,6 @@
+// policy:file-size allow=900 reason=browser controller currently owns the tightly coupled control and render lifecycle
 import { generateDemoScore, parseMidiData } from '../core/midi/parser.js';
-import { DEFAULT_CONFIG, getAverageScoreBackground, getDominantScoreAccent, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
+import { DEFAULT_CONFIG, getAverageScoreBackground, getDominantScoreAccent, getRadialSpokeAutoScale, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
 import { CanvasRenderer } from '../renderers/canvas/canvasRenderer.js';
 import { buildSvg } from '../renderers/svg/svgBuilder.js';
@@ -19,6 +20,7 @@ import { ViewportGestures } from './viewportGestures.js';
 import { clearLibraryCache, dismissLibraryPrompt, downloadLibrary, LibraryUIContext, maybeShowLibraryPrompt, refreshCacheStatus } from './soundfontLibraryUI.js';
 import { applyBadge, buildAudioVoiceRow, VoiceRowContext } from './voiceOptionsUI.js';
 import { VARIATIONS, pickRandom, randomVisualOptions } from './launchRandomizer.js';
+import { getLegendContent } from '../core/legend/legendContent.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
@@ -85,6 +87,7 @@ export class AudioVisualizerApp {
     this.element<HTMLInputElement>('velocity-glow-toggle').checked = visualOptions.velocityGlow;
     this.element<HTMLInputElement>('constant-stroke-toggle').checked = visualOptions.constantStrokeWidth;
     this.element<HTMLInputElement>('ring-flash-toggle').checked = visualOptions.ringFlashes3D;
+    this.element<HTMLInputElement>('velocity-opacity-toggle').checked = visualOptions.velocityOpacity;
 
     this.updateCanvasMode();
     this.updateScoreUi();
@@ -147,10 +150,14 @@ export class AudioVisualizerApp {
     this.element<HTMLInputElement>('interval-angle-toggle').addEventListener('change', (event) => { this.currentConfig.intervalAngleEnabled = (event.target as HTMLInputElement).checked; this.render(); });
     this.element<HTMLInputElement>('quantize-toggle').addEventListener('change', (event) => { this.currentConfig.quantizeOnset = (event.target as HTMLInputElement).checked; this.render(); });
     this.element<HTMLInputElement>('velocity-glow-toggle').addEventListener('change', (event) => { this.currentConfig.velocityGlow = (event.target as HTMLInputElement).checked; this.render(); });
+    this.element<HTMLInputElement>('velocity-opacity-toggle').addEventListener('change', (event) => { this.currentConfig.velocityOpacity = (event.target as HTMLInputElement).checked; this.render(); });
     this.element<HTMLInputElement>('constant-stroke-toggle').addEventListener('change', (event) => { this.currentConfig.constantStrokeWidth = (event.target as HTMLInputElement).checked; this.render(); });
     this.element<HTMLInputElement>('ring-flash-toggle').addEventListener('change', (event) => { this.currentConfig.ringFlashes3D = (event.target as HTMLInputElement).checked; this.render(); });
     this.select<LengthBasis>('length-source-select', (value) => { this.currentConfig.lengthProportionalTo = value; });
     this.range('length-scale', 'val-length', (value) => { this.currentConfig.lengthScale = value; }, '');
+    this.range('radial-spoke-scale', 'val-radial-spoke-scale', (value) => {
+      this.currentConfig.radialSpokeScale = value;
+    }, '', () => this.radialSpokeScaleLabel());
     this.range('angle-scale', 'val-angle', (value) => { this.currentConfig.angleScale = value; }, '', (value) => {
       const perSemitone = value / 12;
       const semitoneLabel = Number.isInteger(perSemitone) ? String(perSemitone) : perSemitone.toFixed(2).replace(/\.?0+$/, '');
@@ -159,6 +166,15 @@ export class AudioVisualizerApp {
     this.range('spiral-bias', 'val-spiral', (value) => { this.currentConfig.spiralBias = value; }, '°');
     this.range('stroke-base', 'val-stroke', (value) => { this.currentConfig.strokeWidthBase = value; }, 'px');
     this.range('time-line-density', 'val-density', (value) => { this.currentConfig.timeLineDensity = value; }, '×');
+
+    const summaryDialog = this.element<HTMLDialogElement>('summary-dialog');
+    this.element<HTMLButtonElement>('btn-summary').addEventListener('click', () => {
+      this.updateSummaryDialog();
+      if (typeof summaryDialog.showModal === 'function') summaryDialog.showModal();
+    });
+    this.element<HTMLButtonElement>('btn-summary-close').addEventListener('click', () => summaryDialog.close());
+    summaryDialog.addEventListener('cancel', (event) => { event.preventDefault(); summaryDialog.close(); });
+    summaryDialog.addEventListener('click', (event) => { if (event.target === summaryDialog) summaryDialog.close(); });
 
     this.element<HTMLSelectElement>('playback-engine-select').addEventListener('change', (event) => {
       this.voiceRouter.setDefaults({ engine: (event.target as HTMLSelectElement).value as PlaybackEngine });
@@ -320,6 +336,7 @@ export class AudioVisualizerApp {
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
     this.element<HTMLElement>('score-meta').textContent = `${this.currentScore.tracks.length} voice${this.currentScore.tracks.length === 1 ? '' : 's'} · ${this.currentScore.bpm} BPM`;
+    this.updateRadialSpokeScaleControl();
     this.element<HTMLInputElement>('export-title-input').value = this.exportTitle;
     // Keep the Engine/Bank dropdowns in sync with the router so the displayed
     // label always reflects the routing actually used at play time. Without this,
@@ -334,7 +351,7 @@ export class AudioVisualizerApp {
     this.currentScore.tracks.forEach((track) => {
       const label = document.createElement('label'); label.className = 'voice-chip';
       const input = document.createElement('input'); input.type = 'checkbox'; input.checked = true; input.value = String(track.channel);
-      input.addEventListener('change', () => { const checked = [...options.querySelectorAll<HTMLInputElement>('input:checked')].map((node) => Number(node.value)); this.currentConfig.voiceFilter = checked.length === this.currentScore.tracks.length ? null : checked; this.render(); });
+      input.addEventListener('change', () => { const checked = [...options.querySelectorAll<HTMLInputElement>('input:checked')].map((node) => Number(node.value)); this.currentConfig.voiceFilter = checked.length === this.currentScore.tracks.length ? null : checked; this.updateRadialSpokeScaleControl(); this.render(); });
       label.append(input, document.createTextNode(track.name)); options.append(label);
     });
     const audioOptions = this.element<HTMLElement>('audio-voice-options'); audioOptions.replaceChildren();
@@ -609,6 +626,7 @@ export class AudioVisualizerApp {
   }
 
   private render(): void {
+    this.updateSummaryDialog();
     if (is3DVariation(this.currentConfig.variation)) {
       void this.render3D();
       this.element<HTMLInputElement>('progress-scrubber').value = String(
@@ -635,6 +653,48 @@ export class AudioVisualizerApp {
     this.updateViewportUi();
   }
 
+  /** Renders the modal from the same legend content used by Canvas/SVG, plus active config values. */
+  private updateSummaryDialog(): void {
+    const content = getLegendContent(this.currentConfig);
+    this.element<HTMLElement>('summary-title').textContent = content.title;
+    const lines = this.element<HTMLUListElement>('summary-lines');
+    lines.replaceChildren(...content.lines.map((line) => {
+      const item = document.createElement('li');
+      item.textContent = line;
+      return item;
+    }));
+    const swatches = this.element<HTMLElement>('summary-swatches');
+    swatches.replaceChildren(...content.swatches.map((swatch) => {
+      const item = document.createElement('span');
+      item.className = 'summary-swatch';
+      const dot = document.createElement('i');
+      dot.style.background = swatch.color;
+      item.append(dot, document.createTextNode(swatch.label));
+      return item;
+    }));
+    const values = [
+      ['Geometry', this.currentConfig.variation.replaceAll('_', ' ')],
+      ['Color source', this.currentConfig.pitchHueMode.replaceAll('_', ' ')],
+      ['Transpose', `${this.currentConfig.transposeSemitones >= 0 ? '+' : ''}${this.currentConfig.transposeSemitones} st`],
+      ['Growth', this.currentConfig.originMode.replaceAll('_', ' ')],
+      ['Rests', this.currentConfig.gapPolicy.replaceAll('_', ' ')],
+      ['Chords', this.currentConfig.chordLayout],
+      ['Length', `${this.currentConfig.lengthScale}px/s · ${this.currentConfig.lengthProportionalTo}`],
+      ['Spoke length', this.supportsRadialSpokeScale() ? this.radialSpokeScaleLabel() : 'not used by this mode'],
+      ['Turn', `${this.currentConfig.angleScale}°/oct · ${this.currentConfig.intervalAngleEnabled ? 'on' : 'off'}`],
+      ['Weight', `${this.currentConfig.strokeWidthBase}px base · ${this.currentConfig.constantStrokeWidth ? 'uniform' : 'velocity'}`],
+      ['Dynamics', `glow ${this.currentConfig.velocityGlow ? 'on' : 'off'} · opacity ${this.currentConfig.velocityOpacity ? 'on' : 'off'}`],
+      ['Quantize', this.currentConfig.quantizeOnset ? `1/${this.currentConfig.quantizeSubdivision * 4}` : 'off'],
+      ['Z / time', is3DVariation(this.currentConfig.variation) ? `${this.currentConfig.zScale}%` : '2D mode'],
+    ];
+    const list = this.element<HTMLDListElement>('summary-values');
+    list.replaceChildren(...values.flatMap(([label, value]) => {
+      const term = document.createElement('dt'); term.textContent = label;
+      const description = document.createElement('dd'); description.textContent = value;
+      return [term, description];
+    }));
+  }
+
   /** Shows the 3D canvas (and its controls) or the 2D canvas depending on the variation. */
   private updateCanvasMode(): void {
     const is3D = is3DVariation(this.currentConfig.variation);
@@ -642,6 +702,26 @@ export class AudioVisualizerApp {
     this.element<HTMLCanvasElement>('visualizer-canvas-3d').classList.toggle('is-hidden', !is3D);
     this.element<HTMLElement>('viewport-hud').classList.toggle('is-hidden', is3D);
     this.element<HTMLElement>('threed-controls').classList.toggle('is-hidden', !is3D);
+    this.updateRadialSpokeScaleControl();
+  }
+
+  private supportsRadialSpokeScale(): boolean {
+    return this.currentConfig.variation === 'radial_pitch_spokes' || this.currentConfig.variation === '3d_voice_towers';
+  }
+
+  private radialSpokeScaleLabel(): string {
+    const visiblePitchedNotes = this.currentScore.tracks
+      .filter((track) => !track.isPercussion && track.channel !== 9 && (this.currentConfig.voiceFilter === null || this.currentConfig.voiceFilter.includes(track.channel)))
+      .flatMap((track) => track.notes);
+    const autoScale = getRadialSpokeAutoScale(visiblePitchedNotes, Math.max(this.currentScore.duration, 0.01), PREVIEW_SIZE * 0.45, this.currentConfig);
+    return `Auto ×${autoScale.toFixed(autoScale >= 10 ? 0 : 2)} · user ${this.currentConfig.radialSpokeScale.toFixed(2)}×`;
+  }
+
+  private updateRadialSpokeScaleControl(): void {
+    const control = this.element<HTMLElement>('radial-spoke-scale-control');
+    const supported = this.supportsRadialSpokeScale();
+    control.classList.toggle('is-hidden', !supported);
+    if (supported) this.element<HTMLOutputElement>('val-radial-spoke-scale').value = this.radialSpokeScaleLabel();
   }
 
   private async ensureThreeRenderer(): Promise<I3DRenderer> {

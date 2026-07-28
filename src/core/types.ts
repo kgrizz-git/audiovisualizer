@@ -6,13 +6,15 @@ export type Variation =
   | 'polar_fan'
   | 'polar_walk'
   | 'radial_voice_paths'
+  | 'radial_pitch_spokes'
   | '3d_lines'
   | '3d_note_halos'
   | '3d_note_spheres'
   | '3d_piano_roll'
   | '3d_polar_fan'
   | '3d_polar_walk'
-  | '3d_radial_voice_paths';
+  | '3d_radial_voice_paths'
+  | '3d_voice_towers';
 
 /** True when the variation is rendered by the Three.js 3D renderer rather than Canvas/SVG. */
 export function is3DVariation(variation: Variation): boolean {
@@ -23,7 +25,8 @@ export function is3DVariation(variation: Variation): boolean {
     variation === '3d_piano_roll' ||
     variation === '3d_polar_fan' ||
     variation === '3d_polar_walk' ||
-    variation === '3d_radial_voice_paths'
+    variation === '3d_radial_voice_paths' ||
+    variation === '3d_voice_towers'
   );
 }
 export type OriginMode = 'left_to_right' | 'center_outward' | 'outside_inward';
@@ -96,6 +99,10 @@ export interface RuleConfig {
   constantStrokeWidth: boolean;
   /** Spawn transient onset ring flashes in the 3D renderer during playback. */
   ringFlashes3D: boolean;
+  /** Map normal note opacity from velocity (percussion keeps its dedicated opacity rule). */
+  velocityOpacity: boolean;
+  /** User multiplier applied after automatic readable scaling in radial pitch spokes and voice towers. */
+  radialSpokeScale: number;
 }
 
 export interface Point2D {
@@ -168,7 +175,7 @@ export interface GeometrySegment3D {
   width: number;
   opacity: number;
   note: NoteEvent;
-  role?: 'note' | 'gap';
+  role?: 'note' | 'gap' | 'tower';
   dashArray?: string;
 }
 

@@ -379,6 +379,50 @@ describe('map3DGeometry', () => {
       expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     });
   });
+
+  describe('3d_voice_towers', () => {
+    const towerConfig: RuleConfig = { ...DEFAULT_CONFIG, variation: '3d_voice_towers', zScale: 100 };
+
+    it('anchors each voice at one XY tower and gives notes absolute pitch-class spokes at onset depth', () => {
+      const score: Score = {
+        title: 'Towers', duration: 4, bpm: 120,
+        tracks: [
+          { name: 'Bass', channel: 0, program: 32, instrumentName: 'Bass', isPercussion: false, notes: [
+            note({ id: 'bass-c', pitch: 48, onset: 1, duration: 1 }),
+            note({ id: 'bass-g', pitch: 55, onset: 2, duration: 1 }),
+          ] },
+          { name: 'Piccolo', channel: 1, program: 72, instrumentName: 'Piccolo', isPercussion: false, notes: [
+            note({ id: 'piccolo-c', pitch: 84, onset: 1, duration: 1 }),
+          ] },
+        ],
+      };
+      const geometry = map3DGeometry(score, towerConfig, 800, 800);
+      const bassC = geometry.segments.find((segment) => segment.note.id === 'bass-c')!;
+      const bassG = geometry.segments.find((segment) => segment.note.id === 'bass-g')!;
+      const piccoloC = geometry.segments.find((segment) => segment.note.id === 'piccolo-c')!;
+      expect(bassC.startX).toBeCloseTo(bassG.startX);
+      expect(bassC.startY).toBeCloseTo(bassG.startY);
+      expect(bassC.startY).toBeGreaterThan(400);
+      expect(piccoloC.startY).toBeLessThan(400);
+      expect(bassC.endY).toBeLessThan(bassC.startY); // C points up
+      expect(bassG.endX).toBeGreaterThan(bassG.startX); // G points down-right
+      expect(bassG.endY).toBeGreaterThan(bassG.startY);
+      expect(bassC.color).toBe('hsl(60, 85%, 60%)');
+      expect(bassG.color).toBe('hsl(270, 85%, 60%)');
+      expect(bassC.startZ).toBeCloseTo(1 * geometry.zScale);
+      expect(bassC.endZ).toBeCloseTo(bassC.startZ);
+    });
+
+    it('uses the same readable auto scale and short-spoke width cap as 2D pitch spokes', () => {
+      const score = scoreOf([note({ id: 'short', pitch: 60, onset: 40, duration: 0.05, velocity: 127 }), note({ id: 'typical', pitch: 67, onset: 120, duration: 0.2, velocity: 127 })], 320);
+      const geometry = map3DGeometry(score, towerConfig, 800, 800);
+      const short = geometry.segments.find((segment) => segment.note.id === 'short')!;
+      const typical = geometry.segments.find((segment) => segment.note.id === 'typical')!;
+      const length = (segment: typeof short) => Math.hypot(segment.endX - segment.startX, segment.endY - segment.startY);
+      expect(length(typical)).toBeGreaterThan(20);
+      expect(short.width).toBeLessThanOrEqual(length(short) * 0.28);
+    });
+  });
 });
 
 describe('liftGeometryTo3D', () => {

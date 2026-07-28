@@ -137,6 +137,19 @@ export function getLegendContent(config: RuleConfig): LegendContent {
         ],
         swatches,
       };
+    case 'radial_pitch_spokes':
+      return {
+        title: 'RADIAL PITCH SPOKES',
+        lines: [
+          'Voice register → radial placement',
+          'Onset → distance from center',
+          'Pitch class → absolute direction + color',
+          'C → yellow + up; 6 st → antiparallel',
+          `Spoke length → auto baseline × ${config.radialSpokeScale}×`,
+          'Percussion → concentric family-color rings',
+        ],
+        swatches,
+      };
     case '3d_polar_fan':
       return {
         title: '3D POLAR OCTAVE FAN',
@@ -172,6 +185,19 @@ export function getLegendContent(config: RuleConfig): LegendContent {
           'X / Y → voice spokes (register → direction)',
           'Z (depth) → onset time',
           'Percussion → time rings lifted to discs',
+          'Now-plane → current playback moment',
+        ],
+        swatches,
+      };
+    case '3d_voice_towers':
+      return {
+        title: '3D VOICE TOWERS',
+        lines: [
+          'Voice register → fixed XY tower',
+          'Z (depth) → onset time',
+          'Pitch class → absolute spoke direction + color',
+          'C → yellow + up; 6 st → antiparallel',
+          `Spoke length → auto baseline × ${config.radialSpokeScale}×`,
           'Now-plane → current playback moment',
         ],
         swatches,

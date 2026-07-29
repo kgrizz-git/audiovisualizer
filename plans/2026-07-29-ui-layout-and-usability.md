@@ -88,16 +88,16 @@ possible (applicability map and config codec should be pure).
 
 ### Phase 2: Sidebar structure and transport (P1)
 
-- [ ] Convert control groups to accordion (`<details>`/`<summary>` or equivalent);
+- [x] Convert control groups to accordion (`<details>`/`<summary>` or equivalent);
       default 01+02 open; optional collapse/expand all
-- [ ] Deduplicate Viewport & Framing: Musical/Time window living primarily in HUD/flyout;
+- [x] Deduplicate Viewport & Framing: Musical/Time window living primarily in HUD/flyout;
       shrink or remove redundant section 05
-- [ ] Move Engine/Bank selects out of the playback bar into Refine (or Audio drawer);
+- [x] Move Engine/Bank selects out of the playback bar into Refine (or Audio drawer);
       keep play / time / scrubber primary
-- [ ] Accordion section badges for key active values (variation name, voice count) if
+- [x] Accordion section badges for key active values (variation name, voice count) if
       cheap after accordion lands
 - [ ] Manual/UI smoke: no overlapping HUD vs playback vs caption at desktop widths
-- [ ] Changelog **MINOR** for structure/transport changes
+- [x] Changelog **MINOR** for structure/transport changes
 
 ### Phase 3: Discoverability (P1–P2)
 

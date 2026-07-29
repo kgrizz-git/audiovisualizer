@@ -1,4 +1,4 @@
-// policy:file-size allow=900 reason=browser controller currently owns the tightly coupled control and render lifecycle
+// policy:file-size allow=930 reason=browser controller intentionally owns the tightly coupled control, playback, and render lifecycle
 import { generateDemoScore, parseMidiData } from '../core/midi/parser.js';
 import { DEFAULT_CONFIG, getAverageScoreBackground, getDominantScoreAccent, getRadialSpokeAutoScale, mapScoreToGeometry } from '../core/mapper/scoreMapper.js';
 import { fitGeometryToCanvas } from '../core/layout/fitGeometry.js';
@@ -106,6 +106,14 @@ export class AudioVisualizerApp {
   private element<T extends HTMLElement>(id: string): T { return document.getElementById(id) as T; }
 
   private bindEvents(): void {
+    const controlGroups = Array.from(document.querySelectorAll<HTMLDetailsElement>('.sidebar > details.control-group'));
+    this.element<HTMLButtonElement>('btn-expand-sections').addEventListener('click', () => {
+      controlGroups.forEach((group) => { group.open = true; });
+    });
+    this.element<HTMLButtonElement>('btn-collapse-sections').addEventListener('click', () => {
+      controlGroups.forEach((group) => { group.open = false; });
+    });
+
     const demoSelect = this.element<HTMLSelectElement>('demo-midi-select');
     demoSelect.addEventListener('change', async () => {
       await this.loadUrl(demoSelect.value, demoSelect.selectedOptions[0].text);
@@ -211,7 +219,7 @@ export class AudioVisualizerApp {
     const titleInput = this.element<HTMLInputElement>('export-title-input');
     titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateCanvasAriaLabel(); this.render(); });
 
-    // Viewport HUD + Section 05 controls
+    // Viewport HUD framing controls
     const center = PREVIEW_SIZE / 2;
     this.element<HTMLButtonElement>('hud-zoom-in').addEventListener('click', () => {
       const z = this.viewportController.getViewport().zoom;
@@ -225,8 +233,14 @@ export class AudioVisualizerApp {
     });
     const reset = () => { this.viewportController.resetView(); this.render(); };
     this.element<HTMLButtonElement>('hud-reset').addEventListener('click', reset);
-    this.element<HTMLButtonElement>('btn-reset-viewport').addEventListener('click', reset);
     this.element<HTMLButtonElement>('hud-legend-toggle').addEventListener('click', () => this.setLegendVisible(!this.legendVisible));
+    const framingToggle = this.element<HTMLButtonElement>('hud-framing-toggle');
+    const framingPanel = this.element<HTMLElement>('hud-framing-panel');
+    framingToggle.addEventListener('click', () => {
+      const expanded = framingPanel.classList.toggle('is-hidden') === false;
+      framingToggle.classList.toggle('is-active', expanded);
+      framingToggle.setAttribute('aria-expanded', String(expanded));
+    });
 
     const syncAuto = (enabled: boolean) => {
       this.viewportController.setAutoZoom(enabled);
@@ -235,15 +249,6 @@ export class AudioVisualizerApp {
     this.element<HTMLInputElement>('hud-autozoom-toggle').addEventListener('change', (e) => {
       syncAuto((e.target as HTMLInputElement).checked);
     });
-    this.element<HTMLInputElement>('viewport-autozoom-toggle').addEventListener('change', (e) => {
-      syncAuto((e.target as HTMLInputElement).checked);
-    });
-    this.element<HTMLInputElement>('viewport-zoom-range').addEventListener('input', (e) => {
-      const zoom = Number((e.target as HTMLInputElement).value);
-      this.viewportController.zoomAt(zoom, center, center, PREVIEW_SIZE, PREVIEW_SIZE);
-      this.render();
-    });
-
     const modeMusical = this.element<HTMLButtonElement>('btn-mode-musical');
     const modeTime = this.element<HTMLButtonElement>('btn-mode-time');
     
@@ -354,6 +359,7 @@ export class AudioVisualizerApp {
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
     this.element<HTMLElement>('score-meta').textContent = `${this.currentScore.tracks.length} voice${this.currentScore.tracks.length === 1 ? '' : 's'} · ${this.currentScore.bpm} BPM`;
+    this.updateGroupBadges();
     this.updateControlApplicability();
     this.element<HTMLInputElement>('export-title-input').value = this.exportTitle;
     // Keep the Engine/Bank dropdowns in sync with the router so the displayed
@@ -591,16 +597,10 @@ export class AudioVisualizerApp {
 
   private updateViewportUi(): void {
     const vp = this.viewportController.getViewport();
-    const zoomRange = this.element<HTMLInputElement>('viewport-zoom-range');
-    const zoomOut = this.element<HTMLOutputElement>('val-viewport-zoom');
     const hudAuto = this.element<HTMLInputElement>('hud-autozoom-toggle');
     const hudAutoLabel = this.element<HTMLElement>('hud-autozoom-label');
-    const panelAuto = this.element<HTMLInputElement>('viewport-autozoom-toggle');
 
-    if (Number(zoomRange.value) !== vp.zoom) zoomRange.value = String(vp.zoom);
-    zoomOut.value = `${Math.round(vp.zoom * 100)}%`;
     if (hudAuto.checked !== vp.autoZoom) hudAuto.checked = vp.autoZoom;
-    if (panelAuto.checked !== vp.autoZoom) panelAuto.checked = vp.autoZoom;
 
     const mode = vp.autoZoomMode ?? 'musical';
     let badgeText: string;
@@ -721,6 +721,16 @@ export class AudioVisualizerApp {
     this.element<HTMLElement>('viewport-hud').classList.toggle('is-hidden', is3D);
     this.element<HTMLElement>('threed-controls').classList.toggle('is-hidden', !is3D);
     this.updateControlApplicability();
+    this.updateGroupBadges();
+  }
+
+  /** Keeps collapsed accordion headers informative without duplicating controls. */
+  private updateGroupBadges(): void {
+    const variation = this.element<HTMLSelectElement>('variation-select');
+    const variationLabel = variation.selectedOptions[0]?.textContent?.trim() ?? this.currentConfig.variation.replaceAll('_', ' ');
+    this.element<HTMLElement>('badge-variation').textContent = variationLabel;
+    const count = this.currentScore.tracks.length;
+    this.element<HTMLElement>('badge-voices').textContent = `${count} voice${count === 1 ? '' : 's'}`;
   }
 
   /**

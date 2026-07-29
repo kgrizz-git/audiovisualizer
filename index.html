@@ -12,132 +12,125 @@
     <aside class="sidebar">
       <div class="brand"><div class="brand-mark">AV</div><div><p class="eyebrow">MIDI → GEOMETRY</p><h1>Visual Score Studio</h1></div></div>
       <p class="brand-copy">Translate timing, pitch, dynamics, and voice into an exportable composition.</p>
+      <div class="sidebar-accordion-tools" role="group" aria-label="Control sections">
+        <button type="button" class="btn btn-ghost btn-compact" id="btn-expand-sections">Expand all</button>
+        <button type="button" class="btn btn-ghost btn-compact" id="btn-collapse-sections">Collapse all</button>
+      </div>
 
-      <section class="control-group input-group"><h2><span>01</span> Choose a score</h2>
-        <div class="control-item"><label for="demo-midi-select">Included studies</label><select id="demo-midi-select">
-          <optgroup label="Classical">
-            <option value="./demo-midi/bach_prelude_c_full.mid">Bach Prelude in C · full score (2:20)</option>
-            <option value="./demo-midi/mozart_nachtmusik_mvt1_full.mid">Mozart Eine kleine Nachtmusik I · full movement (5:20)</option>
-            <option value="./demo-midi/beethoven_fur_elise.mid">Beethoven Für Elise · theme study</option>
-          </optgroup>
-          <optgroup label="Early modern / ragtime">
-            <option value="./demo-midi/joplin_maple_leaf_rag_full.mid">Joplin Maple Leaf Rag · full score (2:24)</option>
-            <option value="./demo-midi/bowman_12th_street_rag_full.mid">Bowman 12th Street Rag · full score (2:36)</option>
-          </optgroup>
-          <optgroup label="Modern style studies (original)">
-            <option value="./demo-midi/blues_12bar_style.mid">Blues · 12-bar in C</option>
-            <option value="./demo-midi/jazz_swing_style.mid">Jazz · swing ii-V-I</option>
-            <option value="./demo-midi/funk_groove_style.mid">Funk · syncopated groove</option>
-            <option value="./demo-midi/electronic_arp_style.mid">Electronic · arpeggio sequence</option>
-            <option value="./demo-midi/hiphop_keys_style.mid">Hip-hop · keys &amp; sub-bass loop</option>
-            <option value="./demo-midi/rock_riff_style.mid">Rock · power-chord riff</option>
-            <option value="./demo-midi/house_four_on_floor_style.mid">House · four-on-the-floor</option>
-          </optgroup>
-        </select></div>
-        <div class="file-dropzone" id="dropzone" tabindex="0"><label for="midi-file-input" id="file-label">Drop a MIDI here or browse</label><input type="file" id="midi-file-input" accept=".mid,.midi,audio/midi" /></div>
-        <div class="control-item"><label for="source-midi-select">Find more MIDI online</label><select id="source-midi-select">
-          <option value="">Browse a free MIDI site or Commons piece…</option>
-          <optgroup label="Free MIDI sites">
-            <option value="https://freemidi.org/">FreeMIDI.org · browse by artist / genre</option>
-            <option value="https://bitmidi.com/">BitMidi · large searchable catalog</option>
-            <option value="https://www.mutopiaproject.org/">Mutopia · public-domain classical</option>
-            <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files">Wikimedia Commons · MIDI library</option>
-            <option value="https://github.com/ldrolez/free-midi-chords">GitHub · free MIDI chord packs (MIT)</option>
-          </optgroup>
-          <optgroup label="Commons pieces &amp; collections">
-            <option value="https://commons.wikimedia.org/wiki/File:What_shall_we_do_with_the_drunken_sailor.mid">Folk · Drunken Sailor (CC0)</option>
-            <option value="https://commons.wikimedia.org/wiki/File:Maturika.mid">Chinese folk · Mo Li Hua (public domain)</option>
-            <option value="https://commons.wikimedia.org/wiki/File:Seikilos.mid">Ancient · Seikilos Epitaph (public domain)</option>
-            <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files_of_traditional_music">Traditional · waltz &amp; folk collection</option>
-            <option value="https://commons.wikimedia.org/wiki/Category:Ragtime">Ragtime · early jazz / rag collection</option>
-          </optgroup>
-        </select></div>
-        <p class="hint">Opens in a new tab. Download a <code>.mid</code> there, then drop it above. Site catalogs often mix rights—use files you are allowed to; nothing is uploaded from this app.</p>
-      </section>
-
-      <section class="control-group"><h2><span>02</span> Compose the rule set</h2>
-        <div class="control-item"><label for="variation-select">Geometry</label><select id="variation-select"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option><option value="tonal_time_lines">Average active pitch color</option><option value="polar_fan">Polar octave fan</option><option value="polar_walk">Polar walk</option><option value="radial_voice_paths">Radial voice paths</option><option value="radial_pitch_spokes">Radial pitch spokes</option><optgroup label="3D (Three.js)"><option value="3d_lines">3D line paths</option><option value="3d_note_halos">3D note halos</option><option value="3d_note_spheres">3D note spheres</option><option value="3d_piano_roll">3D piano-roll slab</option><option value="3d_polar_fan">3D polar octave fan</option><option value="3d_polar_walk">3D polar walk</option><option value="3d_radial_voice_paths">3D radial voice paths</option><option value="3d_voice_towers">3D voice towers</option></optgroup></select></div>
-        <div class="control-subgroup is-hidden" id="threed-controls">
-          <div class="control-item"><label for="camera-preset-select">Camera angle</label><select id="camera-preset-select"><option value="3d_time_up" selected>Time up</option><option value="3d_isometric">Isometric</option><option value="3d_front">Front</option><option value="3d_side">Side</option><option value="3d_birds_eye">Bird's eye</option><option value="3d_free">Free orbit</option></select></div>
-          <div class="control-item"><label for="zscale-range">Z / time stretch <output id="val-zscale">100</output></label><input id="zscale-range" type="range" min="10" max="1200" step="5" value="100" /></div>
-          <div class="control-item"><label for="bloom-range">Glow <output id="val-bloom">1.4</output></label><input id="bloom-range" type="range" min="0" max="2.5" step="0.1" value="1.4" /></div>
-          <div class="control-item"><label for="playback-cue-select">Playback cue</label><select id="playback-cue-select"><option value="now_plane">Now-plane</option><option value="reveal" selected>Reveal through time</option></select></div>
-          <div class="control-grid"><label class="toggle"><input id="threed-autofollow-toggle" type="checkbox"><span>Auto-follow</span></label><label class="toggle"><input id="threed-chase-toggle" type="checkbox"><span>Chase camera</span></label><label class="toggle"><input id="threed-rotate-toggle" type="checkbox"><span>Idle turntable</span></label><label class="toggle"><input id="ring-flash-toggle" type="checkbox" checked><span>Onset ring flashes</span></label></div>
-          <button type="button" class="btn" id="btn-export-webm">Capture 6s WebM</button>
-          <p class="hint">Drag to orbit, wheel to zoom, and right-drag (or two fingers) to pan. Manual navigation suspends auto-follow.</p>
+      <details class="control-group input-group" open>
+        <summary class="group-summary"><span class="group-index">01</span> <span class="group-title">Choose a score</span></summary>
+        <div class="group-body">
+          <div class="control-item"><label for="demo-midi-select">Included studies</label><select id="demo-midi-select">
+            <optgroup label="Classical">
+              <option value="./demo-midi/bach_prelude_c_full.mid">Bach Prelude in C · full score (2:20)</option>
+              <option value="./demo-midi/mozart_nachtmusik_mvt1_full.mid">Mozart Eine kleine Nachtmusik I · full movement (5:20)</option>
+              <option value="./demo-midi/beethoven_fur_elise.mid">Beethoven Für Elise · theme study</option>
+            </optgroup>
+            <optgroup label="Early modern / ragtime">
+              <option value="./demo-midi/joplin_maple_leaf_rag_full.mid">Joplin Maple Leaf Rag · full score (2:24)</option>
+              <option value="./demo-midi/bowman_12th_street_rag_full.mid">Bowman 12th Street Rag · full score (2:36)</option>
+            </optgroup>
+            <optgroup label="Modern style studies (original)">
+              <option value="./demo-midi/blues_12bar_style.mid">Blues · 12-bar in C</option>
+              <option value="./demo-midi/jazz_swing_style.mid">Jazz · swing ii-V-I</option>
+              <option value="./demo-midi/funk_groove_style.mid">Funk · syncopated groove</option>
+              <option value="./demo-midi/electronic_arp_style.mid">Electronic · arpeggio sequence</option>
+              <option value="./demo-midi/hiphop_keys_style.mid">Hip-hop · keys &amp; sub-bass loop</option>
+              <option value="./demo-midi/rock_riff_style.mid">Rock · power-chord riff</option>
+              <option value="./demo-midi/house_four_on_floor_style.mid">House · four-on-the-floor</option>
+            </optgroup>
+          </select></div>
+          <div class="file-dropzone" id="dropzone" tabindex="0"><label for="midi-file-input" id="file-label">Drop a MIDI here or browse</label><input type="file" id="midi-file-input" accept=".mid,.midi,audio/midi" /></div>
+          <div class="control-item"><label for="source-midi-select">Find more MIDI online</label><select id="source-midi-select">
+            <option value="">Browse a free MIDI site or Commons piece…</option>
+            <optgroup label="Free MIDI sites">
+              <option value="https://freemidi.org/">FreeMIDI.org · browse by artist / genre</option>
+              <option value="https://bitmidi.com/">BitMidi · large searchable catalog</option>
+              <option value="https://www.mutopiaproject.org/">Mutopia · public-domain classical</option>
+              <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files">Wikimedia Commons · MIDI library</option>
+              <option value="https://github.com/ldrolez/free-midi-chords">GitHub · free MIDI chord packs (MIT)</option>
+            </optgroup>
+            <optgroup label="Commons pieces &amp; collections">
+              <option value="https://commons.wikimedia.org/wiki/File:What_shall_we_do_with_the_drunken_sailor.mid">Folk · Drunken Sailor (CC0)</option>
+              <option value="https://commons.wikimedia.org/wiki/File:Maturika.mid">Chinese folk · Mo Li Hua (public domain)</option>
+              <option value="https://commons.wikimedia.org/wiki/File:Seikilos.mid">Ancient · Seikilos Epitaph (public domain)</option>
+              <option value="https://commons.wikimedia.org/wiki/Category:MIDI_files_of_traditional_music">Traditional · waltz &amp; folk collection</option>
+              <option value="https://commons.wikimedia.org/wiki/Category:Ragtime">Ragtime · early jazz / rag collection</option>
+            </optgroup>
+          </select></div>
+          <p class="hint">Opens in a new tab. Download a <code>.mid</code> there, then drop it above. Site catalogs often mix rights—use files you are allowed to; nothing is uploaded from this app.</p>
         </div>
-        <div class="control-item" data-control="originMode"><label for="origin-select">Growth direction</label><select id="origin-select"><option value="left_to_right">Left to right</option><option value="center_outward">Center outward</option><option value="outside_inward">Outside inward</option></select></div>
-        <div class="control-item" data-control="pitchHueMode"><label for="hue-mode-select">Color source</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option><option value="voice_palette">Voice palette</option></select></div>
-        <div class="control-item"><label for="transpose-range">Visual transpose <output id="val-transpose">0 st</output></label><input id="transpose-range" type="range" min="-24" max="24" step="1" value="0" /></div>
-        <div class="control-item"><label for="background-select">Canvas background</label><select id="background-select"><option value="black">Black</option><option value="average">Average pitch color</option></select></div>
-        <div class="control-grid"><label class="toggle" data-control="intervalPath"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label><label class="toggle"><input id="velocity-glow-toggle" type="checkbox"><span>Velocity glow</span></label><label class="toggle"><input id="velocity-opacity-toggle" type="checkbox"><span>Velocity opacity</span></label><label class="toggle"><input id="constant-stroke-toggle" type="checkbox"><span>Uniform stroke</span></label></div>
-        <div class="control-item" data-control="gapPolicy"><label for="gap-policy-select">Rest treatment</label><select id="gap-policy-select"><option value="lift_pen">Lift pen</option><option value="faint_line">Faint connection</option><option value="ghost">Ghost trace</option></select></div>
-        <div class="control-item" data-control="chordLayout">
-          <label for="chord-layout-select">Chord layout</label>
-          <select id="chord-layout-select">
-            <option value="polyphony" selected>Polyphony (branch)</option>
-            <option value="chain">Chain (legacy)</option>
-          </select>
-        </div>
-        <button id="btn-summary" class="btn btn-ghost" type="button" aria-label="Show active configuration summary" title="Summary">Summary</button>
-      </section>
+      </details>
 
-      <section class="control-group"><h2><span>03</span> Refine</h2>
-        <div class="control-item" data-control="lengthScale"><label for="length-scale">Duration scale <output id="val-length">40</output></label><input id="length-scale" type="range" min="10" max="150" value="40" /></div>
-        <div class="control-item" data-control="lengthSource"><label for="length-source-select">Length source</label><select id="length-source-select"><option value="duration" selected>Duration</option><option value="velocity">Velocity</option></select></div>
-        <div class="control-item is-hidden" id="radial-spoke-scale-control" data-control="radialSpokeScale"><label for="radial-spoke-scale">Spoke length <output id="val-radial-spoke-scale">Auto ×1 · user 1.00×</output></label><input id="radial-spoke-scale" type="range" min="0.25" max="4" step="0.05" value="1" /><p class="hint">Applies to Radial pitch spokes and 3D voice towers.</p></div>
-        <div class="control-item" data-control="intervalPath"><label for="angle-scale">Turn per octave <output id="val-angle">180°/oct (15°/semitone)</output></label><input id="angle-scale" type="range" min="0" max="360" step="15" value="180" /></div>
-        <div class="control-item" data-control="intervalPath"><label for="spiral-bias">Spiral bias <output id="val-spiral">0°</output></label><input id="spiral-bias" type="range" min="-20" max="20" value="0" /></div>
-        <div class="control-item"><label for="stroke-base">Base weight <output id="val-stroke">2px</output></label><input id="stroke-base" type="range" min="1" max="10" value="2" /></div>
-        <div class="control-item" data-control="timeLineDensity"><label for="time-line-density">Time-line density <output id="val-density">1×</output></label><input id="time-line-density" type="range" min="0.5" max="2" step="0.25" value="1" /></div>
-        <fieldset class="voice-filter"><legend>Visible voices</legend><div id="voice-filter-options" class="voice-filter-options"></div></fieldset>
-        <fieldset class="voice-filter"><legend>Mix / timbre</legend><div id="audio-voice-options" class="audio-voice-options"></div></fieldset>
-        <fieldset class="voice-filter soundfont-library"><legend>SoundFont library</legend>
-          <p class="sf-status" id="sf-cache-status">Checking cache…</p>
-          <div class="sf-progress" id="sf-progress" hidden><div class="sf-progress-bar"><span id="sf-progress-fill"></span></div><span class="sf-progress-label" id="sf-progress-label"></span></div>
-          <div class="button-grid">
-            <button type="button" class="btn" id="btn-download-library">Download full library</button>
-            <button type="button" class="btn" id="btn-cancel-download" hidden>Cancel</button>
-            <button type="button" class="btn" id="btn-clear-cache">Clear cache</button>
+      <details class="control-group" open>
+        <summary class="group-summary"><span class="group-index">02</span> <span class="group-title">Compose the rule set</span><span class="group-badge" id="badge-variation">lines</span></summary>
+        <div class="group-body">
+          <div class="control-item"><label for="variation-select">Geometry</label><select id="variation-select"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option><option value="tonal_time_lines">Average active pitch color</option><option value="polar_fan">Polar octave fan</option><option value="polar_walk">Polar walk</option><option value="radial_voice_paths">Radial voice paths</option><option value="radial_pitch_spokes">Radial pitch spokes</option><optgroup label="3D (Three.js)"><option value="3d_lines">3D line paths</option><option value="3d_note_halos">3D note halos</option><option value="3d_note_spheres">3D note spheres</option><option value="3d_piano_roll">3D piano-roll slab</option><option value="3d_polar_fan">3D polar octave fan</option><option value="3d_polar_walk">3D polar walk</option><option value="3d_radial_voice_paths">3D radial voice paths</option><option value="3d_voice_towers">3D voice towers</option></optgroup></select></div>
+          <div class="control-subgroup is-hidden" id="threed-controls">
+            <div class="control-item"><label for="camera-preset-select">Camera angle</label><select id="camera-preset-select"><option value="3d_time_up" selected>Time up</option><option value="3d_isometric">Isometric</option><option value="3d_front">Front</option><option value="3d_side">Side</option><option value="3d_birds_eye">Bird's eye</option><option value="3d_free">Free orbit</option></select></div>
+            <div class="control-item"><label for="zscale-range">Z / time stretch <output id="val-zscale">100</output></label><input id="zscale-range" type="range" min="10" max="1200" step="5" value="100" /></div>
+            <div class="control-item"><label for="bloom-range">Glow <output id="val-bloom">1.4</output></label><input id="bloom-range" type="range" min="0" max="2.5" step="0.1" value="1.4" /></div>
+            <div class="control-item"><label for="playback-cue-select">Playback cue</label><select id="playback-cue-select"><option value="now_plane">Now-plane</option><option value="reveal" selected>Reveal through time</option></select></div>
+            <div class="control-grid"><label class="toggle"><input id="threed-autofollow-toggle" type="checkbox"><span>Auto-follow</span></label><label class="toggle"><input id="threed-chase-toggle" type="checkbox"><span>Chase camera</span></label><label class="toggle"><input id="threed-rotate-toggle" type="checkbox"><span>Idle turntable</span></label><label class="toggle"><input id="ring-flash-toggle" type="checkbox" checked><span>Onset ring flashes</span></label></div>
+            <button type="button" class="btn" id="btn-export-webm">Capture 6s WebM</button>
+            <p class="hint">Drag to orbit, wheel to zoom, and right-drag (or two fingers) to pan. Manual navigation suspends auto-follow.</p>
           </div>
-        </fieldset>
-      </section>
-
-      <section class="control-group export-group"><h2><span>04</span> Export</h2><div class="export-title-field"><label for="export-title-input">Export title</label><input type="text" id="export-title-input" placeholder="Auto-filled from MIDI filename" maxlength="40" /></div><div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div></section>
-      <section class="control-group">
-        <h2><span>05</span> Viewport &amp; Framing</h2>
-        <div class="control-grid">
-          <label>
-            Zoom level
-            <input id="viewport-zoom-range" type="range" min="0.25" max="10.0" step="0.05" value="1.0" />
-            <output id="val-viewport-zoom">100%</output>
-          </label>
-          <label class="toggle">
-            <input id="viewport-autozoom-toggle" type="checkbox" checked />
-            <span>Auto-zoom active region</span>
-          </label>
-          <div class="control-subgroup" id="autozoom-window-controls">
-            <span class="control-label" id="autozoom-mode-label">Window sampling mode</span>
-            <div class="segmented-control" role="group" aria-labelledby="autozoom-mode-label">
-              <button type="button" id="btn-mode-musical" class="is-active" aria-pressed="true">Musical</button>
-              <button type="button" id="btn-mode-time" aria-pressed="false">Time</button>
-            </div>
-            <div id="wrapper-bars-range">
-              <label for="viewport-bars-range">Window size</label>
-              <input id="viewport-bars-range" type="range" min="0" max="9" step="1" value="4" />
-              <output id="val-viewport-bars" for="viewport-bars-range">1 bar</output>
-            </div>
-            <div id="wrapper-seconds-range" class="is-hidden">
-              <label for="viewport-seconds-range">Window size</label>
-              <input id="viewport-seconds-range" type="range" min="0" max="31" step="1" value="3" />
-              <output id="val-viewport-seconds" for="viewport-seconds-range">3s</output>
-            </div>
+          <div class="control-item" data-control="originMode"><label for="origin-select">Growth direction</label><select id="origin-select"><option value="left_to_right">Left to right</option><option value="center_outward">Center outward</option><option value="outside_inward">Outside inward</option></select></div>
+          <div class="control-item" data-control="pitchHueMode"><label for="hue-mode-select">Color source</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option><option value="voice_palette">Voice palette</option></select></div>
+          <div class="control-item"><label for="transpose-range">Visual transpose <output id="val-transpose">0 st</output></label><input id="transpose-range" type="range" min="-24" max="24" step="1" value="0" /></div>
+          <div class="control-item"><label for="background-select">Canvas background</label><select id="background-select"><option value="black">Black</option><option value="average">Average pitch color</option></select></div>
+          <div class="control-grid"><label class="toggle" data-control="intervalPath"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label><label class="toggle"><input id="velocity-glow-toggle" type="checkbox"><span>Velocity glow</span></label><label class="toggle"><input id="velocity-opacity-toggle" type="checkbox"><span>Velocity opacity</span></label><label class="toggle"><input id="constant-stroke-toggle" type="checkbox"><span>Uniform stroke</span></label></div>
+          <div class="control-item" data-control="gapPolicy"><label for="gap-policy-select">Rest treatment</label><select id="gap-policy-select"><option value="lift_pen">Lift pen</option><option value="faint_line">Faint connection</option><option value="ghost">Ghost trace</option></select></div>
+          <div class="control-item" data-control="chordLayout">
+            <label for="chord-layout-select">Chord layout</label>
+            <select id="chord-layout-select">
+              <option value="polyphony" selected>Polyphony (branch)</option>
+              <option value="chain">Chain (legacy)</option>
+            </select>
           </div>
-          <div class="button-grid">
-            <button type="button" class="btn" id="btn-reset-viewport">Reset framing</button>
-          </div>
+          <button id="btn-summary" class="btn btn-ghost" type="button" aria-label="Show active configuration summary" title="Summary">Summary</button>
         </div>
-      </section>
+      </details>
+
+      <details class="control-group">
+        <summary class="group-summary"><span class="group-index">03</span> <span class="group-title">Refine</span><span class="group-badge" id="badge-voices">0 voices</span></summary>
+        <div class="group-body">
+          <div class="control-item" data-control="lengthScale"><label for="length-scale">Duration scale <output id="val-length">40</output></label><input id="length-scale" type="range" min="10" max="150" value="40" /></div>
+          <div class="control-item" data-control="lengthSource"><label for="length-source-select">Length source</label><select id="length-source-select"><option value="duration" selected>Duration</option><option value="velocity">Velocity</option></select></div>
+          <div class="control-item is-hidden" id="radial-spoke-scale-control" data-control="radialSpokeScale"><label for="radial-spoke-scale">Spoke length <output id="val-radial-spoke-scale">Auto ×1 · user 1.00×</output></label><input id="radial-spoke-scale" type="range" min="0.25" max="4" step="0.05" value="1" /><p class="hint">Applies to Radial pitch spokes and 3D voice towers.</p></div>
+          <div class="control-item" data-control="intervalPath"><label for="angle-scale">Turn per octave <output id="val-angle">180°/oct (15°/semitone)</output></label><input id="angle-scale" type="range" min="0" max="360" step="15" value="180" /></div>
+          <div class="control-item" data-control="intervalPath"><label for="spiral-bias">Spiral bias <output id="val-spiral">0°</output></label><input id="spiral-bias" type="range" min="-20" max="20" value="0" /></div>
+          <div class="control-item"><label for="stroke-base">Base weight <output id="val-stroke">2px</output></label><input id="stroke-base" type="range" min="1" max="10" value="2" /></div>
+          <div class="control-item" data-control="timeLineDensity"><label for="time-line-density">Time-line density <output id="val-density">1×</output></label><input id="time-line-density" type="range" min="0.5" max="2" step="0.25" value="1" /></div>
+          <fieldset class="voice-filter"><legend>Visible voices</legend><div id="voice-filter-options" class="voice-filter-options"></div></fieldset>
+          <fieldset class="voice-filter"><legend>Mix / timbre</legend><div id="audio-voice-options" class="audio-voice-options"></div></fieldset>
+          <fieldset class="voice-filter" id="audio-preview-engine">
+            <legend>Audio preview</legend>
+            <div class="control-grid">
+              <div class="control-item"><label for="playback-engine-select">Engine</label><select id="playback-engine-select" aria-label="Playback engine"><option value="sample" selected>Sample SoundFont</option><option value="oscillator">Oscillator synth</option></select></div>
+              <div class="control-item"><label for="playback-bank-select">Bank</label><select id="playback-bank-select" aria-label="SoundFont bank"><option value="FluidR3_GM" selected>FluidR3 GM (local+CDN)</option><option value="MusyngKite">MusyngKite (network)</option><option value="FatBoy">FatBoy (network)</option></select></div>
+            </div>
+          </fieldset>
+          <fieldset class="voice-filter soundfont-library"><legend>SoundFont library</legend>
+            <p class="sf-status" id="sf-cache-status">Checking cache…</p>
+            <div class="sf-progress" id="sf-progress" hidden><div class="sf-progress-bar"><span id="sf-progress-fill"></span></div><span class="sf-progress-label" id="sf-progress-label"></span></div>
+            <div class="button-grid">
+              <button type="button" class="btn" id="btn-download-library">Download full library</button>
+              <button type="button" class="btn" id="btn-cancel-download" hidden>Cancel</button>
+              <button type="button" class="btn" id="btn-clear-cache">Clear cache</button>
+            </div>
+          </fieldset>
+        </div>
+      </details>
+
+      <details class="control-group export-group">
+        <summary class="group-summary"><span class="group-index">04</span> <span class="group-title">Export</span></summary>
+        <div class="group-body">
+          <div class="export-title-field"><label for="export-title-input">Export title</label><input type="text" id="export-title-input" placeholder="Auto-filled from MIDI filename" maxlength="40" /></div>
+          <div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div>
+        </div>
+      </details>
+
       <p class="status" id="app-status" role="status">Ready · Generative study</p>
     </aside>
 
@@ -152,13 +145,35 @@
           <button type="button" id="hud-zoom-out" class="hud-btn" title="Zoom Out (-)">-</button>
           <button type="button" id="hud-reset" class="hud-btn" title="Reset View (R)">Reset</button>
           <button type="button" id="hud-legend-toggle" class="hud-btn is-active" title="Toggle Legend (L)" aria-pressed="true">L</button>
+          <button type="button" id="hud-framing-toggle" class="hud-btn" title="Auto-zoom window" aria-expanded="false" aria-controls="hud-framing-panel">Win</button>
           <label class="hud-badge" title="Auto-zoom active region">
             <input type="checkbox" id="hud-autozoom-toggle" checked />
             <span id="hud-autozoom-label">Auto</span>
           </label>
+          <div id="hud-framing-panel" class="hud-framing-panel is-hidden" role="region" aria-label="Auto-zoom window">
+            <span class="control-label" id="autozoom-mode-label">Window</span>
+            <div class="segmented-control" role="group" aria-labelledby="autozoom-mode-label">
+              <button type="button" id="btn-mode-musical" class="is-active" aria-pressed="true">Musical</button>
+              <button type="button" id="btn-mode-time" aria-pressed="false">Time</button>
+            </div>
+            <div id="wrapper-bars-range">
+              <label for="viewport-bars-range">Size</label>
+              <input id="viewport-bars-range" type="range" min="0" max="9" step="1" value="4" />
+              <output id="val-viewport-bars" for="viewport-bars-range">1 bar</output>
+            </div>
+            <div id="wrapper-seconds-range" class="is-hidden">
+              <label for="viewport-seconds-range">Size</label>
+              <input id="viewport-seconds-range" type="range" min="0" max="31" step="1" value="3" />
+              <output id="val-viewport-seconds" for="viewport-seconds-range">3s</output>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="playback-bar"><button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button><output id="time-display">00:00 / 00:00</output><input id="progress-scrubber" type="range" min="0" max="1000" value="1000" aria-label="MIDI playback time" /><label class="audio-engine"><span class="audio-label">Engine</span><select id="playback-engine-select" aria-label="Playback engine"><option value="sample" selected>Sample SoundFont</option><option value="oscillator">Oscillator synth</option></select></label><label class="audio-engine"><span class="audio-label">Bank</span><select id="playback-bank-select" aria-label="SoundFont bank"><option value="FluidR3_GM" selected>FluidR3 GM (local+CDN)</option><option value="MusyngKite">MusyngKite (network)</option><option value="FatBoy">FatBoy (network)</option></select></label></div>
+      <div class="playback-bar">
+        <button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button>
+        <output id="time-display">00:00 / 00:00</output>
+        <input id="progress-scrubber" type="range" min="0" max="1000" value="1000" aria-label="MIDI playback time" />
+      </div>
     </main>
   </div>
   <dialog id="library-prompt" class="library-prompt">

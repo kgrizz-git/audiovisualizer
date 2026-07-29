@@ -1,13 +1,18 @@
 # UI Appearance and Usability Suggestions
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
+
+Implementation plan: [`plans/2026-07-29-ui-layout-and-usability.md`](../plans/2026-07-29-ui-layout-and-usability.md).
 
 ## Current state summary
 
 The app uses a two-column grid: a 390px sidebar with numbered control groups and a
 main viewport with canvas, playback bar, and HUD. Controls are all visible at once in
 a scrollable sidebar. The canvas is sized to `min(900px, calc(100vh - 210px))` with
-a fixed aspect ratio.
+a fixed aspect ratio. Geometry is chosen from a long `<select>` (16+ modes). Several
+Compose/Refine controls are ignored by polar/radial/3D modes but remain fully visible.
+Viewport zoom/auto controls are duplicated between section 05 and the canvas HUD.
+The playback bar packs transport plus Engine/Bank selects into one crowded row.
 
 ## Priority suggestions
 
@@ -271,30 +276,192 @@ The current aesthetic (deep navy `#070d19`, mint `#54ebc6`, violet `#9291ff`, co
 
 ---
 
+---
+
+## Revised recommendations (2026-07-29)
+
+Additional ideas that go beyond accordion/tabs/sidebar width. Prefer these where they
+deliver more clarity or canvas space than the original list alone.
+
+### 8. Mode-aware control surfacing (higher leverage than accordion alone)
+
+**Problem**: Accordion reduces scroll, but sections 02/03 still show controls many modes
+ignore (`originMode`, `gapPolicy`, time-line density, spoke length, generic hue source on
+radial pitch spokes, etc.). Users tweak values that do nothing.
+
+**Proposal**: Maintain a small per-variation applicability map (mirroring DESIGN.md /
+`docs/modes.md` ignore notes and the existing `supportsRadialSpokeScale()` pattern). For
+each control (or small control group), hide or disable when inactive and show a one-line
+hint: “Ignored by this mode.” Keep values in `currentConfig` so switching modes restores
+them.
+
+**Effort**: Medium. **Impact**: High — clarity, less false agency.
+
+### 9. Visual geometry picker
+
+**Problem**: Geometry is a dense `<select>` with 16+ options; the product’s core choice is
+hard to scan.
+
+**Proposal**: Replace or supplement the select with a compact grid of labeled tiles
+(icon or tiny deterministic thumbnail per mode family: Lines, Halos, Timeline, Polar,
+Radial, 3D). Optgroups become section labels. Keep keyboard/`<select>` fallback for a11y
+if needed.
+
+**Effort**: Medium–High (thumbnails). **Impact**: High — discoverability and modern feel.
+
+### 10. Live rule caption under the canvas
+
+**Problem**: Summary exists but is a buried dialog; DESIGN.md asks the UI to explain the
+active rule set.
+
+**Proposal**: One plain-English line under the stage title (or overlaid on the canvas)
+that updates with config — e.g. “Pitch → hue · duration → length · rests lift.” Reuse
+legend/summary phrasing where possible. Summary dialog remains for full detail.
+
+**Effort**: Low–Medium. **Impact**: Medium–High — teaching without a modal.
+
+### 11. Deduplicate Viewport & Framing
+
+**Problem**: Zoom / auto-zoom live in both section 05 and the HUD.
+
+**Proposal**: Keep framing controls primarily in the HUD (or a single HUD flyout for
+Musical/Time window). Shrink or remove section 05 from the sidebar. Prefer this before
+floating-panel Option 3C.
+
+**Effort**: Low–Medium. **Impact**: Medium — sidebar space + less confusion.
+
+### 12. Slim the playback bar
+
+**Problem**: Engine + Bank selects crowd the transport row.
+
+**Proposal**: Move Engine/Bank into Refine (or a small Audio drawer). Leave play, time,
+and scrubber as the primary bar.
+
+**Effort**: Low. **Impact**: Medium — transport reads as a studio control strip.
+
+### 13. Overlay stage header (canvas gain without Option 3C)
+
+**Problem**: CURRENT SCORE header + `padding: 82px 42px 92px` steal vertical space from
+the plot.
+
+**Proposal**: Overlay title/meta on the canvas (fade on idle, like the HUD). Recover
+padding so the canvas grows. Complements narrower sidebar (3A).
+
+**Effort**: Low. **Impact**: Medium — instant larger plot.
+
+### 14. Config URL hash + session restore
+
+**Problem**: Reload loses variation and controls; bookmark chips alone are local-only.
+
+**Proposal**: Encode variation + key params in `#config=…` (never MIDI bytes). Support
+`localStorage` restore of last session (5e) and optional shareable hash. Deterministic
+configs make this a natural fit.
+
+**Effort**: Medium. **Impact**: Medium–High — power users and demos.
+
+### 15. Undo for rule tweaks
+
+**Problem**: Slider thrashing is common; there is no way to back out a bad refine pass.
+
+**Proposal**: Keep a small ring buffer of `currentConfig` snapshots; `Cmd/Ctrl+Z` /
+`Shift+Cmd/Ctrl+Z` undo/redo. Do not undo MIDI file swaps in v1.
+
+**Effort**: Medium. **Impact**: Medium — ease of use.
+
+### 16. First-run path
+
+**Problem**: Static brand-copy does not teach the loop: score → geometry → play.
+
+**Proposal**: Dismissible 3-step strip (or checklist) in the sidebar; never show again
+after dismiss (`localStorage`). Prefer this over a shortcuts-only `?` modal for newcomers.
+
+**Effort**: Low. **Impact**: Medium for first visits.
+
+### 17. Command palette (`⌘K`)
+
+**Problem**: Shortcuts are undocumented and will grow; scanning the sidebar is slow for
+power users.
+
+**Proposal**: Lightweight palette: switch mode, export, toggle legend, focus mode, open
+summary. Complements 5a rather than replacing it.
+
+**Effort**: Medium. **Impact**: Medium for power users; Low for casual users.
+
+### 18. Paper / plotter preview theme
+
+**Problem**: Live preview is always dark studio chrome; plotter export is light/black-ink.
+
+**Proposal**: One-click “Paper” preview: off-white field, black (or desaturated) strokes,
+no glow. Does not change export logic; optional preview chrome only.
+
+**Effort**: Medium. **Impact**: Medium — distinctive and plotter-aligned.
+
+### 19. Export review sheet
+
+**Problem**: Export is one-click with little confirmation of title, legend, or framing.
+
+**Proposal**: Small dialog before download: title, format, legend on/off, optional aspect /
+match-current-framing. Prefer this over a live canvas aspect toggle (5d) as the primary
+print-compose path.
+
+**Effort**: Medium. **Impact**: Medium.
+
+### 20. Tablet bottom sheet
+
+**Problem**: At ≤900px the sidebar stacks above the canvas and pushes the plot below the
+fold.
+
+**Proposal**: Bottom drawer with grab handle for controls; canvas stays visible. Better
+default than icon-rail-only (5c) for touch.
+
+**Effort**: Medium. **Impact**: Medium on tablet.
+
+### Deprioritize or reshape
+
+| Original item | Guidance |
+|---|---|
+| Tabs (4) | Skip while mode-aware + accordion land; revisit only if scroll remains painful |
+| Voice-aware pulse (6c) | Low ROI vs mode-aware controls |
+| Live canvas aspect toggle (5d) | Prefer export review sheet (19); keep square preview by default |
+| Floating Figma panel (3C) | Only after overlay header (13) + HUD framing (11) |
+| Accent / glass polish (7) | Do after layout clarity; keep as a polish pass |
+
+---
+
 ## Implementation priority
 
-| # | Suggestion | Effort | Impact |
-|---|---|---|---|
-| 1 | Accordion control groups | Medium | High — reduces scroll, improves focus |
-| 2 | Legend show/hide toggle | Low | Medium — gives users preview control |
-| 3A | Narrower sidebar (320px) | Trivial | Medium — instant canvas gain |
-| 3B | Collapsible sidebar | Medium | High — maximum canvas on demand |
-| 3C | Floating panel | High | High — major layout change |
-| 4 | Tabbed layout (alternative to 1) | Medium | High — eliminates scrolling |
-| 5a | Keyboard shortcut overlay | Low | Low — nice-to-have discoverability |
-| 5b | Section badge previews | Low | Low — subtle UX polish |
-| 5c | Responsive tablet breakpoint | Low | Medium — better tablet experience |
-| 5d | Canvas aspect ratio toggle | Medium | Low — niche but useful |
-| 5e | Persistent state via localStorage | Low | Medium — reduces repeated setup |
-| 6a | Preset bookmark chips | Low | Medium — quick config recall |
-| 6b | Focus / Presentation mode (`F`) | Low | Low — presentation utility |
-| 6c | Voice-aware sidebar pulse | Very low | Low — domain-specific feedback |
-| 6d | Mini navigation strip | Medium | Medium — timeline context |
-| 7 | Appearance polish (gradients, glass, typography, controls) | Low–Medium | Medium — modernized surface feel |
+| # | Suggestion | Effort | Impact | Priority |
+|---|---|---|---|---|
+| 8 | Mode-aware control surfacing | Medium | High | P0 |
+| 3A | Narrower sidebar (320px) | Trivial | Medium | P0 |
+| 13 | Overlay stage header | Low | Medium | P0 |
+| 2 | Legend show/hide toggle | Low | Medium | P0 |
+| 1 | Accordion control groups | Medium | High | P1 |
+| 11 | Deduplicate Viewport & Framing | Low–Medium | Medium | P1 |
+| 12 | Slim playback bar | Low | Medium | P1 |
+| 10 | Live rule caption | Low–Medium | Medium–High | P1 |
+| 9 | Visual geometry picker | Medium–High | High | P2 |
+| 5e / 14 | Session restore + config URL | Medium | Medium–High | P2 |
+| 15 | Config undo/redo | Medium | Medium | P2 |
+| 16 | First-run path | Low | Medium | P2 |
+| 18 | Paper preview theme | Medium | Medium | P3 |
+| 19 | Export review sheet | Medium | Medium | P3 |
+| 7 | Appearance polish pass | Low–Medium | Medium | P3 |
+| 20 | Tablet bottom sheet | Medium | Medium | P3 |
+| 17 | Command palette | Medium | Medium | P3 |
+| 5a | Keyboard shortcut overlay | Low | Low | P3 |
+| 3B | Collapsible sidebar | Medium | High | Later |
+| 6a | Preset bookmark chips | Low | Medium | Later |
+| 6b | Focus / Presentation mode | Low | Low | Later |
+| 6d | Mini navigation strip | Medium | Medium | Later |
+| 3C | Floating panel | High | High | Deferred |
+| 4 | Tabbed layout | Medium | — | Skip for now |
+| 6c | Voice-aware sidebar pulse | Very low | Low | Skip |
 
 ## Recommended first steps
 
-1. **3A**: Change `grid-template-columns` from `390px` to `320px` — one CSS line.
-2. **2**: Add a legend toggle wired to `showLegend` — ~15 lines of JS + 1 HUD button.
-3. **1**: Convert control groups to `<details>`/`<summary>` — HTML restructure in
-   `index.html` + CSS styling, no JS framework changes.
+1. **8 + 3A + 13 + 2**: Mode-aware controls, narrower sidebar, overlay header, legend toggle — maximum clarity and canvas for little structure risk.
+2. **1 + 11 + 12**: Accordion, HUD-owned framing, slim transport.
+3. **10 + 9**: Live rule caption, then geometry picker.
+4. **5e/14 + 15 + 16**: Persistence, undo, first-run.
+5. **18 + 19 + 7 + 20**: Paper theme, export review, surface polish, tablet sheet.

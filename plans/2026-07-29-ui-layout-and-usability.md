@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-29
 Date: 2026-07-29
 Author: agent
-Status: draft
+Status: in-progress
 Linked issue/PR: n/a
 Spec / suggestions: [`dev-docs/ui-suggestions.md`](../dev-docs/ui-suggestions.md)
 
@@ -75,16 +75,16 @@ possible (applicability map and config codec should be pure).
 
 ### Phase 1: Clarity and canvas (P0)
 
-- [ ] Add per-variation control applicability map; hide/disable inactive Compose/Refine
+- [x] Add per-variation control applicability map; hide/disable inactive Compose/Refine
       controls and show a short “Ignored by this mode” hint (extend the radial spoke-scale
       pattern; align with DESIGN.md ignore notes)
-- [ ] Narrow sidebar from 390px to ~320px
-- [ ] Overlay stage title/meta on the canvas (recover top padding; fade on idle optional)
-- [ ] User-facing legend show/hide for live preview (HUD control + optional `L`); exports
+- [x] Narrow sidebar from 390px to ~320px
+- [x] Overlay stage title/meta on the canvas (recover top padding; fade on idle optional)
+- [x] User-facing legend show/hide for live preview (HUD control + optional `L`); exports
       keep current legend policy (SVG/PNG include; plotter omits)
-- [ ] Vitest: applicability expectations for representative modes; legend flag reaches
+- [x] Vitest: applicability expectations for representative modes; legend flag reaches
       `CanvasRenderer.render` options
-- [ ] Update `CHANGELOG.md` Unreleased for shipped Phase 1 behavior; SemVer **MINOR**
+- [x] Update `CHANGELOG.md` Unreleased for shipped Phase 1 behavior; SemVer **MINOR**
 
 ### Phase 2: Sidebar structure and transport (P1)
 

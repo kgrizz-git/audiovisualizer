@@ -111,3 +111,66 @@ describe('CanvasRenderer Background Options', () => {
     }
   });
 });
+
+describe('CanvasRenderer legend visibility', () => {
+  function mockRenderer(): { renderer: CanvasRenderer; texts: string[] } {
+    const texts: string[] = [];
+    const mockGradient = { addColorStop: () => {} };
+    const mockCtx = {
+      save: () => {},
+      scale: () => {},
+      translate: () => {},
+      fillRect: () => {},
+      beginPath: () => {},
+      arc: () => {},
+      fill: () => {},
+      stroke: () => {},
+      restore: () => {},
+      roundRect: () => {},
+      fillText: (text: string) => { texts.push(text); },
+      measureText: (text: string) => ({ width: text.length * 6 }),
+      createRadialGradient: () => mockGradient,
+    };
+    const mockCanvas = {
+      getContext: () => mockCtx,
+      width: 200,
+      height: 200,
+    } as unknown as HTMLCanvasElement;
+    return { renderer: new CanvasRenderer(mockCanvas), texts };
+  }
+
+  const geometry: RenderedGeometry = {
+    width: 200,
+    height: 200,
+    bands: [],
+    voicePaths: [],
+    config: DEFAULT_CONFIG,
+    bpm: 120,
+  };
+
+  it('draws the legend when showLegend is true', () => {
+    const originalWindow = (globalThis as { window?: unknown }).window;
+    (globalThis as { window: unknown }).window = { devicePixelRatio: 1 };
+    try {
+      const { renderer, texts } = mockRenderer();
+      renderer.render(geometry, { showLegend: true });
+      expect(texts.some((t) => t.includes('VISUAL SCORE'))).toBe(true);
+    } finally {
+      if (originalWindow === undefined) delete (globalThis as { window?: unknown }).window;
+      else (globalThis as { window: unknown }).window = originalWindow;
+    }
+  });
+
+  it('skips the legend when showLegend is false (preview toggle path)', () => {
+    const originalWindow = (globalThis as { window?: unknown }).window;
+    (globalThis as { window: unknown }).window = { devicePixelRatio: 1 };
+    try {
+      const { renderer, texts } = mockRenderer();
+      renderer.render(geometry, { showLegend: false });
+      expect(texts.some((t) => t.includes('VISUAL SCORE'))).toBe(false);
+    } finally {
+      if (originalWindow === undefined) delete (globalThis as { window?: unknown }).window;
+      else (globalThis as { window: unknown }).window = originalWindow;
+    }
+  });
+});

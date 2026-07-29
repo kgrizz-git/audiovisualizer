@@ -1,6 +1,6 @@
 # Visual modes and controls
 
-Last reviewed: 2026-07-28
+Last reviewed: 2026-07-29
 
 This is the operational reference for the studio's visual modes and controls. It describes
 what a viewer sees; [DESIGN.md](../DESIGN.md) remains the source for visual intent and
@@ -31,6 +31,10 @@ pitch-derived position or color.
 | 3D camera | Time up | Selects Time up, Isometric, Front, Side, Bird's eye, or Free orbit framing. |
 | Playback cue | Reveal through time | Selects a sweeping now-plane or clipping-based cumulative reveal. |
 | 3D playback helpers | Off | Auto-follow, chase camera, idle turntable, and onset ring flashes alter playback presentation, not geometry. |
+
+The studio hides Compose/Refine controls that the active mode ignores (title tip:
+“Ignored by this mode”). Values remain in the rule config so switching modes restores
+them. See `src/ui/controlApplicability.ts`.
 
 ## lines
 

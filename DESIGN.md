@@ -1,6 +1,6 @@
 # AudioVisualizer Visual Design
 
-Last reviewed: 2026-07-28
+Last reviewed: 2026-07-29
 
 ## Intent
 
@@ -162,7 +162,7 @@ art padding.
 soft shadow and note halos use a radius-scaled bloom. It is a rendering treatment only and
 does not alter their deterministic geometry or SVG/plotter output.
 
-The score canvas supports interactive zoom and pan (mouse wheel, click-drag, touch pinch/pan, keyboard shortcuts `+`/`-`/`R`/`A`, and HUD overlay). An overlay HUD (`+`, `-`, `Reset`, `Auto`, mode badge `Auto · 1 bar`) is anchored inside the canvas wrapper at the bottom-left (`z-index: 5`) with frosted glass styling, remaining clear of top-right `.stage-corner` metadata. Title headers, legend overlays, and background atmosphere remain screen-fixed while score geometry transforms within the viewport matrix.
+The score canvas supports interactive zoom and pan (mouse wheel, click-drag, touch pinch/pan, keyboard shortcuts `+`/`-`/`R`/`A`/`L`, and HUD overlay). An overlay HUD (`+`, `-`, `Reset`, `L` legend, `Auto`, mode badge `Auto · 1 bar`) is anchored inside the canvas wrapper at the bottom-left (`z-index: 5`) with frosted glass styling, remaining clear of top-right `.stage-corner` metadata. The current-score title sits as a frosted overlay at the top-left of the canvas. Title headers, legend overlays, and background atmosphere remain screen-fixed while score geometry transforms within the viewport matrix. The live preview legend can be toggled off; SVG/PNG exports still include it and plotter SVG still omits it.
 
 During MIDI playback, dynamic auto-zoom is active by default and configurable across **Musical** bars (`1/16` to `16` bars, default `1`), **Time** seconds (`0` to `30s`, default `3s`), or **Full track** (`Infinity`). Active note/band bounding boxes are calculated over a symmetric sampling window `[t - W/2, t + W/2]` around current playback time `t` (where $W=0$ gives instantaneous framing) and lerp (`AUTO_ZOOM_LERP = 0.15`) to keep active performance regions centered with 75% canvas padding, easing back to full score view during silence. Musical bar durations convert to seconds assuming a fixed 4/4 meter (`4 * 60 / bpm`) via `RenderedGeometry.bpm`. Clicking the HUD mode badge cycles between Musical, Time, and Full track modes, while sidebar section 05 ("Viewport & Framing") exposes discrete step sliders and mode toggles. Manual pan/zoom interactions suspend auto-zoom so viewers can explore score detail without interference; pressing `Reset` or toggling `Auto` restores tracking.
 
@@ -171,6 +171,8 @@ SVG and PNG exports preserve the active preview framing using proportional pan s
 ## Design guardrails
 
 - Keep controls modern and compact; expose meaningful musical choices before cosmetic ones.
+- Hide studio Compose/Refine controls that the active geometry ignores so users do not
+  adjust inert values; keep values in the rule config when switching modes.
 - Preserve contrast on black and make color an aid, not the sole explanation—legends and
   visual structure must remain useful without hue discrimination.
 - Do not introduce randomness unless it is an explicit recorded configuration value.

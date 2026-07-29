@@ -100,6 +100,8 @@ function setupMockDom() {
     },
     createElement: (tag: string) => createMockElement(tag),
     createTextNode: (text: string) => ({ textContent: text }),
+    // Mode-aware controls query [data-control] nodes; playback tests have no real DOM tree.
+    querySelectorAll: vi.fn(() => []),
   });
 
   vi.stubGlobal('window', {

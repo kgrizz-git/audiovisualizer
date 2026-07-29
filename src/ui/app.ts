@@ -21,6 +21,7 @@ import { clearLibraryCache, dismissLibraryPrompt, downloadLibrary, LibraryUICont
 import { applyBadge, buildAudioVoiceRow, VoiceRowContext } from './voiceOptionsUI.js';
 import { VARIATIONS, pickRandom, randomVisualOptions } from './launchRandomizer.js';
 import { getLegendContent } from '../core/legend/legendContent.js';
+import { isControlApplicable, StudioControlKey } from './controlApplicability.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
@@ -46,6 +47,8 @@ export class AudioVisualizerApp {
   private downloadAbort: AbortController | null = null;
   private threeRenderer: I3DRenderer | null = null;
   private viewport3d: ViewportTransform3D = { ...DEFAULT_VIEWPORT_3D };
+  /** Preview-only: SVG/PNG exports still include the legend; plotter omits it. */
+  private legendVisible = true;
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
@@ -223,6 +226,7 @@ export class AudioVisualizerApp {
     const reset = () => { this.viewportController.resetView(); this.render(); };
     this.element<HTMLButtonElement>('hud-reset').addEventListener('click', reset);
     this.element<HTMLButtonElement>('btn-reset-viewport').addEventListener('click', reset);
+    this.element<HTMLButtonElement>('hud-legend-toggle').addEventListener('click', () => this.setLegendVisible(!this.legendVisible));
 
     const syncAuto = (enabled: boolean) => {
       this.viewportController.setAutoZoom(enabled);
@@ -280,20 +284,34 @@ export class AudioVisualizerApp {
       const t = event.target;
       if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
       if (t instanceof HTMLElement && t.isContentEditable) return;
-      const centerPt = PREVIEW_SIZE / 2;
-      if (event.key === '+' || event.key === '=') {
-        this.viewportController.zoomAt(this.viewportController.getViewport().zoom * 1.25, centerPt, centerPt, PREVIEW_SIZE, PREVIEW_SIZE);
-      } else if (event.key === '-' || event.key === '_') {
-        this.viewportController.zoomAt(this.viewportController.getViewport().zoom / 1.25, centerPt, centerPt, PREVIEW_SIZE, PREVIEW_SIZE);
-      } else if (event.key === '0' || event.key === 'r' || event.key === 'R') {
-        this.viewportController.resetView();
-      } else if (event.key === 'a' || event.key === 'A') {
-        this.viewportController.setAutoZoom(!this.viewportController.getViewport().autoZoom);
-      } else {
-        return;
-      }
-      this.render();
+      if (this.handleViewportShortcut(event.key)) this.render();
     });
+  }
+
+  /** Applies zoom/reset/auto/legend shortcuts. Returns true when a shortcut matched. */
+  private handleViewportShortcut(key: string): boolean {
+    const centerPt = PREVIEW_SIZE / 2;
+    if (key === '+' || key === '=') {
+      this.viewportController.zoomAt(this.viewportController.getViewport().zoom * 1.25, centerPt, centerPt, PREVIEW_SIZE, PREVIEW_SIZE);
+      return true;
+    }
+    if (key === '-' || key === '_') {
+      this.viewportController.zoomAt(this.viewportController.getViewport().zoom / 1.25, centerPt, centerPt, PREVIEW_SIZE, PREVIEW_SIZE);
+      return true;
+    }
+    if (key === '0' || key === 'r' || key === 'R') {
+      this.viewportController.resetView();
+      return true;
+    }
+    if (key === 'a' || key === 'A') {
+      this.viewportController.setAutoZoom(!this.viewportController.getViewport().autoZoom);
+      return true;
+    }
+    if (key === 'l' || key === 'L') {
+      this.setLegendVisible(!this.legendVisible);
+      return false; // setLegendVisible already re-renders
+    }
+    return false;
   }
 
   private select<T extends string>(id: string, apply: (value: T) => void): void {
@@ -336,7 +354,7 @@ export class AudioVisualizerApp {
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
     this.element<HTMLElement>('score-meta').textContent = `${this.currentScore.tracks.length} voice${this.currentScore.tracks.length === 1 ? '' : 's'} · ${this.currentScore.bpm} BPM`;
-    this.updateRadialSpokeScaleControl();
+    this.updateControlApplicability();
     this.element<HTMLInputElement>('export-title-input').value = this.exportTitle;
     // Keep the Engine/Bank dropdowns in sync with the router so the displayed
     // label always reflects the routing actually used at play time. Without this,
@@ -351,7 +369,7 @@ export class AudioVisualizerApp {
     this.currentScore.tracks.forEach((track) => {
       const label = document.createElement('label'); label.className = 'voice-chip';
       const input = document.createElement('input'); input.type = 'checkbox'; input.checked = true; input.value = String(track.channel);
-      input.addEventListener('change', () => { const checked = [...options.querySelectorAll<HTMLInputElement>('input:checked')].map((node) => Number(node.value)); this.currentConfig.voiceFilter = checked.length === this.currentScore.tracks.length ? null : checked; this.updateRadialSpokeScaleControl(); this.render(); });
+      input.addEventListener('change', () => { const checked = [...options.querySelectorAll<HTMLInputElement>('input:checked')].map((node) => Number(node.value)); this.currentConfig.voiceFilter = checked.length === this.currentScore.tracks.length ? null : checked; this.updateControlApplicability(); this.render(); });
       label.append(input, document.createTextNode(track.name)); options.append(label);
     });
     const audioOptions = this.element<HTMLElement>('audio-voice-options'); audioOptions.replaceChildren();
@@ -639,7 +657,7 @@ export class AudioVisualizerApp {
     const geometry = this.geometryFor(PREVIEW_SIZE);
     this.canvasRenderer.render(geometry, {
       time: this.currentTime,
-      showLegend: true,
+      showLegend: this.legendVisible,
       backgroundColor: this.backgroundColor(),
       atmosphereColors: this.atmosphereColors(),
       title: this.exportTitle,
@@ -702,11 +720,42 @@ export class AudioVisualizerApp {
     this.element<HTMLCanvasElement>('visualizer-canvas-3d').classList.toggle('is-hidden', !is3D);
     this.element<HTMLElement>('viewport-hud').classList.toggle('is-hidden', is3D);
     this.element<HTMLElement>('threed-controls').classList.toggle('is-hidden', !is3D);
-    this.updateRadialSpokeScaleControl();
+    this.updateControlApplicability();
+  }
+
+  /**
+   * Hides Compose/Refine controls that the active variation ignores.
+   * Values stay in currentConfig so switching modes restores them.
+   */
+  private updateControlApplicability(): void {
+    const variation = this.currentConfig.variation;
+    document.querySelectorAll<HTMLElement>('[data-control]').forEach((el) => {
+      const key = el.dataset.control as StudioControlKey | undefined;
+      if (!key) return;
+      const applicable = isControlApplicable(variation, key);
+      el.classList.toggle('is-hidden', !applicable);
+      if (applicable) {
+        el.removeAttribute('title');
+      } else {
+        el.title = 'Ignored by this mode';
+      }
+    });
+    if (isControlApplicable(variation, 'radialSpokeScale')) {
+      this.element<HTMLOutputElement>('val-radial-spoke-scale').value = this.radialSpokeScaleLabel();
+    }
+  }
+
+  /** Preview legend visibility; does not change SVG/PNG/plotter export policy. */
+  private setLegendVisible(visible: boolean): void {
+    this.legendVisible = visible;
+    const btn = this.element<HTMLButtonElement>('hud-legend-toggle');
+    btn.classList.toggle('is-active', visible);
+    btn.setAttribute('aria-pressed', String(visible));
+    this.render();
   }
 
   private supportsRadialSpokeScale(): boolean {
-    return this.currentConfig.variation === 'radial_pitch_spokes' || this.currentConfig.variation === '3d_voice_towers';
+    return isControlApplicable(this.currentConfig.variation, 'radialSpokeScale');
   }
 
   private radialSpokeScaleLabel(): string {
@@ -715,13 +764,6 @@ export class AudioVisualizerApp {
       .flatMap((track) => track.notes);
     const autoScale = getRadialSpokeAutoScale(visiblePitchedNotes, Math.max(this.currentScore.duration, 0.01), PREVIEW_SIZE * 0.45, this.currentConfig);
     return `Auto ×${autoScale.toFixed(autoScale >= 10 ? 0 : 2)} · user ${this.currentConfig.radialSpokeScale.toFixed(2)}×`;
-  }
-
-  private updateRadialSpokeScaleControl(): void {
-    const control = this.element<HTMLElement>('radial-spoke-scale-control');
-    const supported = this.supportsRadialSpokeScale();
-    control.classList.toggle('is-hidden', !supported);
-    if (supported) this.element<HTMLOutputElement>('val-radial-spoke-scale').value = this.radialSpokeScaleLabel();
   }
 
   private async ensureThreeRenderer(): Promise<I3DRenderer> {

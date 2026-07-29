@@ -66,13 +66,13 @@
           <button type="button" class="btn" id="btn-export-webm">Capture 6s WebM</button>
           <p class="hint">Drag to orbit, wheel to zoom, and right-drag (or two fingers) to pan. Manual navigation suspends auto-follow.</p>
         </div>
-        <div class="control-item"><label for="origin-select">Growth direction</label><select id="origin-select"><option value="left_to_right">Left to right</option><option value="center_outward">Center outward</option><option value="outside_inward">Outside inward</option></select></div>
-        <div class="control-item"><label for="hue-mode-select">Color source</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option><option value="voice_palette">Voice palette</option></select></div>
+        <div class="control-item" data-control="originMode"><label for="origin-select">Growth direction</label><select id="origin-select"><option value="left_to_right">Left to right</option><option value="center_outward">Center outward</option><option value="outside_inward">Outside inward</option></select></div>
+        <div class="control-item" data-control="pitchHueMode"><label for="hue-mode-select">Color source</label><select id="hue-mode-select"><option value="pitch_class">Pitch-class loop</option><option value="register_spiral">Register spiral</option><option value="voice_palette">Voice palette</option></select></div>
         <div class="control-item"><label for="transpose-range">Visual transpose <output id="val-transpose">0 st</output></label><input id="transpose-range" type="range" min="-24" max="24" step="1" value="0" /></div>
         <div class="control-item"><label for="background-select">Canvas background</label><select id="background-select"><option value="black">Black</option><option value="average">Average pitch color</option></select></div>
-        <div class="control-grid"><label class="toggle"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label><label class="toggle"><input id="velocity-glow-toggle" type="checkbox"><span>Velocity glow</span></label><label class="toggle"><input id="velocity-opacity-toggle" type="checkbox"><span>Velocity opacity</span></label><label class="toggle"><input id="constant-stroke-toggle" type="checkbox"><span>Uniform stroke</span></label></div>
-        <div class="control-item"><label for="gap-policy-select">Rest treatment</label><select id="gap-policy-select"><option value="lift_pen">Lift pen</option><option value="faint_line">Faint connection</option><option value="ghost">Ghost trace</option></select></div>
-        <div class="control-item">
+        <div class="control-grid"><label class="toggle" data-control="intervalPath"><input id="interval-angle-toggle" type="checkbox" checked><span>Interval turns</span></label><label class="toggle"><input id="quantize-toggle" type="checkbox"><span>Quantize 1/16</span></label><label class="toggle"><input id="velocity-glow-toggle" type="checkbox"><span>Velocity glow</span></label><label class="toggle"><input id="velocity-opacity-toggle" type="checkbox"><span>Velocity opacity</span></label><label class="toggle"><input id="constant-stroke-toggle" type="checkbox"><span>Uniform stroke</span></label></div>
+        <div class="control-item" data-control="gapPolicy"><label for="gap-policy-select">Rest treatment</label><select id="gap-policy-select"><option value="lift_pen">Lift pen</option><option value="faint_line">Faint connection</option><option value="ghost">Ghost trace</option></select></div>
+        <div class="control-item" data-control="chordLayout">
           <label for="chord-layout-select">Chord layout</label>
           <select id="chord-layout-select">
             <option value="polyphony" selected>Polyphony (branch)</option>
@@ -83,13 +83,13 @@
       </section>
 
       <section class="control-group"><h2><span>03</span> Refine</h2>
-        <div class="control-item"><label for="length-scale">Duration scale <output id="val-length">40</output></label><input id="length-scale" type="range" min="10" max="150" value="40" /></div>
-        <div class="control-item"><label for="length-source-select">Length source</label><select id="length-source-select"><option value="duration" selected>Duration</option><option value="velocity">Velocity</option></select></div>
-        <div class="control-item is-hidden" id="radial-spoke-scale-control"><label for="radial-spoke-scale">Spoke length <output id="val-radial-spoke-scale">Auto ×1 · user 1.00×</output></label><input id="radial-spoke-scale" type="range" min="0.25" max="4" step="0.05" value="1" /><p class="hint">Applies to Radial pitch spokes and 3D voice towers.</p></div>
-        <div class="control-item"><label for="angle-scale">Turn per octave <output id="val-angle">180°/oct (15°/semitone)</output></label><input id="angle-scale" type="range" min="0" max="360" step="15" value="180" /></div>
-        <div class="control-item"><label for="spiral-bias">Spiral bias <output id="val-spiral">0°</output></label><input id="spiral-bias" type="range" min="-20" max="20" value="0" /></div>
+        <div class="control-item" data-control="lengthScale"><label for="length-scale">Duration scale <output id="val-length">40</output></label><input id="length-scale" type="range" min="10" max="150" value="40" /></div>
+        <div class="control-item" data-control="lengthSource"><label for="length-source-select">Length source</label><select id="length-source-select"><option value="duration" selected>Duration</option><option value="velocity">Velocity</option></select></div>
+        <div class="control-item is-hidden" id="radial-spoke-scale-control" data-control="radialSpokeScale"><label for="radial-spoke-scale">Spoke length <output id="val-radial-spoke-scale">Auto ×1 · user 1.00×</output></label><input id="radial-spoke-scale" type="range" min="0.25" max="4" step="0.05" value="1" /><p class="hint">Applies to Radial pitch spokes and 3D voice towers.</p></div>
+        <div class="control-item" data-control="intervalPath"><label for="angle-scale">Turn per octave <output id="val-angle">180°/oct (15°/semitone)</output></label><input id="angle-scale" type="range" min="0" max="360" step="15" value="180" /></div>
+        <div class="control-item" data-control="intervalPath"><label for="spiral-bias">Spiral bias <output id="val-spiral">0°</output></label><input id="spiral-bias" type="range" min="-20" max="20" value="0" /></div>
         <div class="control-item"><label for="stroke-base">Base weight <output id="val-stroke">2px</output></label><input id="stroke-base" type="range" min="1" max="10" value="2" /></div>
-        <div class="control-item"><label for="time-line-density">Time-line density <output id="val-density">1×</output></label><input id="time-line-density" type="range" min="0.5" max="2" step="0.25" value="1" /></div>
+        <div class="control-item" data-control="timeLineDensity"><label for="time-line-density">Time-line density <output id="val-density">1×</output></label><input id="time-line-density" type="range" min="0.5" max="2" step="0.25" value="1" /></div>
         <fieldset class="voice-filter"><legend>Visible voices</legend><div id="voice-filter-options" class="voice-filter-options"></div></fieldset>
         <fieldset class="voice-filter"><legend>Mix / timbre</legend><div id="audio-voice-options" class="audio-voice-options"></div></fieldset>
         <fieldset class="voice-filter soundfont-library"><legend>SoundFont library</legend>
@@ -142,8 +142,8 @@
     </aside>
 
     <main class="viewport-container">
-      <div class="stage-header"><div><p class="eyebrow">CURRENT SCORE</p><h2 id="score-title">Generative study · C major</h2></div><p id="score-meta">2 voices · 120 BPM</p></div>
       <div class="canvas-wrapper">
+        <div class="stage-header stage-header--overlay"><div><p class="eyebrow">CURRENT SCORE</p><h2 id="score-title">Generative study · C major</h2></div><p id="score-meta">2 voices · 120 BPM</p></div>
         <canvas id="visualizer-canvas" width="800" height="800" role="img" aria-label="Visual score rendering"></canvas>
         <canvas id="visualizer-canvas-3d" width="900" height="900" class="is-hidden" role="img" aria-label="3D visual score rendering"></canvas>
         <div class="stage-corner">DETERMINISTIC<br>VISUALIZATION</div>
@@ -151,6 +151,7 @@
           <button type="button" id="hud-zoom-in" class="hud-btn" title="Zoom In (+)">+</button>
           <button type="button" id="hud-zoom-out" class="hud-btn" title="Zoom Out (-)">-</button>
           <button type="button" id="hud-reset" class="hud-btn" title="Reset View (R)">Reset</button>
+          <button type="button" id="hud-legend-toggle" class="hud-btn is-active" title="Toggle Legend (L)" aria-pressed="true">L</button>
           <label class="hud-badge" title="Auto-zoom active region">
             <input type="checkbox" id="hud-autozoom-toggle" checked />
             <span id="hud-autozoom-label">Auto</span>

@@ -9,6 +9,7 @@ Last reviewed: 2026-07-24
 
 ### Added
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.
+- Phase 1 of that plan: `src/ui/controlApplicability.ts` plus Vitest coverage for mode-aware controls and canvas `showLegend` preview toggle. SemVer: covered in public changelog (**MINOR**).
 
 ### Changed
 - ESLint `complexity` rule escalated from `warn` to `error` at 15, making the policy's

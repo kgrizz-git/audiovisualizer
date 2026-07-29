@@ -131,7 +131,7 @@
         <summary class="group-summary"><span class="group-index">04</span> <span class="group-title">Export</span></summary>
         <div class="group-body">
           <div class="export-title-field"><label for="export-title-input">Export title</label><input type="text" id="export-title-input" placeholder="Auto-filled from MIDI filename" maxlength="40" /></div>
-          <div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button></div>
+          <div class="button-grid"><button class="btn btn-primary" id="btn-export-svg">SVG + legend</button><button class="btn" id="btn-export-png">PNG image</button><button class="btn" id="btn-export-plotter">Plotter SVG</button><button class="btn btn-ghost" id="btn-copy-config-link" type="button">Copy look link</button></div>
         </div>
       </details>
 
@@ -192,6 +192,10 @@
   <dialog id="summary-dialog" class="summary-dialog" aria-labelledby="summary-title">
     <div class="summary-header"><div><p class="eyebrow">ACTIVE RULE SET</p><h2 id="summary-title"></h2></div><button id="btn-summary-close" class="summary-close" type="button" aria-label="Close summary">×</button></div>
     <div class="summary-columns"><section><h3>How to read it</h3><ul id="summary-lines"></ul><div id="summary-swatches" class="summary-swatches" aria-label="Color swatches"></div></section><section><h3>Active controls</h3><dl id="summary-values" class="summary-values"></dl></section></div>
+  </dialog>
+  <dialog id="shortcuts-dialog" class="shortcuts-dialog" aria-labelledby="shortcuts-title">
+    <div class="summary-header"><div><p class="eyebrow">STUDIO SHORTCUTS</p><h2 id="shortcuts-title">Keyboard controls</h2></div><button id="btn-shortcuts-close" class="summary-close" type="button" aria-label="Close shortcuts">×</button></div>
+    <dl class="shortcut-list"><dt>+ / −</dt><dd>Zoom in / out</dd><dt>R or 0</dt><dd>Reset framing</dd><dt>A</dt><dd>Toggle auto-zoom</dd><dt>L</dt><dd>Show / hide preview legend</dd><dt>⌘/Ctrl + Z</dt><dd>Undo a visual configuration change</dd><dt>⌘/Ctrl + Shift + Z</dt><dd>Redo a visual configuration change</dd><dt>?</dt><dd>Show these shortcuts</dd></dl>
   </dialog>
   <script type="module" src="./src/ui/app.ts"></script>
 </body>

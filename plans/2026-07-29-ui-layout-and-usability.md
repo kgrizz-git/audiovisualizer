@@ -111,14 +111,14 @@ possible (applicability map and config codec should be pure).
 
 ### Phase 4: Persistence and power tools (P2)
 
-- [ ] Restore last session (variation + controls; MIDI path only for bundled demos—do not
+- [x] Restore last session (variation + controls; MIDI path only for bundled demos—do not
       persist uploaded file bytes)
-- [ ] Optional `#config=` hash encode/decode for shareable looks (no MIDI payload)
-- [ ] Config undo/redo ring buffer (`Cmd/Ctrl+Z` / redo); exclude MIDI file swaps in v1
-- [ ] Keyboard shortcut overlay (`?`) and/or command palette (`⌘K`) — at least one in
+- [x] Optional `#config=` hash encode/decode for shareable looks (no MIDI payload)
+- [x] Config undo/redo ring buffer (`Cmd/Ctrl+Z` / redo); exclude MIDI file swaps in v1
+- [x] Keyboard shortcut overlay (`?`) and/or command palette (`⌘K`) — at least one in
       this phase; both if time allows
-- [ ] Tests for config codec round-trip and undo stack
-- [ ] Changelog **MINOR**
+- [x] Tests for config codec round-trip and undo stack
+- [x] Changelog **MINOR**
 
 ### Phase 5: Appearance, export compose, tablet (P3)
 

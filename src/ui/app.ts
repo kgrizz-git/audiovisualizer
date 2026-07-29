@@ -23,6 +23,8 @@ import { VARIATIONS, pickRandom, randomVisualOptions } from './launchRandomizer.
 import { getLegendContent, getRuleCaption } from '../core/legend/legendContent.js';
 import { isControlApplicable, StudioControlKey } from './controlApplicability.js';
 import { initializeGeometryPicker, updateGeometryPicker } from './geometryPickerUI.js';
+import { ConfigHistory, saveConfig } from './configPersistence.js';
+import { copyConfigLink, restoreInitialConfig, storage, syncConfigControls } from './configSessionUI.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
@@ -50,6 +52,7 @@ export class AudioVisualizerApp {
   private viewport3d: ViewportTransform3D = { ...DEFAULT_VIEWPORT_3D };
   /** Preview-only: SVG/PNG exports still include the legend; plotter omits it. */
   private legendVisible = true;
+  private configHistory = new ConfigHistory();
 
   constructor() {
     this.canvasRenderer = new CanvasRenderer(this.element<HTMLCanvasElement>('visualizer-canvas'));
@@ -87,16 +90,13 @@ export class AudioVisualizerApp {
       demoSelect.value = initialMidiUrl;
     }
 
-    this.currentConfig.variation = randomVariation;
-    this.element<HTMLSelectElement>('variation-select').value = randomVariation;
-
-    const visualOptions = randomVisualOptions(Math.random);
-    Object.assign(this.currentConfig, visualOptions);
-    this.element<HTMLSelectElement>('length-source-select').value = visualOptions.lengthProportionalTo;
-    this.element<HTMLInputElement>('velocity-glow-toggle').checked = visualOptions.velocityGlow;
-    this.element<HTMLInputElement>('constant-stroke-toggle').checked = visualOptions.constantStrokeWidth;
-    this.element<HTMLInputElement>('ring-flash-toggle').checked = visualOptions.ringFlashes3D;
-    this.element<HTMLInputElement>('velocity-opacity-toggle').checked = visualOptions.velocityOpacity;
+    const restored = restoreInitialConfig();
+    if (restored) this.currentConfig = restored;
+    else {
+      this.currentConfig.variation = randomVariation;
+      Object.assign(this.currentConfig, randomVisualOptions(Math.random));
+    }
+    syncConfigControls((id) => this.element(id), this.currentConfig);
 
     this.updateCanvasMode();
     this.updateScoreUi();
@@ -192,6 +192,10 @@ export class AudioVisualizerApp {
     this.element<HTMLButtonElement>('btn-summary-close').addEventListener('click', () => summaryDialog.close());
     summaryDialog.addEventListener('cancel', (event) => { event.preventDefault(); summaryDialog.close(); });
     summaryDialog.addEventListener('click', (event) => { if (event.target === summaryDialog) summaryDialog.close(); });
+    const shortcutsDialog = this.element<HTMLDialogElement>('shortcuts-dialog');
+    this.element<HTMLButtonElement>('btn-shortcuts-close').addEventListener('click', () => shortcutsDialog.close());
+    shortcutsDialog.addEventListener('cancel', (event) => { event.preventDefault(); shortcutsDialog.close(); });
+    shortcutsDialog.addEventListener('click', (event) => { if (event.target === shortcutsDialog) shortcutsDialog.close(); });
 
     this.element<HTMLSelectElement>('playback-engine-select').addEventListener('change', (event) => {
       this.voiceRouter.setDefaults({ engine: (event.target as HTMLSelectElement).value as PlaybackEngine });
@@ -221,6 +225,7 @@ export class AudioVisualizerApp {
     this.element<HTMLButtonElement>('btn-export-plotter').addEventListener('click', () => this.downloadSvg(true));
     this.element<HTMLButtonElement>('btn-export-png').addEventListener('click', () => this.downloadPng());
     this.element<HTMLButtonElement>('btn-export-webm').addEventListener('click', () => void this.downloadWebM3D());
+    this.element<HTMLButtonElement>('btn-copy-config-link').addEventListener('click', () => void this.copyConfigLink());
 
     const titleInput = this.element<HTMLInputElement>('export-title-input');
     titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateCanvasAriaLabel(); this.render(); });
@@ -292,9 +297,18 @@ export class AudioVisualizerApp {
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        this.applyHistory(event.shiftKey ? this.configHistory.redo() : this.configHistory.undo());
+        return;
+      }
       const t = event.target;
       if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
       if (t instanceof HTMLElement && t.isContentEditable) return;
+      if (event.key === '?') {
+        if (typeof shortcutsDialog.showModal === 'function') shortcutsDialog.showModal();
+        return;
+      }
       if (this.handleViewportShortcut(event.key)) this.render();
     });
   }
@@ -362,17 +376,15 @@ export class AudioVisualizerApp {
     this.setStatus(message);
   }
 
+  private applyHistory(config: RuleConfig | null): void { if (config) { this.currentConfig = config; syncConfigControls((id) => this.element(id), config); this.updateCanvasMode(); this.render(); } }
+
   private updateScoreUi(): void {
     this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
     this.element<HTMLElement>('score-meta').textContent = `${this.currentScore.tracks.length} voice${this.currentScore.tracks.length === 1 ? '' : 's'} · ${this.currentScore.bpm} BPM`;
     this.updateGroupBadges();
     this.updateControlApplicability();
     this.element<HTMLInputElement>('export-title-input').value = this.exportTitle;
-    // Keep the Engine/Bank dropdowns in sync with the router so the displayed
-    // label always reflects the routing actually used at play time. Without this,
-    // the dropdown-label ↔ router-state binding is one-way and can desync, which
-    // makes oscillator playback render behind a "Sample SoundFont" label (and
-    // never shows the synth-fallback badge that would otherwise explain it).
+    // Keep Engine/Bank labels synchronized with the active playback route.
     const defaults = this.voiceRouter.getDefaults();
     this.element<HTMLSelectElement>('playback-engine-select').value = defaults.engine;
     this.element<HTMLSelectElement>('playback-bank-select').value = defaults.soundbank;
@@ -650,6 +662,8 @@ export class AudioVisualizerApp {
   }
 
   private render(): void {
+    this.configHistory.record(this.currentConfig);
+    saveConfig(storage(), this.currentConfig);
     this.element<HTMLElement>('rule-caption').textContent = getRuleCaption(this.currentConfig);
     this.updateSummaryDialog();
     if (is3DVariation(this.currentConfig.variation)) {
@@ -891,6 +905,11 @@ export class AudioVisualizerApp {
     } catch {
       this.setStatus('WebM capture is not supported in this browser.', true);
     }
+  }
+
+  private async copyConfigLink(): Promise<void> {
+    const copied = await copyConfigLink(this.currentConfig);
+    this.setStatus(copied ? 'Shareable look link copied. It contains no MIDI data.' : 'Shareable look link added to this page URL.');
   }
 
   private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }

@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- Studio looks now restore locally across reloads, can be copied as a `#config=` link, and support bounded undo/redo with `⌘/Ctrl+Z` and `⌘/Ctrl+Shift+Z`. Session and link state contain visual controls only—never MIDI file bytes, uploaded filenames, or voice filters. Press `?` for the keyboard shortcut reference. SemVer: **MINOR**.
 - A live, one-line rule caption beneath the stage, derived from the same mode explanation used in Canvas/SVG legends. The Geometry selector is now an accessible visual tile picker with clear 2D and Three.js groupings. SemVer: **MINOR**.
 - Mode-aware Compose/Refine controls: the studio hides controls the active geometry ignores (for example growth direction on polar/radial modes), with an “Ignored by this mode” tip. SemVer: **MINOR**.
 - Live-preview **legend toggle** on the viewport HUD (`L` shortcut). SVG/PNG exports still include the legend; plotter SVG still omits it. SemVer: **MINOR**.

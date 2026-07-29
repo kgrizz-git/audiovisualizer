@@ -1,7 +1,7 @@
 // @ts-expect-error Node built-in used for test fixture loading
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { getLegendContent } from '../src/core/legend/legendContent.js';
+import { getLegendContent, getRuleCaption } from '../src/core/legend/legendContent.js';
 import { DEFAULT_CONFIG } from '../src/core/mapper/scoreMapper.js';
 import { Variation } from '../src/core/types.js';
 
@@ -38,4 +38,10 @@ describe('legend content and mode reference binding', () => {
       }
     });
   }
+
+  it('derives a compact live-stage caption from the active rule explanation', () => {
+    const caption = getRuleCaption({ ...DEFAULT_CONFIG, variation: '3d_polar_fan' });
+    expect(caption).toContain('3D Polar Octave Fan');
+    expect(caption).toContain('X / Y → polar fan');
+  });
 });

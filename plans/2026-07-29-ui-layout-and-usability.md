@@ -101,13 +101,13 @@ possible (applicability map and config codec should be pure).
 
 ### Phase 3: Discoverability (P1–P2)
 
-- [ ] Live one-line rule caption under/over the stage, driven by active config; keep
+- [x] Live one-line rule caption under/over the stage, driven by active config; keep
       Summary dialog for full detail
-- [ ] Visual geometry picker (tile grid by mode family); preserve accessible selection
+- [x] Visual geometry picker (tile grid by mode family); preserve accessible selection
       (select or radiogroup semantics)
 - [ ] Optional: lightweight first-run 3-step strip (score → geometry → play), dismissible
       via `localStorage`
-- [ ] Changelog **MINOR**
+- [x] Changelog **MINOR**
 
 ### Phase 4: Persistence and power tools (P2)
 

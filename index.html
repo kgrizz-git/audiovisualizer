@@ -65,7 +65,11 @@
       <details class="control-group" open>
         <summary class="group-summary"><span class="group-index">02</span> <span class="group-title">Compose the rule set</span><span class="group-badge" id="badge-variation">lines</span></summary>
         <div class="group-body">
-          <div class="control-item"><label for="variation-select">Geometry</label><select id="variation-select"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option><option value="tonal_time_lines">Average active pitch color</option><option value="polar_fan">Polar octave fan</option><option value="polar_walk">Polar walk</option><option value="radial_voice_paths">Radial voice paths</option><option value="radial_pitch_spokes">Radial pitch spokes</option><optgroup label="3D (Three.js)"><option value="3d_lines">3D line paths</option><option value="3d_note_halos">3D note halos</option><option value="3d_note_spheres">3D note spheres</option><option value="3d_piano_roll">3D piano-roll slab</option><option value="3d_polar_fan">3D polar octave fan</option><option value="3d_polar_walk">3D polar walk</option><option value="3d_radial_voice_paths">3D radial voice paths</option><option value="3d_voice_towers">3D voice towers</option></optgroup></select></div>
+          <div class="control-item geometry-picker-shell">
+            <span class="control-label" id="geometry-picker-label">Geometry</span>
+            <div id="geometry-picker" class="geometry-picker" role="radiogroup" aria-labelledby="geometry-picker-label"></div>
+            <label class="sr-only" for="variation-select">Geometry</label><select id="variation-select" class="sr-only"><option value="lines">Line paths</option><option value="circles">Note halos</option><option value="vertical_tone">Pitch timeline</option><option value="tonal_time_lines">Average active pitch color</option><option value="polar_fan">Polar octave fan</option><option value="polar_walk">Polar walk</option><option value="radial_voice_paths">Radial voice paths</option><option value="radial_pitch_spokes">Radial pitch spokes</option><optgroup label="3D (Three.js)"><option value="3d_lines">3D line paths</option><option value="3d_note_halos">3D note halos</option><option value="3d_note_spheres">3D note spheres</option><option value="3d_piano_roll">3D piano-roll slab</option><option value="3d_polar_fan">3D polar octave fan</option><option value="3d_polar_walk">3D polar walk</option><option value="3d_radial_voice_paths">3D radial voice paths</option><option value="3d_voice_towers">3D voice towers</option></optgroup></select>
+          </div>
           <div class="control-subgroup is-hidden" id="threed-controls">
             <div class="control-item"><label for="camera-preset-select">Camera angle</label><select id="camera-preset-select"><option value="3d_time_up" selected>Time up</option><option value="3d_isometric">Isometric</option><option value="3d_front">Front</option><option value="3d_side">Side</option><option value="3d_birds_eye">Bird's eye</option><option value="3d_free">Free orbit</option></select></div>
             <div class="control-item"><label for="zscale-range">Z / time stretch <output id="val-zscale">100</output></label><input id="zscale-range" type="range" min="10" max="1200" step="5" value="100" /></div>
@@ -169,6 +173,7 @@
           </div>
         </div>
       </div>
+      <p id="rule-caption" class="rule-caption" aria-live="polite"></p>
       <div class="playback-bar">
         <button class="play-pause-btn" id="play-btn" aria-label="Play MIDI synth preview">▶</button>
         <output id="time-display">00:00 / 00:00</output>

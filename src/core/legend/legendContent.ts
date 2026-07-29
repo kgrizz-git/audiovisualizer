@@ -205,6 +205,16 @@ export function getLegendContent(config: RuleConfig): LegendContent {
   }
 }
 
+/** Compact live-stage caption drawn from the same deterministic mode explanation as exports. */
+export function getRuleCaption(config: RuleConfig): string {
+  const content = getLegendContent(config);
+  return `${toTitleCase(content.title)} · ${content.lines.slice(0, 3).join(' · ')}`;
+}
+
 function format(value: string): string {
   return value.replaceAll('_', ' ');
+}
+
+function toTitleCase(value: string): string {
+  return value.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase()).replace(/\b3d\b/gi, '3D');
 }

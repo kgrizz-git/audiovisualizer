@@ -20,8 +20,9 @@ import { ViewportGestures } from './viewportGestures.js';
 import { clearLibraryCache, dismissLibraryPrompt, downloadLibrary, LibraryUIContext, maybeShowLibraryPrompt, refreshCacheStatus } from './soundfontLibraryUI.js';
 import { applyBadge, buildAudioVoiceRow, VoiceRowContext } from './voiceOptionsUI.js';
 import { VARIATIONS, pickRandom, randomVisualOptions } from './launchRandomizer.js';
-import { getLegendContent } from '../core/legend/legendContent.js';
+import { getLegendContent, getRuleCaption } from '../core/legend/legendContent.js';
 import { isControlApplicable, StudioControlKey } from './controlApplicability.js';
+import { initializeGeometryPicker, updateGeometryPicker } from './geometryPickerUI.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
@@ -62,6 +63,11 @@ export class AudioVisualizerApp {
     this.voicePlayback = new Map(this.currentScore.tracks.map((track, index) => [track.channel, defaultVoiceSettings(index)]));
     this.voiceRouter.syncFromVoicePlayback(this.voicePlayback);
     this.bindEvents();
+    const variationSelect = this.element<HTMLSelectElement>('variation-select');
+    initializeGeometryPicker(variationSelect, this.element<HTMLElement>('geometry-picker'), (variation) => {
+      variationSelect.value = variation;
+      variationSelect.dispatchEvent(new Event('change'));
+    });
 
     const demoSelect = this.element<HTMLSelectElement>('demo-midi-select');
     let initialMidiUrl = '';
@@ -644,6 +650,7 @@ export class AudioVisualizerApp {
   }
 
   private render(): void {
+    this.element<HTMLElement>('rule-caption').textContent = getRuleCaption(this.currentConfig);
     this.updateSummaryDialog();
     if (is3DVariation(this.currentConfig.variation)) {
       void this.render3D();
@@ -722,6 +729,7 @@ export class AudioVisualizerApp {
     this.element<HTMLElement>('threed-controls').classList.toggle('is-hidden', !is3D);
     this.updateControlApplicability();
     this.updateGroupBadges();
+    updateGeometryPicker(this.element<HTMLElement>('geometry-picker'), this.currentConfig.variation);
   }
 
   /** Keeps collapsed accordion headers informative without duplicating controls. */

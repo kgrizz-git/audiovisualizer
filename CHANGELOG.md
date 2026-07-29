@@ -10,6 +10,7 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- A live, one-line rule caption beneath the stage, derived from the same mode explanation used in Canvas/SVG legends. The Geometry selector is now an accessible visual tile picker with clear 2D and Three.js groupings. SemVer: **MINOR**.
 - Mode-aware Compose/Refine controls: the studio hides controls the active geometry ignores (for example growth direction on polar/radial modes), with an “Ignored by this mode” tip. SemVer: **MINOR**.
 - Live-preview **legend toggle** on the viewport HUD (`L` shortcut). SVG/PNG exports still include the legend; plotter SVG still omits it. SemVer: **MINOR**.
 - A visible **Spoke length** control for Radial pitch spokes and 3D voice towers. It shows a deterministic score-specific Auto baseline, targets a 24px median pitched spoke (clamped 1×–96×), and applies an adjustable user multiplier; a proportional width cap keeps short spokes from reading as dots. SemVer: **MINOR**.

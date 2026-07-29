@@ -15,6 +15,8 @@ Last updated: 2026-07-28
 - [ ] **Export inferred audio transcription as downloadable MIDI**: v1 audio input ships visual exports only; add a `.mid` writer so users can take the estimated notes into a DAW, with the same estimated/model-version manifest metadata. Deferred follow-up to [`plans/2026-07-22-audio-file-input.md`](../plans/2026-07-22-audio-file-input.md).
 - [ ] **Deterministic offline WAV audio export**: Render score audio directly to downloadable WAV file offline.
 
+- [ ] **UI layout and usability overhaul**: Collapsible accordion controls, legend show/hide toggle, larger canvas area, and other UX improvements. See [`dev-docs/ui-suggestions.md`](ui-suggestions.md).
+
 ## Bugs and UX issues
 
 - [ ] **Play not working first time pressed**: Playback fails to start on the first press of the play button. See [`plans/2026-07-27-playback-and-transport-fixes.md`](../plans/2026-07-27-playback-and-transport-fixes.md).

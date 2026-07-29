@@ -10,6 +10,9 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- A preview-only **Paper** canvas field toggle in the viewport HUD for checking a light print-like composition without changing export behavior, mapper rules, or saved visual configuration. SemVer: **MINOR**.
+- An export review sheet for SVG, PNG, and plotter SVG confirms title, format, legend policy, and current preview framing before download. SemVer: **MINOR**.
+- At tablet widths (768–1024px), studio controls become a touch-friendly bottom sheet opened with a Controls button, preserving the canvas workspace. SemVer: **MINOR**.
 - Studio looks now restore locally across reloads, can be copied as a `#config=` link, and support bounded undo/redo with `⌘/Ctrl+Z` and `⌘/Ctrl+Shift+Z`. Session and link state contain visual controls only—never MIDI file bytes, uploaded filenames, or voice filters. Press `?` for the keyboard shortcut reference. SemVer: **MINOR**.
 - A live, one-line rule caption beneath the stage, derived from the same mode explanation used in Canvas/SVG legends. The Geometry selector is now an accessible visual tile picker with clear 2D and Three.js groupings. SemVer: **MINOR**.
 - Mode-aware Compose/Refine controls: the studio hides controls the active geometry ignores (for example growth direction on polar/radial modes), with an “Ignored by this mode” tip. SemVer: **MINOR**.
@@ -38,6 +41,7 @@ uses [Semantic Versioning](https://semver.org/).
 - Engine-aware voice controls with dynamic per-track UI switching between General MIDI instrument selection (SoundFont mode) and oscillator waveform selection (Synth mode). SemVer: **MINOR**.
 
 ### Changed
+- Refined accordion typography, translucent HUD glass, and button hover feedback for clearer controls and a more tactile studio surface. SemVer: **PATCH**.
 - Narrower control sidebar (320px) and an overlaid score title on the canvas so the plot uses more of the viewport. SemVer: **MINOR**.
 - Control sections now use accessible accordions, with Choose a score and Compose open by default and global expand/collapse actions. The Viewport & Framing sidebar panel has moved into a compact HUD flyout, while playback transport is reduced to play, elapsed time, and scrubber; Engine and Bank now live in Refine. Collapsed Compose and Refine headers retain the selected geometry and voice count. SemVer: **MINOR**.
 - The default auto-zoom musical window during playback is now 1 bar (was 4 bars), giving a tighter default framing of the active region; the window remains configurable from 1/16 note to 16 bars or Full track. SemVer: **MINOR**.

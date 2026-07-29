@@ -122,14 +122,14 @@ possible (applicability map and config codec should be pure).
 
 ### Phase 5: Appearance, export compose, tablet (P3)
 
-- [ ] Paper / plotter preview theme toggle (preview chrome only; export semantics
+- [x] Paper / plotter preview theme toggle (preview chrome only; export semantics
       unchanged)
-- [ ] Export review sheet (title, format, legend, optional framing note) before download
-- [ ] Surface polish pass from suggestions §7 (glass, typography, slider track, button
+- [x] Export review sheet (title, format, legend, optional framing note) before download
+- [x] Surface polish pass from suggestions §7 (glass, typography, slider track, button
       hover)—after layout is stable
-- [ ] Tablet: bottom-sheet controls instead of stacking sidebar above canvas at the
+- [x] Tablet: bottom-sheet controls instead of stacking sidebar above canvas at the
       existing mobile breakpoint (or a dedicated 768–1024px band)
-- [ ] Changelog **MINOR** (or **PATCH** if polish-only slice)
+- [x] Changelog **MINOR** (or **PATCH** if polish-only slice)
 
 ### Deferred (track in suggestions; not required to complete this plan)
 
@@ -140,7 +140,7 @@ possible (applicability map and config codec should be pure).
 
 ## Verification
 
-- [ ] `npm run validate` passes after each phase that changes TypeScript or tests
+- [x] `npm run validate` passes after each phase that changes TypeScript or tests
 - [ ] Manual desktop check: canvas larger or equal; no control overlap with HUD/playback
 - [ ] Manual: switch among lines, polar_fan, radial_pitch_spokes, and a 3D mode — only
       applicable controls active; caption/summary stay truthful

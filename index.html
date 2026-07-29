@@ -11,6 +11,7 @@
   <div id="app-container">
     <aside class="sidebar">
       <div class="brand"><div class="brand-mark">AV</div><div><p class="eyebrow">MIDI → GEOMETRY</p><h1>Visual Score Studio</h1></div></div>
+      <button type="button" id="btn-tablet-controls" class="tablet-controls-toggle" aria-expanded="false">Controls</button>
       <p class="brand-copy">Translate timing, pitch, dynamics, and voice into an exportable composition.</p>
       <div class="sidebar-accordion-tools" role="group" aria-label="Control sections">
         <button type="button" class="btn btn-ghost btn-compact" id="btn-expand-sections">Expand all</button>
@@ -149,6 +150,7 @@
           <button type="button" id="hud-zoom-out" class="hud-btn" title="Zoom Out (-)">-</button>
           <button type="button" id="hud-reset" class="hud-btn" title="Reset View (R)">Reset</button>
           <button type="button" id="hud-legend-toggle" class="hud-btn is-active" title="Toggle Legend (L)" aria-pressed="true">L</button>
+          <button type="button" id="hud-paper-toggle" class="hud-btn" title="Toggle paper preview" aria-pressed="false">Paper</button>
           <button type="button" id="hud-framing-toggle" class="hud-btn" title="Auto-zoom window" aria-expanded="false" aria-controls="hud-framing-panel">Win</button>
           <label class="hud-badge" title="Auto-zoom active region">
             <input type="checkbox" id="hud-autozoom-toggle" checked />
@@ -196,6 +198,11 @@
   <dialog id="shortcuts-dialog" class="shortcuts-dialog" aria-labelledby="shortcuts-title">
     <div class="summary-header"><div><p class="eyebrow">STUDIO SHORTCUTS</p><h2 id="shortcuts-title">Keyboard controls</h2></div><button id="btn-shortcuts-close" class="summary-close" type="button" aria-label="Close shortcuts">×</button></div>
     <dl class="shortcut-list"><dt>+ / −</dt><dd>Zoom in / out</dd><dt>R or 0</dt><dd>Reset framing</dd><dt>A</dt><dd>Toggle auto-zoom</dd><dt>L</dt><dd>Show / hide preview legend</dd><dt>⌘/Ctrl + Z</dt><dd>Undo a visual configuration change</dd><dt>⌘/Ctrl + Shift + Z</dt><dd>Redo a visual configuration change</dd><dt>?</dt><dd>Show these shortcuts</dd></dl>
+  </dialog>
+  <dialog id="export-review-dialog" class="shortcuts-dialog" aria-labelledby="export-review-title">
+    <div class="summary-header"><div><p class="eyebrow">EXPORT REVIEW</p><h2 id="export-review-title">Ready to export</h2></div><button id="btn-export-review-close" class="summary-close" type="button" aria-label="Close export review">×</button></div>
+    <dl class="shortcut-list"><dt>Title</dt><dd id="export-review-name"></dd><dt>Format</dt><dd id="export-review-format"></dd><dt>Legend</dt><dd id="export-review-legend"></dd><dt>Framing</dt><dd>Current preview pan and zoom</dd></dl>
+    <div class="button-grid"><button id="btn-export-review-confirm" type="button" class="btn btn-primary">Download</button><button id="btn-export-review-cancel" type="button" class="btn">Back</button></div>
   </dialog>
   <script type="module" src="./src/ui/app.ts"></script>
 </body>

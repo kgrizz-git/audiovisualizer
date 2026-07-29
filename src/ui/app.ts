@@ -25,6 +25,8 @@ import { isControlApplicable, StudioControlKey } from './controlApplicability.js
 import { initializeGeometryPicker, updateGeometryPicker } from './geometryPickerUI.js';
 import { ConfigHistory, saveConfig } from './configPersistence.js';
 import { copyConfigLink, restoreInitialConfig, storage, syncConfigControls } from './configSessionUI.js';
+import { bindExportReview } from './exportReviewUI.js';
+import { bindTabletSheet } from './tabletSheetUI.js';
 
 const PREVIEW_SIZE = 900;
 const EXPORT_SIZE = 1200;
@@ -45,12 +47,11 @@ export class AudioVisualizerApp {
   private voiceRouter = new VoiceRouter({ engine: 'sample', soundbank: 'FluidR3_GM' });
   private voicePlayback = new Map<number, VoicePlaybackSettings>();
   private voiceMixController = new VoiceMixController();
-  private backgroundMode: 'black' | 'average' = 'black';
+  private backgroundMode: 'black' | 'average' | 'paper' = 'black';
   private exportTitle: string = this.currentScore.title;
   private downloadAbort: AbortController | null = null;
   private threeRenderer: I3DRenderer | null = null;
   private viewport3d: ViewportTransform3D = { ...DEFAULT_VIEWPORT_3D };
-  /** Preview-only: SVG/PNG exports still include the legend; plotter omits it. */
   private legendVisible = true;
   private configHistory = new ConfigHistory();
 
@@ -112,6 +113,7 @@ export class AudioVisualizerApp {
   private element<T extends HTMLElement>(id: string): T { return document.getElementById(id) as T; }
 
   private bindEvents(): void {
+    bindTabletSheet(this.element<HTMLButtonElement>('btn-tablet-controls'), this.element<HTMLElement>('app-container').querySelector<HTMLElement>('.sidebar')!);
     const controlGroups = Array.from(document.querySelectorAll<HTMLDetailsElement>('.sidebar > details.control-group'));
     this.element<HTMLButtonElement>('btn-expand-sections').addEventListener('click', () => {
       controlGroups.forEach((group) => { group.open = true; });
@@ -221,16 +223,13 @@ export class AudioVisualizerApp {
       void this.startPlayback();
     });
     this.element<HTMLButtonElement>('play-btn').addEventListener('click', () => this.togglePlay());
-    this.element<HTMLButtonElement>('btn-export-svg').addEventListener('click', () => this.downloadSvg(false));
-    this.element<HTMLButtonElement>('btn-export-plotter').addEventListener('click', () => this.downloadSvg(true));
-    this.element<HTMLButtonElement>('btn-export-png').addEventListener('click', () => this.downloadPng());
+    bindExportReview((id) => this.element(id), { svg: () => this.downloadSvg(false), png: () => this.downloadPng(), plotter: () => this.downloadSvg(true) });
     this.element<HTMLButtonElement>('btn-export-webm').addEventListener('click', () => void this.downloadWebM3D());
     this.element<HTMLButtonElement>('btn-copy-config-link').addEventListener('click', () => void this.copyConfigLink());
 
     const titleInput = this.element<HTMLInputElement>('export-title-input');
     titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateCanvasAriaLabel(); this.render(); });
 
-    // Viewport HUD framing controls
     const center = PREVIEW_SIZE / 2;
     this.element<HTMLButtonElement>('hud-zoom-in').addEventListener('click', () => {
       const z = this.viewportController.getViewport().zoom;
@@ -245,6 +244,7 @@ export class AudioVisualizerApp {
     const reset = () => { this.viewportController.resetView(); this.render(); };
     this.element<HTMLButtonElement>('hud-reset').addEventListener('click', reset);
     this.element<HTMLButtonElement>('hud-legend-toggle').addEventListener('click', () => this.setLegendVisible(!this.legendVisible));
+    this.element<HTMLButtonElement>('hud-paper-toggle').addEventListener('click', () => this.togglePaperPreview());
     const framingToggle = this.element<HTMLButtonElement>('hud-framing-toggle');
     const framingPanel = this.element<HTMLElement>('hud-framing-panel');
     framingToggle.addEventListener('click', () => {
@@ -285,7 +285,6 @@ export class AudioVisualizerApp {
       return s === Infinity ? 'Full track' : `${s}s`;
     });
 
-    // SoundFont library management
     this.element<HTMLButtonElement>('btn-download-library').addEventListener('click', () => void this.downloadLibrary());
     this.element<HTMLButtonElement>('btn-cancel-download').addEventListener('click', () => this.downloadAbort?.abort());
     this.element<HTMLButtonElement>('btn-clear-cache').addEventListener('click', () => void this.clearLibraryCache());
@@ -295,7 +294,6 @@ export class AudioVisualizerApp {
     });
     this.element<HTMLButtonElement>('btn-prompt-dismiss').addEventListener('click', () => this.dismissLibraryPrompt());
 
-    // Keyboard shortcuts
     window.addEventListener('keydown', (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault();
@@ -786,6 +784,8 @@ export class AudioVisualizerApp {
     this.render();
   }
 
+  private togglePaperPreview(): void { this.backgroundMode = this.backgroundMode === 'paper' ? 'black' : 'paper'; const button = this.element<HTMLButtonElement>('hud-paper-toggle'); button.classList.toggle('is-active', this.backgroundMode === 'paper'); button.setAttribute('aria-pressed', String(this.backgroundMode === 'paper')); this.render(); }
+
   private supportsRadialSpokeScale(): boolean {
     return isControlApplicable(this.currentConfig.variation, 'radialSpokeScale');
   }
@@ -913,7 +913,7 @@ export class AudioVisualizerApp {
   }
 
   private geometryFor(size: number) { return fitGeometryToCanvas(mapScoreToGeometry(this.currentScore, this.currentConfig, size, size), size, size); }
-  private backgroundColor(): string { return this.backgroundMode === 'average' ? getAverageScoreBackground(this.currentScore, this.currentConfig) : '#000000'; }
+  private backgroundColor(): string { return this.backgroundMode === 'average' ? getAverageScoreBackground(this.currentScore, this.currentConfig) : this.backgroundMode === 'paper' ? '#f6f0e4' : '#000000'; }
   private atmosphereColors(): string[] | undefined {
     if (this.backgroundMode !== 'black') return undefined;
     const accent = getDominantScoreAccent(this.currentScore, this.currentConfig);

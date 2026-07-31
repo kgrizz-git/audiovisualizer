@@ -35,6 +35,17 @@ npm run dev
 npm run validate
 ```
 
+## Contributing
+
+Suggestions, bug reports, and feature requests via **[GitHub Issues](https://github.com/kgrizz-git/audiovisualizer/issues)** are welcome.
+
+**Pull requests are not solicited right now.** The project is in an early public phase and
+maintainer bandwidth is limited; unsolicited PRs may be closed without merge. If you have a
+concrete change in mind, open an issue first so we can decide whether to take it on.
+
+Security vulnerabilities: see [`SECURITY.md`](SECURITY.md) (private reporting only — do not
+file public issues for vulns).
+
 ### SoundFont audio preview
 
 AudioVisualizer includes a sample-based General MIDI SoundFont engine alongside its oscillator preview. Multi-program tracks on shared channels load distinct instrument patches automatically based on their assigned programs. Percussion tracks (MIDI channel 10, zero-indexed channel 9) render using the bundled FluidR3 Standard drum kit. Support for additional drum kit variants (Room, Power, Electronic, Jazz, Brush, etc.) is deferred to the upcoming SF2 synth engine plan.

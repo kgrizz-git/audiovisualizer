@@ -1,0 +1,38 @@
+name: Suggestion or request
+description: Feature idea, UX suggestion, or documentation request.
+title: "[Request]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas and requests are welcome via Issues. Unsolicited pull requests are
+        not solicited right now — please discuss here first (see README Contributing).
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: The outcome you want, not an implementation plan (unless you have one).
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does this matter?
+      description: Optional context — workflow, use case, or pain point.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area (best guess)
+      options:
+        - Visual modes / mapping
+        - Playback / audio
+        - UI / controls
+        - Export / CLI
+        - Docs
+        - Other
+      default: 5
+    validations:
+      required: true

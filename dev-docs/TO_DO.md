@@ -1,6 +1,22 @@
 # AudioVisualizer Development TODOs
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
+
+## Repository / release hygiene
+
+- [ ] **Make unsolicited PRs safe before inviting them**: Configure a default-branch
+  ruleset (or classic branch protection) so outsiders cannot land code without review.
+  Minimum: require a PR to merge; require status checks `Validate`, `Policy`,
+  `Secret scan`, and `SAST (Semgrep)`; require at least one approving review from someone
+  with write access (not the PR author); enable **Require review from Code Owners**
+  (`.github/CODEOWNERS` already maps `* @kgrizz-git`); dismiss stale approvals on new
+  pushes; block force-pushes and branch deletion; keep the bypass list empty or
+  maintainer-only. Restrict who can push/create branches if needed. Revisit the README
+  “PRs not solicited” note only after this is live and trusted. See
+  [`ci/README.md`](../ci/README.md) and
+  [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
+  Also enable **GitHub private vulnerability reporting** when the repo is public
+  (Settings → Code security → Private vulnerability reporting).
 
 ## Next product milestones
 

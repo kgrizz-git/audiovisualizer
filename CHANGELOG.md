@@ -10,6 +10,11 @@ uses [Semantic Versioning](https://semver.org/).
 ## Unreleased
 
 ### Added
+- [`SECURITY.md`](SECURITY.md) with private vulnerability-reporting guidance, plus a README
+  Contributing note: GitHub Issues welcome; unsolicited pull requests are not solicited for
+  now. SemVer: **PATCH** (docs / process).
+- `.github/CODEOWNERS` (`* @kgrizz-git`), issue forms (bug / suggestion), and a PR template
+  that steers contributors to Issues first. SemVer: **PATCH** (docs / process).
 - A preview-only **Paper** canvas field toggle in the viewport HUD for checking a light print-like composition without changing export behavior, mapper rules, or saved visual configuration. SemVer: **MINOR**.
 - An export review sheet for SVG, PNG, and plotter SVG confirms title, format, legend policy, and current preview framing before download. SemVer: **MINOR**.
 - At tablet widths (768–1024px), studio controls become a touch-friendly bottom sheet opened with a Controls button, preserving the canvas workspace. SemVer: **MINOR**.

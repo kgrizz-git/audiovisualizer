@@ -20,6 +20,10 @@ Last reviewed: 2026-07-31
   tracked file for email addresses (excluding reserved example/test domains), absolute paths,
   `file://` URIs, and private IPv4 addresses so the repo never leaks local identity.
   Allowlisting via `.repo-clean-allowlist` or inline `# policy:repo-clean allow=<token>`.
+- Backlog item to configure default-branch rulesets / CODEOWNERS before inviting outside
+  PRs (`dev-docs/TO_DO.md` → Repository / release hygiene). SemVer: none.
+- `.github/CODEOWNERS` (`* @kgrizz-git`), issue forms, and PR template; TO_DO updated so
+  remaining work is ruleset enforcement + private vulnerability reporting. SemVer: none.
 
 ### Changed
 - ESLint `complexity` rule escalated from `warn` to `error` at 15, making the policy's

@@ -1,8 +1,14 @@
 # .github/workflows/ci.yml
 #
-# AudioVisualizer CI: app validate, coverage (informational), npm audit,
-# license inventory, public-release clean gate, policy hook tests, gitleaks,
-# and Semgrep SAST. Target: validate job under ~5 minutes on a cold runner.
+# AudioVisualizer CI:
+#   Validate  — lint, Vitest+coverage, type-check, production build, npm audit
+#   Policy    — license inventory, public-release clean gate, hook unit tests
+#   Secrets   — gitleaks
+#   SAST      — Semgrep (pinned image; TypeScript + Python security rulesets)
+#
+# Required status-check names for branch protection / rulesets:
+#   Validate, Policy, Secret scan, SAST (Semgrep)
+# Target: Validate under ~5 minutes on a cold runner.
 
 name: CI
 
@@ -26,24 +32,36 @@ jobs:
           node-version: "20"
           cache: npm
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Test, type-check, and production build
+      - name: Lint, test with coverage, type-check, and production build
         run: npm run validate
 
-      - name: Test coverage (informational)
-        # No coverage thresholds — reports only. continue-on-error so tooling
-        # drift cannot block merges while validate already gates correctness.
-        continue-on-error: true
-        run: npm run coverage
+      - name: Upload coverage (lcov)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Audit dependencies (high/critical)
+        # Hard gate on main pushes; advisory on PRs so fresh advisories do not
+        # block unrelated work overnight (still visible as a failed step).
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: npm audit --audit-level=high
+
+  policy:
+    name: Policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: License inventory gate
         run: python hooks/scripts/check_license_inventory.py --check
@@ -70,10 +88,12 @@ jobs:
 
   semgrep:
     name: SAST (Semgrep)
+    # Skip Dependabot lockfile PRs — SAST adds little signal there.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    # Official image — returntocorp/semgrep-action@v1 is archived/deprecated.
+    # Pin tag + digest; bump deliberately when refreshing Semgrep.
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep:1.169.0@sha256:2b33f46ba66cf8cc2ad59ccfa7d22951fd00c632c38f1339e84ec8e6e641a942
     steps:
       - uses: actions/checkout@v4
       - name: Scan TypeScript and Python security rules
@@ -83,4 +103,4 @@ jobs:
             --config=p/python-security \
             --error \
             --quiet \
-            .
+            src/ hooks/scripts/ tests/ ci/scripts/

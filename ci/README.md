@@ -8,16 +8,15 @@ Guidance for selecting, structuring, and gating CI checks. Example workflows liv
 This repository’s **active** CI is
 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml):
 
-- **Validate job (fast lane):** `npm run validate` (lint + Vitest + TypeScript + Vite
-  production build), informational Vitest coverage (`continue-on-error`),
-  `npm audit --audit-level=high`, the third-party license inventory gate, the
-  public-release clean gate (`check_public_repo_clean.py`), and policy-hook unit tests.
-- **Secrets job:** gitleaks.
-- **SAST job:** Semgrep (`semgrep/semgrep` container, `p/typescript` +
-  `p/python-security`) — kept as a separate job so it does not inflate the validate
-  wall-clock target.
+| Job (status-check name) | What it runs |
+|---|---|
+| **Validate** | `npm run validate` (lint + Vitest with coverage + TypeScript + Vite build), uploads `coverage/lcov.info`, `npm audit --audit-level=high` (hard on `main` pushes; `continue-on-error` on PRs) |
+| **Policy** | License inventory gate, public-release clean gate, policy-hook unit tests (Python-only; parallel with Validate) |
+| **Secret scan** | gitleaks |
+| **SAST (Semgrep)** | Pinned `semgrep/semgrep` image; `p/typescript` + `p/python-security` on `src/`, `hooks/scripts/`, `tests/`, `ci/scripts/` (skipped for Dependabot) |
 
-It is application CI, not seed-template asset validation.
+Use those exact job names when configuring required checks in a repository ruleset /
+branch protection. It is application CI, not seed-template asset validation.
 
 `ci/examples/` remains inactive reference material from the bootstrap template (generic
 Python/lint lanes, CodeQL, Dependabot samples, etc.). Do not treat those examples as
@@ -36,9 +35,9 @@ expand schedules/matrices/artifacts without a rough usage estimate in the PR.
 | Type checking | optional | ✅ primary | — | — |
 | Secret scanning (gitleaks) | ✅ primary | ✅ safety net | — | — |
 | File size / doc freshness | ✅ primary | ✅ safety net | — | — |
-| Emails / absolute paths / private IPs (clean-repo) | ✅ primary | ✅ safety net | — | — |
-| Unit tests | — | ✅ primary | — | — |
-| Dep audit (pip-audit, npm audit) | — | ✅ primary | — | — |
+| Emails / absolute paths / private IPs (clean-repo) | ✅ primary | ✅ safety net (Policy job) | — | — |
+| Unit tests + coverage report | — | ✅ primary (folded into validate) | — | — |
+| Dep audit (npm audit) | — | ✅ primary on main; advisory on PRs | optional weekly | — |
 | SAST / OWASP (Semgrep) | optional | ✅ primary (focused rulesets) | ✅ deeper suites (OWASP, etc.) | — |
 | CodeQL deep analysis | — | — | ✅ primary | — |
 | Container / IaC scan (grype, checkov) | — | — | ✅ primary | — |
@@ -48,9 +47,10 @@ expand schedules/matrices/artifacts without a rough usage estimate in the PR.
 | Refactor / GC assessment | — | — | — | ✅ primary |
 | Open PRs after push / daily reminder | — | — | optional advisory schedule | ✅ primary (local script) |
 
-**Fast lane** (must stay < 5 min): lint, types, tests, secret scan, dep audit.
-**Slow lane** (can run on schedule or on PR to main): SAST, CodeQL, container scans.
-**Scheduled** (nightly or weekly): TruffleHog history, dep audit, stale-branch cleanup.
+**Fast lane** (must stay < 5 min): lint, types, tests+coverage, secret scan, policy gates,
+dep audit.
+**Slow lane** (can run on schedule or on PR to main): deeper SAST, CodeQL, container scans.
+**Scheduled** (nightly or weekly): TruffleHog history, dep audit refresh, stale-branch cleanup.
 
 For repositories that must reject secrets, personal data, or absolute machine paths before a
 public release, the clean-repo guard (`hooks/scripts/check_public_repo_clean.py`, wired as
@@ -69,7 +69,7 @@ it is required, make it a required default-branch check; see
 4. **Least-privilege tokens.** Set `permissions:` explicitly at the workflow and job
    level; default to `contents: read`.
 5. **Pin action versions.** Use `uses: actions/checkout@v4` with a SHA comment for
-   high-value steps; prevents supply-chain drift.
+   high-value steps; prevents supply-chain drift. Pin container images by tag+digest.
 6. **Dependabot for Actions.** Enable `package-ecosystem: github-actions` in
    `dependabot.yml` so action versions stay current.
 7. **Estimate minutes/storage** when changing triggers, schedules, matrices, runners,

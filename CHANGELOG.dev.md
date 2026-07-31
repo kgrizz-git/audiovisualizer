@@ -10,11 +10,11 @@ Last reviewed: 2026-07-31
 ### Added
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.
 - Phase 1 of that plan: `src/ui/controlApplicability.ts` plus Vitest coverage for mode-aware controls and canvas `showLegend` preview toggle. SemVer: covered in public changelog (**MINOR**).
-- CI public-release hardening on `prepare-public-release`: informational Vitest coverage
-  (`npm run coverage` / `@vitest/coverage-v8`), `npm audit --audit-level=high`, and a
-  Semgrep SAST job using the official `semgrep/semgrep` container with `p/typescript` and
-  `p/python-security` (replacing the archived `returntocorp/semgrep-action`). SemVer: none
-  (tooling only).
+- CI public-release hardening on `prepare-public-release`: Vitest coverage folded into
+  `npm run validate` (no second test pass), `npm audit --audit-level=high` (hard on main,
+  advisory on PRs), parallel **Policy** job for license/clean/smoke gates, Semgrep via a
+  pinned `semgrep/semgrep:1.169.0` digest scanning `src/` `hooks/scripts/` `tests/`
+  `ci/scripts/`, and an uploaded `coverage-lcov` artifact. SemVer: none (tooling only).
 - `hooks/scripts/check_public_repo_clean.py` (wired as `check-public-repo-clean` in
   `.pre-commit-config.yaml`, `hooks/install.sh`, and `.github/workflows/ci.yml`): scans every
   tracked file for email addresses (excluding reserved example/test domains), absolute paths,

@@ -1,0 +1,55 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please avoid attaching personal MIDI files;
+        a tiny synthetic or redistributable demo is enough when possible.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+      placeholder: Steps, screenshots, or a short description…
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps help a lot.
+      placeholder: |
+        1. Load …
+        2. Choose mode …
+        3. …
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where?
+      options:
+        - Browser studio
+        - CLI (`npm run render`)
+        - Docs / other
+      default: 0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment (optional)
+      description: Browser/OS, or Node version for CLI.
+      placeholder: e.g. Safari 18 / macOS, or Node 20
+    validations:
+      required: false
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Not a security report
+      options:
+        - label: This is not a security vulnerability (those go through SECURITY.md / private advisory).
+          required: true

@@ -11,8 +11,9 @@
     "render": "npm run build:cli --silent && node dist-cli/render-midi.mjs",
     "preview": "vite preview",
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "lint": "eslint src/ tests/",
-    "validate": "npm run lint && npm run test && npm run build",
+    "validate": "npm run lint && npm run coverage && npm run build",
     "bundle:soundfonts": "node scripts/bundle-soundfonts.mjs",
     "bundle:soundfonts:verify": "node scripts/bundle-soundfonts.mjs --verify",
     "prepare": "sh hooks/install.sh 2>/dev/null || true"
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/three": "^0.160.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "esbuild": "^0.28.1",
     "eslint": "^10.8.0",
     "typescript": "^5.4.5",

@@ -3,7 +3,7 @@
 Last reviewed: 2026-07-27T16:53:33Z (re-review of updated plan)
 Date: 2026-07-27
 Reviewer: opencode (agent)
-Scope: [plans/2026-07-27-playback-and-transport-fixes.md](plans/2026-07-27-playback-and-transport-fixes.md)
+Scope: [plans/2026-07-27-playback-and-transport-fixes.md](../plans/2026-07-27-playback-and-transport-fixes.md)
 Status: approved
 
 ## Executive Summary

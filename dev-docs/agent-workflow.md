@@ -1,6 +1,6 @@
 # AudioVisualizer Agent Workflow
 
-Last reviewed: 2026-07-24
+Last reviewed: 2026-07-31
 
 ## Harness choice
 
@@ -25,12 +25,14 @@ several independent, concurrent streams.
 
 `npm run validate` is the required local gate. It runs:
 
-- `npm test` — deterministic unit tests for mapping and SVG generation.
+- `npm run lint` — ESLint over `src/` and `tests/`.
+- `npm run coverage` — Vitest once, with coverage (no hard thresholds; report only).
 - `npm run build` — TypeScript strict checking and a Vite production build.
 
-Do not add an external linter, formatter, deployment system, or agent framework without
-a concrete project need. The existing policy and hook directories remain available for
-future repository-wide controls.
+Use `npm test` when you want a faster loop without the coverage report. Do not add an
+external linter, formatter, deployment system, or agent framework without a concrete
+project need. The existing policy and hook directories remain available for future
+repository-wide controls.
 
 ## Change routing
 

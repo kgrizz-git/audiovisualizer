@@ -7,7 +7,7 @@ and coverage. All are install-on-demand — evaluate per project before enabling
 
 Before installing any App, scope it to needed repositories and confirm its code/metadata
 access, retention, subprocessors, and contractual fit for the repo's data classification.
-For a ruleset, required-check, and PII/PHI/absolute-path gate baseline, see
+For a ruleset, required-check, and sensitive-data / absolute-path gate baseline, see
 [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
 
 ## AI-assisted code review
@@ -44,7 +44,7 @@ Privacy code scanner that traces sensitive-data flows through code, logs, files,
 SDKs, and AI paths. It offers local CLI/Docker and IDE scanning as well as GitHub/GitLab/Bitbucket
 integrations that can block PRs. For this template, HoundDog is **local CLI/Docker only until
 further user authorization**: do not use its IDE, cloud, API-key, or SCM/GitHub integration.
-See [`inventory/medical-data-security.md`](medical-data-security.md).
+See [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
 
 ## Vulnerability & license scanning
 
@@ -86,7 +86,6 @@ Requires a `CODECOV_TOKEN` secret (Settings → Secrets → Actions) for both pu
 | Start with zero friction | Dependabot + Codecov |
 | Add AI review | CodeRabbit (best breadth) |
 | Unified security dashboard | Aikido (solo/small team) or Snyk (enterprise) |
-| Privacy data-flow scanning / HIPAA-oriented code review | HoundDog.ai (local CLI/Docker only until further authorization) |
 | Static analysis + autofix PRs | DeepSource |
 | More dep update control | Renovate (replaces Dependabot) |
 | Test generation | Qodo |

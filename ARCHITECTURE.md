@@ -1,6 +1,6 @@
 # AudioVisualizer Architecture
 
-Last reviewed: 2026-07-27
+Last reviewed: 2026-07-31
 
 ## Purpose and deployment boundary
 
@@ -112,9 +112,9 @@ must never gate file loading, analysis, rendering, playback, or export.
 
 ## Verification and change ownership
 
-Run `npm run validate` after implementation changes; it runs Vitest, strict TypeScript,
-and a Vite production build. Add focused tests whenever parser normalization, mapping,
-layout fitting, SVG/PNG serialization, or source boundaries change.
+Run `npm run validate` after implementation changes; it runs ESLint, Vitest with coverage,
+strict TypeScript, and a Vite production build. Add focused tests whenever parser
+normalization, mapping, layout fitting, SVG/PNG serialization, or source boundaries change.
 
 | Change | Primary documents and tests |
 |---|---|

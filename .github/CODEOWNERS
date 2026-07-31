@@ -1,0 +1,4 @@
+# Default owner for every path in this repository.
+# Enforcement requires a ruleset/branch-protection option:
+# "Require review from Code Owners" (see dev-docs/TO_DO.md).
+* @kgrizz-git

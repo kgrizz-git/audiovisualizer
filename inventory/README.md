@@ -46,7 +46,6 @@ repo — not committed into this template.
 - [python.md](python.md) — Python project defaults, formatting, testing, type checking
 - [scientific-domain.md](scientific-domain.md) — medical imaging (pydicom, SimpleITK), EM/FDTD simulation (meep, openEMS, gprMax), general scientific stack
 - [financial-modeling.md](financial-modeling.md) — market data (yfinance, FRED), quant libraries (QuantLib, PyPortfolioOpt, empyrical), backtesting (backtrader, vectorbt), modeling patterns
-- [medical-data-security.md](medical-data-security.md) — strict PII/PHI guard setup, human approval inventory, and medical-data scanning options
 
 ### Design & frontend
 - [frontend-design-ux.md](frontend-design-ux.md) — Claude Design, Google Stitch, Figma, Penpot, shadcn/ui, Radix UI, Open Props, Shopify Polaris, frontend tooling

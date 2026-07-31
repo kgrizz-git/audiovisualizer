@@ -1,6 +1,6 @@
 # AudioVisualizer — Music → Visual Score Art
 
-Last reviewed: 2026-07-28
+Last reviewed: 2026-07-31
 
 This repository was bootstrapped and cloned from the [template-repo-v1](https://github.com/kgrizz-git/template-repo-v1) seed template.
 
@@ -31,9 +31,20 @@ npm install
 # Start local development server (Vite)
 npm run dev
 
-# Run the full local verification gate (tests, type-checking, and production build)
+# Run the full local verification gate (lint, tests with coverage, type-check, production build)
 npm run validate
 ```
+
+## Contributing
+
+Suggestions, bug reports, and feature requests via **[GitHub Issues](https://github.com/kgrizz-git/audiovisualizer/issues)** are welcome.
+
+**Pull requests are not solicited right now.** The project is in an early public phase and
+maintainer bandwidth is limited; unsolicited PRs may be closed without merge. If you have a
+concrete change in mind, open an issue first so we can decide whether to take it on.
+
+Security vulnerabilities: see [`SECURITY.md`](SECURITY.md) (private reporting only — do not
+file public issues for vulns).
 
 ### SoundFont audio preview
 

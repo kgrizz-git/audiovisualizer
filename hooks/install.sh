@@ -33,6 +33,11 @@ if ! python3 hooks/scripts/check_license_inventory.py --check; then
     has_failed=1
 fi
 
+echo "--- Running check_public_repo_clean.py ---"
+if ! python3 hooks/scripts/check_public_repo_clean.py --repo-root .; then
+    has_failed=1
+fi
+
 if [ $has_failed -ne 0 ]; then
     exit 1
 fi

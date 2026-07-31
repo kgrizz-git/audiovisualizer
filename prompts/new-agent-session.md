@@ -20,10 +20,9 @@ From the profile, report to the user in a single short paragraph:
 - Orchestration tier and any active subagents/skills
 - Any open questions listed at the bottom of the profile
 
-If the profile says `regulated` data or mentions PII, PHI, medical, FHIR/HL7, or DICOM, read
-[`prompts/strict-phi-agent-guidance.md`](strict-phi-agent-guidance.md) before inspecting or
-editing data-bearing files. Verify the strict sensitive-data hook/CI setup before making a
-relevant commit; do not modify its human approval inventory.
+Before publishing anything publicly, run `hooks/scripts/check_public_repo_clean.py` (wired as
+`check-public-repo-clean` in `.pre-commit-config.yaml`) and confirm no emails, absolute local
+paths, or private IPs are tracked.
 
 ---
 

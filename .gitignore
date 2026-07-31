@@ -51,6 +51,7 @@ cython_debug/
 .hypothesis/
 .coverage
 .coverage.*
+coverage/
 coverage.xml
 htmlcov/
 nosetests.xml
@@ -204,6 +205,8 @@ temp/
 # (pre-commit itself is tracked; ignore its local cache)
 .pre-commit-cache/
 .worktrees/
+# Local agent/editor worktrees nested inside the checkout (never publish)
+.kilo/
 
 # SoundFont sample blobs (regenerate with npm run bundle:soundfonts)
 public/soundfonts/**/*.js

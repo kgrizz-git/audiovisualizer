@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Last reviewed: 2026-07-28
+Last reviewed: 2026-07-31
 
 AudioVisualizer turns MIDI files into deterministic visual score art. This is the
 single source of truth for coding agents; tool-specific entrypoints point here.
@@ -21,7 +21,8 @@ Read these in order for implementation work:
 2. Update `DESIGN.md` when changing a visual rule, mapping formula, or export aesthetic;
    update `ARCHITECTURE.md` when changing a public domain contract, stack, library, or runtime boundary.
 3. Add or update Vitest coverage with mapper, parser, and SVG behavior changes.
-4. Run `npm run validate` before handing off a change. It type-checks, tests, and production-builds the app.
+4. Run `npm run validate` before handing off a change. It lints, runs Vitest with coverage,
+   type-checks, and production-builds the app.
 5. Do not upload user MIDI files or add telemetry without explicit approval. Browser file handling stays local.
 6. Preserve the existing template policy and hook material unless the task explicitly changes it.
 

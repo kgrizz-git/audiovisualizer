@@ -1,6 +1,6 @@
 # Third-Party License Inventory
 
-Last reviewed: 2026-07-26
+Last reviewed: 2026-07-31
 Last human reviewed: 2026-07-26
 
 This document catalogs third-party dependencies and their licenses for compliance,
@@ -25,6 +25,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 - `@eslint/js` (v10.0.1) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/@eslint/js/`
 - `@types/three` (v0.160.0) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/three/`
+- `@vitest/coverage-v8` (v4.1.10) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/coverage-v8/`
 - `esbuild` (v0.28.1) — MIT ([source](https://github.com/evanw/esbuild)) — see `node_modules/esbuild/`
 - `eslint` (v10.8.0) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/eslint/`
 - `typescript` (v5.9.3) — Apache-2.0 ([source](https://github.com/microsoft/TypeScript)) — see `node_modules/typescript/`
@@ -58,6 +59,11 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 ### Permissive Licenses
 
+- `@babel/helper-string-parser` (v7.29.7) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/helper-string-parser/`
+- `@babel/helper-validator-identifier` (v7.29.7) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/helper-validator-identifier/`
+- `@babel/parser` (v7.29.7) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/parser/`
+- `@babel/types` (v7.29.7) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/types/`
+- `@bcoe/v8-coverage` (v1.0.2) — MIT ([source](https://github.com/bcoe/v8-coverage)) — see `node_modules/@bcoe/v8-coverage/`
 - `@emnapi/core` (v1.11.1) — MIT — see `node_modules/@emnapi/core/`
 - `@emnapi/runtime` (v1.11.1) — MIT — see `node_modules/@emnapi/runtime/`
 - `@emnapi/wasi-threads` (v1.2.2) — MIT — see `node_modules/@emnapi/wasi-threads/`
@@ -99,7 +105,9 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@humanfs/types` (v0.15.0) — Apache-2.0 ([source](https://github.com/humanwhocodes/humanfs)) — see `node_modules/@humanfs/types/`
 - `@humanwhocodes/module-importer` (v1.0.1) — Apache-2.0 ([source](https://github.com/humanwhocodes/module-importer)) — see `node_modules/@humanwhocodes/module-importer/`
 - `@humanwhocodes/retry` (v0.4.3) — Apache-2.0 ([source](https://github.com/humanwhocodes/retry)) — see `node_modules/@humanwhocodes/retry/`
+- `@jridgewell/resolve-uri` (v3.1.2) — MIT ([source](https://github.com/jridgewell/resolve-uri)) — see `node_modules/@jridgewell/resolve-uri/`
 - `@jridgewell/sourcemap-codec` (v1.5.5) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/sourcemap-codec/`
+- `@jridgewell/trace-mapping` (v0.3.31) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/trace-mapping/`
 - `@napi-rs/wasm-runtime` (v1.1.6) — MIT — see `node_modules/@napi-rs/wasm-runtime/`
 - `@oxc-project/types` (v0.139.0) — MIT ([source](https://github.com/oxc-project/oxc)) — see `node_modules/@oxc-project/types/`
 - `@rolldown/binding-android-arm64` (v1.1.5) — MIT — see `node_modules/@rolldown/binding-android-arm64/`
@@ -148,6 +156,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `acorn-jsx` (v5.3.2) — MIT ([source](https://github.com/acornjs/acorn-jsx)) — see `node_modules/acorn-jsx/`
 - `ajv` (v6.15.0) — MIT ([source](https://github.com/ajv-validator/ajv)) — see `node_modules/ajv/`
 - `assertion-error` (v2.0.1) — MIT ([source](https://github.com/chaijs/assertion-error)) — see `node_modules/assertion-error/`
+- `ast-v8-to-istanbul` (v1.0.5) — MIT ([source](https://github.com/AriPerkkio/ast-v8-to-istanbul)) — see `node_modules/ast-v8-to-istanbul/`
 - `balanced-match` (v4.0.4) — MIT ([source](https://github.com/juliangruber/balanced-match)) — see `node_modules/balanced-match/`
 - `brace-expansion` (v5.0.8) — MIT ([source](https://github.com/juliangruber/brace-expansion)) — see `node_modules/brace-expansion/`
 - `chai` (v6.2.2) — MIT ([source](https://github.com/chaijs/chai)) — see `node_modules/chai/`
@@ -179,12 +188,18 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `flatted` (v3.4.3) — ISC ([source](https://github.com/WebReflection/flatted)) — see `node_modules/flatted/`
 - `fsevents` (v2.3.3) — MIT — see `node_modules/fsevents/`
 - `glob-parent` (v6.0.2) — ISC ([source](https://github.com/gulpjs/glob-parent)) — see `node_modules/glob-parent/`
+- `has-flag` (v4.0.0) — MIT ([source](https://github.com/sindresorhus/has-flag)) — see `node_modules/has-flag/`
+- `html-escaper` (v2.0.2) — MIT ([source](https://github.com/WebReflection/html-escaper)) — see `node_modules/html-escaper/`
 - `ignore` (v5.3.2) — MIT ([source](https://github.com/kaelzhang/node-ignore)) — see `node_modules/ignore/`
 - `ignore` (v7.0.6) — MIT ([source](https://github.com/kaelzhang/node-ignore)) — see `node_modules/ignore/`
 - `imurmurhash` (v0.1.4) — MIT ([source](https://github.com/jensyt/imurmurhash-js)) — see `node_modules/imurmurhash/`
 - `is-extglob` (v2.1.1) — MIT ([source](https://github.com/jonschlinkert/is-extglob)) — see `node_modules/is-extglob/`
 - `is-glob` (v4.0.3) — MIT ([source](https://github.com/micromatch/is-glob)) — see `node_modules/is-glob/`
 - `isexe` (v2.0.0) — ISC ([source](https://github.com/isaacs/isexe)) — see `node_modules/isexe/`
+- `istanbul-lib-coverage` (v3.2.2) — BSD-3-Clause ([source](https://github.com/istanbuljs/istanbuljs)) — see `node_modules/istanbul-lib-coverage/`
+- `istanbul-lib-report` (v3.0.1) — BSD-3-Clause ([source](https://github.com/istanbuljs/istanbuljs)) — see `node_modules/istanbul-lib-report/`
+- `istanbul-reports` (v3.2.0) — BSD-3-Clause ([source](https://github.com/istanbuljs/istanbuljs)) — see `node_modules/istanbul-reports/`
+- `js-tokens` (v10.0.0) — MIT ([source](https://github.com/lydell/js-tokens)) — see `node_modules/js-tokens/`
 - `json-buffer` (v3.0.1) — MIT ([source](https://github.com/dominictarr/json-buffer)) — see `node_modules/json-buffer/`
 - `json-schema-traverse` (v0.4.1) — MIT ([source](https://github.com/epoberezkin/json-schema-traverse)) — see `node_modules/json-schema-traverse/`
 - `json-stable-stringify-without-jsonify` (v1.0.1) — MIT ([source](https://github.com/samn/json-stable-stringify)) — see `node_modules/json-stable-stringify-without-jsonify/`
@@ -192,6 +207,8 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `levn` (v0.4.1) — MIT ([source](https://github.com/gkz/levn)) — see `node_modules/levn/`
 - `locate-path` (v6.0.0) — MIT ([source](https://github.com/sindresorhus/locate-path)) — see `node_modules/locate-path/`
 - `magic-string` (v0.30.21) — MIT ([source](https://github.com/Rich-Harris/magic-string)) — see `node_modules/magic-string/`
+- `magicast` (v0.5.3) — MIT ([source](https://github.com/unjs/magicast)) — see `node_modules/magicast/`
+- `make-dir` (v4.0.0) — MIT ([source](https://github.com/sindresorhus/make-dir)) — see `node_modules/make-dir/`
 - `meshoptimizer` (v0.18.1) — MIT ([source](https://github.com/zeux/meshoptimizer)) — see `node_modules/meshoptimizer/`
 - `minimatch` (v10.2.5) — BlueOak-1.0.0 ([source](https://github.com/isaacs/minimatch)) — see `node_modules/minimatch/`
 - `ms` (v2.1.3) — MIT ([source](https://github.com/vercel/ms)) — see `node_modules/ms/`
@@ -217,6 +234,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `source-map-js` (v1.2.1) — BSD-3-Clause ([source](https://github.com/7rulnik/source-map-js)) — see `node_modules/source-map-js/`
 - `stackback` (v0.0.2) — MIT ([source](https://github.com/shtylman/node-stackback)) — see `node_modules/stackback/`
 - `std-env` (v4.2.0) — MIT ([source](https://github.com/unjs/std-env)) — see `node_modules/std-env/`
+- `supports-color` (v7.2.0) — MIT ([source](https://github.com/chalk/supports-color)) — see `node_modules/supports-color/`
 - `tinybench` (v2.9.0) — MIT ([source](https://github.com/tinylibs/tinybench)) — see `node_modules/tinybench/`
 - `tinyexec` (v1.2.4) — MIT ([source](https://github.com/tinylibs/tinyexec)) — see `node_modules/tinyexec/`
 - `tinyglobby` (v0.2.17) — MIT ([source](https://github.com/SuperchupuDev/tinyglobby)) — see `node_modules/tinyglobby/`
@@ -249,7 +267,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 | Category | Production | Development |
 |----------|------------|-------------|
-| Permissive | 4 | 179 |
+| Permissive | 4 | 197 |
 | Weak Copyleft | 13 | 12 |
 | Strong Copyleft | 0 | 0 |
 | Unknown/Check | 0 | 0 |

@@ -3,13 +3,38 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
-Last reviewed: 2026-07-24
+Last reviewed: 2026-07-31
 
 ## Unreleased
 
 ### Added
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.
 - Phase 1 of that plan: `src/ui/controlApplicability.ts` plus Vitest coverage for mode-aware controls and canvas `showLegend` preview toggle. SemVer: covered in public changelog (**MINOR**).
+- CI public-release hardening on `prepare-public-release`: Vitest coverage folded into
+  `npm run validate` (no second test pass), `npm audit --audit-level=high` (hard on main,
+  advisory on PRs), parallel **Policy** job for license/clean/smoke gates, Semgrep via a
+  pinned `semgrep/semgrep:1.169.0` digest scanning `src/` `hooks/scripts/` `tests/`
+  `ci/scripts/`, and an uploaded `coverage-lcov` artifact. SemVer: none (tooling only).
+- `hooks/scripts/check_public_repo_clean.py` (wired as `check-public-repo-clean` in
+  `.pre-commit-config.yaml`, `hooks/install.sh`, and `.github/workflows/ci.yml`): scans every
+  tracked file for email addresses (excluding reserved example/test domains), absolute paths,
+  `file://` URIs, and private IPv4 addresses so the repo never leaks local identity.
+  Allowlisting via `.repo-clean-allowlist` or inline `# policy:repo-clean allow=<token>`.
+- Backlog item to configure default-branch rulesets / CODEOWNERS before inviting outside
+  PRs (`dev-docs/TO_DO.md` → Repository / release hygiene). SemVer: none.
+- `.github/CODEOWNERS` (`* @kgrizz-git`), issue forms, and PR template; TO_DO updated so
+  remaining work is ruleset enforcement + private vulnerability reporting. SemVer: none.
+- CI fixes: license inventory gate moved back onto **Validate** (needs `npm ci` /
+  license-checker); Semgrep uses `p/python` instead of dead `p/python-security` registry
+  pack; `.coderabbit.yaml` disables auto-review (opt-in via `@coderabbitai review`).
+  SemVer: none.
+- Clean-gate hardening from CodeRabbit review: `git ls-files -z`, single-pass file read,
+  CI `--redact` (local hooks still show matches), `persist-credentials: false` on
+  Policy/Semgrep checkouts, SECURITY.md + blank-issue chooser aligned with private vuln
+  reporting, doc/policy accuracy for index-vs-history scope. SemVer: none.
+- License-inventory unit tests (`tests.hooks.test_check_license_inventory`) run on
+  **Validate** after `npm ci`, not on the Python-only **Policy** job — the repo
+  integration smoke needs license-checker enrichment. SemVer: none.
 
 ### Changed
 - ESLint `complexity` rule escalated from `warn` to `error` at 15, making the policy's
@@ -20,6 +45,24 @@ Last reviewed: 2026-07-24
   lizard is not used (TS-only codebase; ESLint covers it without a Python dependency);
   annotated the lizard row in `inventory/security-quality.md` accordingly.
 - Refactored oversized files to pass the 800-line hook: extracted SoundFont library UI (`src/ui/soundfontLibraryUI.ts`), audio voice options row builder (`src/ui/voiceOptionsUI.ts`), 3D geometry builders (`src/renderers/three/geometryBuilders.ts`), onset pulses (`src/renderers/three/onsetPulses.ts`), and scene atmosphere (`src/renderers/three/sceneAtmosphere.ts`) into sibling modules. Both `src/ui/app.ts` (714 lines) and `src/renderers/three/ThreeDRenderer.ts` (499 lines) now pass comfortably without exemptions.
+- Vitest excludes nested `.kilo/` / `.worktrees/` checkouts so local test and coverage runs
+  do not double-count sibling worktree suites; `.kilo/` is gitignored.
+- `check_public_repo_clean.py` fails closed when `git ls-files` cannot run (previously a Git
+  failure returned an empty file list and the gate silently passed).
+
+### Removed
+- Public-release prep: removed the template's PHI/medical enforcement infrastructure
+  (`check_sensitive_data.py`, `check_commit_message_sensitive_data.py`,
+  `check_scan_contract.py`, `check_gitignore_protected.py`, `check_forbidden_paths.py`,
+  their `.example` configs, `ci/examples/strict-sensitive-data.yml`,
+  `inventory/medical-data-security.md`, `prompts/strict-phi-agent-guidance.md`,
+  `policies/sensitive-data-scan-gates.md`, `policies/sensitive-data-runtime-leaks.md`)
+  and scrubbed PHI/medical wording from the hooks, CI, policies, prompts, and inventory docs.
+- Replaced absolute `file:///Users/...` links with relative paths in `CHANGELOG.dev.md`,
+  `assessments/`, and `plans/specs/`; dropped an author username from an archived plan.
+- Smoke tests: replaced the removed sensitive-data/scan-gate/commit-message test classes in
+  `tests/test_policy_hooks_smoke.py` with `PublicRepoCleanHookTests`; CI now runs the full
+  policy-hook smoke suite plus the license-inventory tests.
 
 ### Added
 - Added plan assessment for Polar Walk Mode in [assessments/2026-07-27-polar-walk-mode-assessment.md](assessments/2026-07-27-polar-walk-mode-assessment.md).
@@ -85,40 +128,17 @@ Last reviewed: 2026-07-24
   script), policy `policies/third-party-licenses.md`, fixture tests under `tests/hooks/`,
   and CI wiring in `.github/workflows/ci.yml` (plus a note in `ci/examples/ci.yml`).
   README points at the inventory for attribution.
-- Structural sensitive-data gates: `hooks/scripts/check_gitignore_protected.py` (blocks
-  removal of required `.gitignore` rules), `check_forbidden_paths.py` (blocks tracking
-  files under never-commit paths), and `check_scan_contract.py` (a git-blob-hash ledger
-  that blocks when a required heavy scanner — Presidio text/image, local OCR,
-  dicom-phi-scan, phi-scan, HoundDog local, or a local SonarQube CE scan — has not been
-  re-run since the files it covers changed). Each is inert until its root config exists.
-  Ships `hooks/{gitignore-protected,forbidden-paths}.example` and
-  `hooks/scan-contract.json.example`, `policies/sensitive-data-scan-gates.md`, commented
-  `.pre-commit-config.yaml` blocks, and smoke tests. Wired into the bootstrap
-  medical/regulated trigger, `strict-phi-agent-guidance.md`, `AGENTS.md`,
-  `inventory/medical-data-security.md` (also adds a SonarQube CE row), and both READMEs.
 - `prompts/bootstrap-checklist.md`: a phase-by-phase tick-list companion to
-  `bootstrap-project.md`, including the conditional sensitive-data branch (Phase S).
-- `inventory/medical-data-security.md`: added ExifTool (metadata detect/strip),
-  Poppler (PDF text/page-image/attachment extraction backend), and pypdf (pure-Python
-  text-layer extraction; the strict guard's optional PDF pass) as the extraction/
-  sanitization backends feeding the OCR → Presidio redaction chain, plus an
-  "extract before you scan" step and cross-references in `hooks/scan-contract.json.example`.
+  `bootstrap-project.md`.
 - `template-checks` GitHub Actions workflow: path-filtered validation for maintained
   Markdown, Actions examples, shell hooks, Python policy scripts, and committed secrets.
 - `prompts/sensitive-data-leak-prevention.md`: runtime/dev leak-prevention guidance
   (logs, temp files, test/CI output, caches, telemetry, third-party/AI egress) with
   a leak-surface control table, awareness/easy-clearance practices, and verification
-  steps. Wired into the bootstrap medical/regulated trigger, `AGENTS.md`,
-  `strict-phi-agent-guidance.md`, and `inventory/medical-data-security.md`.
-- `policies/sensitive-data-runtime-leaks.md`: registers the runtime-leak rule with
-  tiered enforcement (gitignore artifact dirs + strict guard, `make clean-sensitive`,
-  log-scanning tests, telemetry-egress review, HoundDog data-flow scan) and clear
-  remediation; intentionally no false "redaction" hard gate. Listed in
-  `policies/README.md`, `AGENTS.md`, and the bootstrap wiring step.
+  steps.
 - `inventory/cloud-and-infra.md`: **Observability & error monitoring** section —
   self-hosted Sentry (`getsentry/self-hosted`), managed Sentry free tier, GlitchTip,
-  and OpenTelemetry, with the keep-event-data-on-your-infra / no-BAA-on-free-tiers
-  caveat cross-linked to the runtime-leak policy and prompt.
+  and OpenTelemetry, with the keep-event-data-on-your-infra caveat.
 
 ### Changed
 - Template CI pins Markdownlint and applies the repository's established style choices;

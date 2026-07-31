@@ -62,8 +62,8 @@ class PublicRepoCleanHookTests(unittest.TestCase):
     def stage(self, directory: Path) -> None:
         subprocess.run(["git", "-C", str(directory), "add", "-A"], check=True)
 
-    def scan(self, directory: Path) -> subprocess.CompletedProcess[str]:
-        return run("check_public_repo_clean.py", "--repo-root", str(directory))
+    def scan(self, directory: Path, *extra: str) -> subprocess.CompletedProcess[str]:
+        return run("check_public_repo_clean.py", "--repo-root", str(directory), *extra)
 
     def test_clean_tracked_text_passes(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -82,6 +82,18 @@ class PublicRepoCleanHookTests(unittest.TestCase):
             result = self.scan(root)
             self.assertEqual(result.returncode, 1)
             self.assertIn("alice@personal-mail.net", result.stderr)
+
+    def test_ci_redact_omits_match_value(self) -> None:
+        """CI --redact keeps rule metadata but omits the matched token from logs."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.init_repo(root)
+            (root / "README.md").write_text("Contact: alice@personal-mail.net\n", encoding="utf-8")
+            self.stage(root)
+            result = self.scan(root, "--redact")
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("rule=email", result.stderr)
+            self.assertNotIn("alice@personal-mail.net", result.stderr)
 
     def test_example_domain_email_passes(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

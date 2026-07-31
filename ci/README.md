@@ -48,15 +48,16 @@ expand schedules/matrices/artifacts without a rough usage estimate in the PR.
 | Open PRs after push / daily reminder | — | — | optional advisory schedule | ✅ primary (local script) |
 
 **Fast lane** (must stay < 5 min): lint, types, tests+coverage, secret scan, policy gates,
-dep audit.
+dep audit, focused Semgrep (`p/typescript` + `p/python`).
 **Slow lane** (can run on schedule or on PR to main): deeper SAST, CodeQL, container scans.
 **Scheduled** (nightly or weekly): TruffleHog history, dep audit refresh, stale-branch cleanup.
 
-For repositories that must reject secrets, personal data, or absolute machine paths before a
-public release, the clean-repo guard (`hooks/scripts/check_public_repo_clean.py`, wired as
-`check-public-repo-clean` in the root `.pre-commit-config.yaml`) scans every tracked file for
-emails, absolute paths, `file://` URIs, and private IPs. Run it in CI as a safety net and, if
-it is required, make it a required default-branch check; see
+The clean-repo guard (`hooks/scripts/check_public_repo_clean.py`, wired as
+`check-public-repo-clean` in the root `.pre-commit-config.yaml` and the CI **Policy** job)
+scans every **currently tracked** file for emails, absolute paths, `file://` URIs, and
+private IPv4 addresses. It does **not** replace gitleaks (credentials) and does not audit
+full Git history. Local hooks print matched tokens for debugging; CI runs with `--redact`.
+Make the Policy job a required default-branch check when needed; see
 [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
 
 ## Workflow design principles

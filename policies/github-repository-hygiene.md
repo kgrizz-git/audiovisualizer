@@ -1,6 +1,6 @@
 # Policy: GitHub Repository Hygiene & Sensitive-Data Gates
 
-Last reviewed: 2026-07-15
+Last reviewed: 2026-07-31
 Enforced by: GitHub rulesets/branch protection, hooks, CI, and selected GitHub Apps.
 
 ## Purpose
@@ -95,17 +95,20 @@ alerts are owned and triaged.
 ## 4. Hooks and CI: block sensitive content before it spreads
 
 Local hooks make feedback fast; CI makes the control unavoidable. Run the same checker in
-both places and make the CI job a required check. Keep finding output minimal: report a path,
-line number, rule ID, and remediation—not the sensitive match itself.
+both places and make the CI job a required check. In **CI**, keep finding output minimal:
+report a path, line number, rule ID, and remediation—not the sensitive match itself
+(`check_public_repo_clean.py --redact`). **Local** hooks may print the matched token so
+authors can fix fixtures quickly.
 
-For higher-risk tiers, install a `commit-msg` gate. File approvals must never apply to immutable
-commit prose: reject personal data, local paths/usernames/hostnames, and private network
-addresses in the message; refer to a sanitized issue or incident record instead.
+For higher-risk tiers, install a `commit-msg` gate. Commit-message content has **no**
+approval or allowlist bypass: reject personal data, local paths/usernames/hostnames, and
+private network addresses in the message; refer to a sanitized issue or incident record
+instead.
 
 | Risk | Local hook | Required CI job | Notes |
 |---|---|---|---|
 | Credentials | gitleaks + `detect-private-key` | gitleaks and scheduled history scan | Already included in [`hooks/.pre-commit-config.yaml`](../hooks/.pre-commit-config.yaml). |
-| Absolute local paths / emails / private IPs | `check_public_repo_clean.py` (full Git index) | Same script as a required Validate-job step | Wired as `check-public-repo-clean` in pre-commit and CI. Allow only documented synthetic fixtures via `.repo-clean-allowlist` or inline markers. Prefer project-relative paths, env vars, or config values. |
+| Absolute local paths / emails / private IPs | `check_public_repo_clean.py` (current Git index) | Same script on the **Policy** job with `--redact` | Wired as `check-public-repo-clean` in pre-commit and CI. Allow only documented synthetic fixtures via `.repo-clean-allowlist` or inline markers. Prefer project-relative paths, env vars, or config values. Index-only — not a full-history scrub. |
 | Binary / data exports | Filename, extension, size, and allowlist rule | Re-run and scan unpacked permitted fixtures if justified | A ruleset can block risky paths/extensions/sizes; content inspection needs a hook or CI scanner. |
 
 Do not enable a broad personal-data regex as a hard gate without measuring it against
@@ -118,14 +121,15 @@ Do not send repository contents to an
 external DLP, AI review, or GitHub App without confirming data residency, retention, access
 controls, contractual terms, and any required BAA/DPA.
 
-Per-commit and per-PR gates only see the current diff. For Sensitive and Regulated tiers, also
-schedule a periodic **repo-wide, full-history secret/credential audit** (analogous to the
-scheduled credential history scan above)—the working tree and every reachable commit, not just
-recent changes. There is no official GitHub personal-data audit product; GitHub-native scanning
-covers credentials, not personal data. Use a local-first tool such as a gitleaks-style history
-scan; run it offline against a local checkout and treat findings as triage for human review.
-Do not route a regulated repo's contents through a SaaS repo scanner without the data-residency
-and BAA/DPA review above.
+`check_public_repo_clean.py` covers **currently tracked files** in the Git index only.
+Per-commit and per-PR gates likewise only see the current tree/diff. For Sensitive and
+Regulated tiers, also schedule a periodic **repo-wide, full-history secret/credential
+audit** (analogous to the scheduled credential history scan above)—every reachable commit,
+not just recent changes. There is no official GitHub personal-data audit product;
+GitHub-native scanning covers credentials, not personal data. Use a local-first tool such
+as a gitleaks-style history scan; run it offline against a local checkout and treat findings
+as triage for human review. Do not route a regulated repo's contents through a SaaS repo
+scanner without the data-residency and BAA/DPA review above.
 This audit runs periodically, not at bootstrap—see [`prompts/maintenance-loop.md`](../prompts/maintenance-loop.md).
 
 ### Recommended implementation contract

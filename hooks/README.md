@@ -23,7 +23,7 @@ pre-commit run --all-files  # first-run check
 | `scripts/check_doc_freshness.py` | Enforces [`policies/doc-freshness.md`](../policies/doc-freshness.md) |
 | `scripts/check_todo_limits.py` | Enforces living backlog size ([`policies/plans-and-todos.md`](../policies/plans-and-todos.md); soft **150** / hard **300**) |
 | `scripts/check_license_inventory.py` | Enforces [`policies/third-party-licenses.md`](../policies/third-party-licenses.md); generates/gates [`inventory/third-party-licenses.md`](../inventory/third-party-licenses.md) (`--check` / `--update` / `--human-review`). Uses pinned `license-checker@25.0.1` via npx when available. |
-| `scripts/check_public_repo_clean.py` | Public-release guard: scans every tracked file for emails (excluding reserved example/test domains), absolute paths, `file://` URIs, and private IPv4 addresses so a repo never leaks local identity |
+| `scripts/check_public_repo_clean.py` | Public-release guard: scans every tracked file for emails (excluding reserved example/test domains), absolute paths, `file://` URIs, and private IPv4 addresses so a repo never leaks local identity. Local runs print matched tokens; CI should pass `--redact` (or `POLICY_REPO_CLEAN_REDACT=1`). |
 | `scripts/prune_backups.sh` | Optional: delete `backups/` dirs older than last N commits |
 
 ## Built-in secret detection and linting

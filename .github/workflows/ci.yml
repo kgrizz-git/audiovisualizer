@@ -68,13 +68,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Public-release clean gate (emails, absolute paths, private IPs)
-        run: python hooks/scripts/check_public_repo_clean.py --repo-root .
+        # --redact: omit matched tokens from CI logs; local hooks stay unredacted.
+        run: python hooks/scripts/check_public_repo_clean.py --repo-root . --redact
 
       - name: Policy hook unit tests
         run: python -m unittest tests.test_policy_hooks_smoke tests.hooks.test_check_license_inventory -v
@@ -103,6 +106,8 @@ jobs:
       image: semgrep/semgrep:1.169.0@sha256:2b33f46ba66cf8cc2ad59ccfa7d22951fd00c632c38f1339e84ec8e6e641a942
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Scan TypeScript and Python rules
         # p/python-security 404s in the registry; use p/python + p/typescript.
         run: |

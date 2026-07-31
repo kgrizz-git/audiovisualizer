@@ -28,6 +28,10 @@ Last reviewed: 2026-07-31
   license-checker); Semgrep uses `p/python` instead of dead `p/python-security` registry
   pack; `.coderabbit.yaml` disables auto-review (opt-in via `@coderabbitai review`).
   SemVer: none.
+- Clean-gate hardening from CodeRabbit review: `git ls-files -z`, single-pass file read,
+  CI `--redact` (local hooks still show matches), `persist-credentials: false` on
+  Policy/Semgrep checkouts, SECURITY.md + blank-issue chooser aligned with private vuln
+  reporting, doc/policy accuracy for index-vs-history scope. SemVer: none.
 
 ### Changed
 - ESLint `complexity` rule escalated from `warn` to `error` at 15, making the policy's

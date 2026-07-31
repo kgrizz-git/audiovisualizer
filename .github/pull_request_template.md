@@ -4,6 +4,8 @@ Pull requests are not solicited right now. Please open a GitHub Issue first
 Unsolicited PRs may be closed without merge. See README → Contributing.
 -->
 
+# Pull request
+
 ## Related issue
 
 - Closes #

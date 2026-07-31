@@ -20,8 +20,10 @@ Skip a step only when the user's answers make it clearly irrelevant, and say so.
 - [ ] Summarize answers back; list assumptions and open questions.
 - [ ] If real personal/customer data or secrets may enter the repo, plan to keep them out: run
       `hooks/scripts/check_public_repo_clean.py` (wired as `check-public-repo-clean` in
-      `.pre-commit-config.yaml`) before publishing; keep tokens, private keys, absolute local
-      paths, emails, and private IPs out of history.
+      `.pre-commit-config.yaml`) before publishing so the **current index** has no absolute
+      local paths, emails, or private IPs; keep tokens and private keys out with gitleaks.
+      Index scans do not scrub past commits — use a full-history secret scan when history
+      cleanup is required.
 
 ## Phase 1 — Profile
 

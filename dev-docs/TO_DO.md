@@ -16,7 +16,8 @@ Last updated: 2026-07-31
   [`ci/README.md`](../ci/README.md) and
   [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
   Also enable **GitHub private vulnerability reporting** when the repo is public
-  (Settings → Code security → Private vulnerability reporting).
+  (Settings → Code security → Private vulnerability reporting) — already on for this
+  repo as of 2026-07-31; keep it enabled after ruleset work.
 
 ## Next product milestones
 

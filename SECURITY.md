@@ -11,18 +11,14 @@ AudioVisualizer is pre-1.0 (`0.x` on the default branch). Security fixes land on
 
 Please **do not** open a public GitHub issue for security vulnerabilities.
 
-Prefer one of these private channels:
+Use **GitHub private vulnerability reporting**:
 
-1. **GitHub private vulnerability reporting** (preferred when enabled): on the
-   repository page, use **Security → Advisories → Report a vulnerability**, or open
-   https://github.com/kgrizz-git/audiovisualizer/security/advisories/new
-2. If private reporting is unavailable, contact the maintainer via the email listed on
-   the GitHub profile that owns this repository
-   ([@kgrizz-git](https://github.com/kgrizz-git)).
+- Repository page → **Security → Advisories → Report a vulnerability**, or
+- https://github.com/kgrizz-git/audiovisualizer/security/advisories/new
 
-Include enough detail to reproduce the issue (affected version or commit, steps,
-impact). Do not attach real user MIDI files or other personal data unless we ask for a
-minimal synthetic fixture.
+Private vulnerability reporting is enabled for this repository. Include enough detail
+to reproduce the issue (affected version or commit, steps, impact). Do not attach real
+user MIDI files or other personal data unless we ask for a minimal synthetic fixture.
 
 You can expect an acknowledgment when the report is received. Fix timing depends on
 severity and whether a coordinated disclosure is needed; we will say so if a public

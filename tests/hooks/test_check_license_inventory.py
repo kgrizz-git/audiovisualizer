@@ -239,6 +239,8 @@ class RepoIntegrationSmoke(unittest.TestCase):
             self.skipTest("package-lock.json missing")
         if not (ROOT / "inventory" / "third-party-licenses.md").exists():
             self.skipTest("inventory missing")
+        if not (ROOT / "node_modules").is_dir():
+            self.skipTest("node_modules missing — license-checker enrichment required")
         env = os.environ.copy()
         # Allow checker; real inventory was generated with it.
         env.pop("POLICY_LICENSE_SKIP_CHECKER", None)

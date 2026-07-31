@@ -32,6 +32,9 @@ Last reviewed: 2026-07-31
   CI `--redact` (local hooks still show matches), `persist-credentials: false` on
   Policy/Semgrep checkouts, SECURITY.md + blank-issue chooser aligned with private vuln
   reporting, doc/policy accuracy for index-vs-history scope. SemVer: none.
+- License-inventory unit tests (`tests.hooks.test_check_license_inventory`) run on
+  **Validate** after `npm ci`, not on the Python-only **Policy** job — the repo
+  integration smoke needs license-checker enrichment. SemVer: none.
 
 ### Changed
 - ESLint `complexity` rule escalated from `warn` to `error` at 15, making the policy's

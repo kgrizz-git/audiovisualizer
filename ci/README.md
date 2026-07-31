@@ -10,8 +10,8 @@ This repository’s **active** CI is
 
 | Job (status-check name) | What it runs |
 |---|---|
-| **Validate** | `npm run validate` (lint + Vitest with coverage + TypeScript + Vite build), uploads `coverage/lcov.info`, `npm audit --audit-level=high` (hard on `main` pushes; `continue-on-error` on PRs), license inventory gate (after `npm ci`) |
-| **Policy** | Public-release clean gate, policy-hook unit tests (Python-only; parallel with Validate) |
+| **Validate** | `npm run validate` (lint + Vitest with coverage + TypeScript + Vite build), uploads `coverage/lcov.info`, `npm audit --audit-level=high` (hard on `main` pushes; `continue-on-error` on PRs), license inventory gate + license-inventory unit tests (after `npm ci`) |
+| **Policy** | Public-release clean gate, policy-hook smoke tests (Python-only; parallel with Validate) |
 | **Secret scan** | gitleaks |
 | **SAST (Semgrep)** | Pinned `semgrep/semgrep` image; `p/typescript` + `p/python` on `src/`, `hooks/scripts/`, `tests/`, `ci/scripts/` (skipped for Dependabot) |
 

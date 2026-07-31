@@ -14,11 +14,14 @@ Skip a step only when the user's answers make it clearly irrelevant, and say so.
 - [ ] Ask what the repo is for, who uses it, platforms/runtimes/languages, and success criteria.
       Full question list: [`bootstrap-project.md`](bootstrap-project.md) §1.
 - [ ] Ask the **data question explicitly**: what data can enter this repo (code, fixtures,
-      screenshots, logs, exports)? Will it hold real PII, PHI, clinical/FHIR/HL7/DICOM, financial,
-      or other regulated/customer data — or is that prohibited with synthetic-only fixtures?
+      screenshots, logs, exports)? Will it hold real personal/customer data or secrets — or is
+      that prohibited with synthetic-only fixtures?
 - [ ] Ask whether subagents/parallel workers should be used for research, planning, or review.
 - [ ] Summarize answers back; list assumptions and open questions.
-- [ ] **If the data answer is yes/maybe/regulated → run Phase S** before writing code or wiring tools.
+- [ ] If real personal/customer data or secrets may enter the repo, plan to keep them out: run
+      `hooks/scripts/check_public_repo_clean.py` (wired as `check-public-repo-clean` in
+      `.pre-commit-config.yaml`) before publishing; keep tokens, private keys, absolute local
+      paths, emails, and private IPs out of history.
 
 ## Phase 1 — Profile
 
@@ -46,35 +49,6 @@ Skip a step only when the user's answers make it clearly irrelevant, and say so.
 - [ ] Pick CI workflows from [`ci/README.md`](../ci/README.md); estimate Actions cost first
       ([`policies/github-actions-usage.md`](../policies/github-actions-usage.md)).
 - [ ] Decide what belongs in pre-commit vs CI vs agent-side ([`hooks/README.md`](../hooks/README.md)).
-
-## Phase S — Sensitive / private / PHI / PII data (conditional)
-
-Run only when Phase 0 flags real or possible PII/PHI/regulated/customer data. Read
-[`prompts/strict-phi-agent-guidance.md`](strict-phi-agent-guidance.md),
-[`prompts/sensitive-data-leak-prevention.md`](sensitive-data-leak-prevention.md), and
-[`inventory/medical-data-security.md`](../inventory/medical-data-security.md) first. An **agent must
-not** author approvals or weaken any gate — a named human owns those.
-
-- [ ] **Keep data out of history:** have a human create `.phi-security-approvals.json`; enable the
-      strict `check-sensitive-data` and `check-commit-message-sensitive-data` hooks + required CI
-      ([`inventory/medical-data-security.md`](../inventory/medical-data-security.md)).
-- [ ] **Protect the ignore rules:** `cp hooks/gitignore-protected.example .gitignore-protected`;
-      list the data/export/log dirs that must stay ignored; enable `check-gitignore-protected`.
-- [ ] **Forbid tracking data dirs:** `cp hooks/forbidden-paths.example .forbidden-paths`; enable
-      `check-forbidden-paths`; add matching `.gitignore` rules and a push ruleset backstop.
-- [ ] **Heavy scanners? Add a scan contract:** if Presidio (text/image), OCR, dicom-phi-scan,
-      phi-scan, HoundDog (local), or a local SonarQube CE scan applies,
-      `cp hooks/scan-contract.json.example .scan-contract.json`, keep the scanners you adopt, run
-      each once, `record` it, and enable `check-scan-contract`. See
-      [`policies/sensitive-data-scan-gates.md`](../policies/sensitive-data-scan-gates.md).
-- [ ] **Runtime leak surface:** gitignore artifact dirs, ship a one-command `make clean-sensitive`,
-      add log-scanning tests, review telemetry/error-tracker egress
-      ([`policies/sensitive-data-runtime-leaks.md`](../policies/sensitive-data-runtime-leaks.md)).
-- [ ] **Document, image/OCR ingestion?** Inventory local OCR / local vision options to catch
-      burned-in text before ingestion ([`inventory/medical-data-security.md`](../inventory/medical-data-security.md)).
-- [ ] **Schedule** a periodic repo-wide/full-history PII audit (e.g. Octopii, local only) via
-      [`maintenance-loop.md`](maintenance-loop.md); record the cadence in the profile.
-- [ ] `CODEOWNERS`-protect every control above (approvals, hooks, workflows, configs, fixtures).
 
 ## Phase 4.5 — Environment
 

@@ -50,54 +50,13 @@ repos:
         files: ''
         description: "Ensures third-party license inventory matches package-lock.json and policy gates (inventory/third-party-licenses.md)."
 
-      # Strict PII/PHI guard: enable only after a human has created and reviewed
-      # .phi-security-approvals.json from hooks/phi-security-approvals.json.example.
-      # It ignores pre-commit filenames and scans every file tracked in the Git index,
-      # including tests and workbooks. See inventory/medical-data-security.md.
-      # - id: check-sensitive-data
-      #   name: "security: strict PII/PHI and opaque-file gate"
-      #   entry: python hooks/scripts/check_sensitive_data.py
-      #   language: python
-      #   pass_filenames: false
-      #   always_run: true
-      #   description: "Blocks suspected PII/PHI, hardcoded usernames/paths, images, DICOM, extensionless, and opaque files without exact human approval."
-
-      # Strict commit-message gate for medical/regulated repositories. Enable with
-      # check-sensitive-data and never allowlist a commit message: use a sanitized
-      # issue or incident reference instead of PHI, usernames, paths, or endpoints.
-      # - id: check-commit-message-sensitive-data
-      #   name: "security: strict sensitive commit-message gate"
-      #   entry: python hooks/scripts/check_commit_message_sensitive_data.py
-      #   language: python
-      #   stages: [commit-msg]
-      #   pass_filenames: true
-      #   description: "Blocks PII/PHI, local paths/usernames, private IPs, and internal endpoints in commit messages."
-
-      # Structural sensitive-data gates (see policies/sensitive-data-scan-gates.md).
-      # Each is inert until its root config file exists, so it is safe to leave wired.
-      # - id: check-gitignore-protected
-      #   name: "security: protected .gitignore rules"
-      #   entry: python hooks/scripts/check_gitignore_protected.py
-      #   language: python
-      #   pass_filenames: false
-      #   always_run: true
-      #   description: "Blocks removal of a required .gitignore rule (config: .gitignore-protected)."
-
-      # - id: check-forbidden-paths
-      #   name: "security: forbidden tracked paths"
-      #   entry: python hooks/scripts/check_forbidden_paths.py
-      #   language: python
-      #   pass_filenames: false
-      #   always_run: true
-      #   description: "Blocks tracking files under never-commit paths (config: .forbidden-paths)."
-
-      # - id: check-scan-contract
-      #   name: "security: heavy-scanner contract"
-      #   entry: python hooks/scripts/check_scan_contract.py
-      #   language: python
-      #   pass_filenames: false
-      #   always_run: true
-      #   description: "Blocks when a required local scanner (Presidio/OCR/phi-scan/HoundDog/SonarQube CE) is stale vs covered files (config: .scan-contract.json + .scan-ledger.json)."
+      - id: check-public-repo-clean
+        name: "security: no emails / absolute paths / home dirs"
+        entry: python hooks/scripts/check_public_repo_clean.py
+        language: python
+        pass_filenames: false
+        always_run: true
+        description: "Scans every tracked file for emails, absolute paths, home-relative paths, and private IPs so a public repo never leaks local identity. See hooks/README.md for the allowed-fixture exception."
 
       # Optional: uncomment if your team uses gitignored backups/ before edits
       # - id: prune-backups

@@ -5,7 +5,7 @@ You are an AI coding agent working inside a newly cloned project seed repository
 Do not assume the project type. Start by interviewing the user, then propose a plan before creating a large scaffold.
 
 Work the phase-by-phase [`bootstrap-checklist.md`](bootstrap-checklist.md) alongside this prompt —
-it is the tick-list version of these steps, including the conditional sensitive-data branch (Phase S).
+it is the tick-list version of these steps, including the conditional secrets-and-identity hygiene branch.
 
 ## 1. Start With Discovery
 
@@ -16,7 +16,7 @@ Ask concise questions before choosing a stack or writing many files:
 - What are the expected platforms, runtimes, languages, deployment targets, and integrations?
 - Is this a library, app, website, CLI, service, research project, automation workflow, data project, design prototype, or something else?
 - What matters most: speed, correctness, user experience, security, scientific rigor, maintainability, cost, portability, or learning?
-- What data can enter this repository (including fixtures, screenshots, logs, and workflow artifacts)? Is real PII, PHI, regulated, or customer data prohibited, or is there an approved handling design?
+- What data can enter this repository (including fixtures, screenshots, logs, and workflow artifacts)? Will real personal/customer data or secrets be prohibited, or is there an approved handling design?
 - Are there existing repos, docs, style guides, prompts, agent skills, product specs, designs, or examples you should inspect?
 - Should you use subagents or parallel workers for research, planning, review, or implementation?
 
@@ -33,35 +33,15 @@ returning agents rediscover the project type from scratch on every session.
 Use the profile's **Relevant inventory** section to decide which inventory files to read
 in step 3 — do not load all 18 files by default.
 
-**Medical or regulated data trigger:** if the user indicates PII, PHI, clinical/FHIR/HL7/DICOM,
-or similarly regulated data, read
-[`prompts/strict-phi-agent-guidance.md`](strict-phi-agent-guidance.md),
-[`prompts/sensitive-data-leak-prevention.md`](sensitive-data-leak-prevention.md), and
-[`inventory/medical-data-security.md`](../inventory/medical-data-security.md) before creating
-fixtures or configuring external tools. Have a human create the exact-file approval inventory,
-wire the strict local hook and required CI job, and protect those controls with CODEOWNERS before
-the first relevant commit. Do not let an agent add approval entries. Beyond keeping data out of
-the repo, design the code so it does not leak PII/PHI/secrets/usernames/IPs/hostnames/paths into
-logs, temp files, test/CI output, caches, telemetry, or third-party/AI calls (in production *or*
+**Keep secrets and local identity out of the repo:** run
+`hooks/scripts/check_public_repo_clean.py` (wired as `check-public-repo-clean` in
+`.pre-commit-config.yaml`) before publishing. Avoid committing tokens, private keys, absolute
+local paths, email addresses, or private IPs. Beyond keeping data out of the repo, design the
+code so it does not leak personal data/secrets/usernames/IPs/hostnames/paths into logs, temp
+files, test/CI output, caches, telemetry, or third-party/AI calls (in production *or*
 development): sanitize at the boundary, gitignore and document any sensitive-capable sinks, and
 ship a one-command way to clear local logs/caches/temp artifacts — see
-[`prompts/sensitive-data-leak-prevention.md`](sensitive-data-leak-prevention.md) for the
-how, and wire the tiered checks in
-[`policies/sensitive-data-runtime-leaks.md`](../policies/sensitive-data-runtime-leaks.md)
-(gitignore artifact dirs, `make clean-sensitive`, log-scanning tests, HoundDog data-flow scan).
-Also wire the structural gates in
-[`policies/sensitive-data-scan-gates.md`](../policies/sensitive-data-scan-gates.md): protect the
-required `.gitignore` rules (`check_gitignore_protected.py`), forbid tracking data/export dirs
-(`check_forbidden_paths.py`), and — when heavy scanners like Presidio (text/image), local OCR,
-dicom-phi-scan, phi-scan, HoundDog local, or a local SonarQube CE scan apply — add a scan
-contract/ledger (`check_scan_contract.py`) that blocks commits until each chosen scanner has been
-re-run against the current tree. If the project ingests,
-processes, or exports scanned documents, PDFs, images, or DICOM files, inventory options for
-local OCR or local multimodal vision models to detect burned-in text/PII before data ingestion.
-A full-history PII/PHI audit is not meaningful on a freshly bootstrapped repo—instead, record it
-as a recurring control: set up a local-first repo-wide audit (for example
-[Octopii](https://github.com/redhuntlabs/Octopii)) to run periodically via
-[`prompts/maintenance-loop.md`](maintenance-loop.md), and note the schedule in the project profile.
+[`prompts/sensitive-data-leak-prevention.md`](sensitive-data-leak-prevention.md) for the how.
 
 ## 2. Protect The Template Remote
 

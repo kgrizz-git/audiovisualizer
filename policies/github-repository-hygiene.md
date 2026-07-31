@@ -6,14 +6,14 @@ Enforced by: GitHub rulesets/branch protection, hooks, CI, and selected GitHub A
 ## Purpose
 
 Set a small, enforceable GitHub baseline before a repository receives real work. Scale it
-to the data it may contain: a public utility needs less process than a medical product, but
-neither should accept direct pushes, red CI, credentials, personal data, or machine-specific
-paths by accident.
+to the data it may contain: a public utility needs less process than one holding customer
+data, but neither should accept direct pushes, red CI, credentials, personal data, or
+machine-specific paths by accident.
 
 This policy complements [`security-baseline.md`](security-baseline.md). It does **not** make
-a project HIPAA-, GDPR-, or otherwise compliance-certified. In particular, a scanner cannot
-prove that PHI is absent. For a regulated project, obtain the organization's privacy,
-security, legal, and compliance decisions before committing or sending data to a CI service.
+a project compliance-certified. In particular, a scanner cannot prove the absence of secrets
+or personal data. Obtain the organization's privacy, security, and legal decisions before
+committing or sending data to a CI service.
 
 ## 1. Classify before configuring
 
@@ -22,21 +22,21 @@ If the answer is unknown, use the more protective tier until it is resolved.
 
 | Tier | Use when | Minimum decision |
 |---|---|---|
-| Standard | Source code and public/synthetic test data only | State that real PII/PHI and production exports are prohibited. |
+| Standard | Source code and public/synthetic test data only | State that secrets, real personal data, and production exports are prohibited. |
 | Sensitive | The repo may hold internal identifiers, restricted designs, or de-identified data | Define allowed data, prohibited patterns/paths, an exception owner, and a local+CI content gate. |
-| Regulated | Medical, financial, identity, education, government, or similarly regulated work | Treat all real regulated data as prohibited unless an approved data-handling design says otherwise; complete a threat/risk review and obtain the required contracts, retention, access, audit, and incident-response approvals. |
+| Regulated | Financial, identity, government, or similarly regulated work | Treat all real regulated data as prohibited unless an approved data-handling design says otherwise; complete a threat/risk review and obtain the required contracts, retention, access, audit, and incident-response approvals. |
 
-**Data rule:** source control is not a data store. Do not commit production dumps, patient
+**Data rule:** source control is not a data store. Do not commit production dumps, personal
 records, support tickets, screenshots, PDFs, chat transcripts, database backups, or model
 training corpora containing real people. Use deterministic synthetic fixtures and document
 their provenance. De-identification is a risk decision, not a label a developer can apply
 unilaterally.
 
-For a medical or other highly regulated repository, also document: permitted data classes,
+For a highly regulated repository, also document: permitted data classes,
 where scans run, who can read workflow logs/artifacts, retention periods, encryption and key
 ownership, approved subprocessors, audit requirements, a breach/escalation contact, and how
-an accidental disclosure is contained. Do not upload candidate PHI to a third-party scanner
-without an approved data-processing arrangement and explicit authorization.
+an accidental disclosure is contained. Do not send candidate sensitive data to a third-party
+scanner without an approved data-processing arrangement and explicit authorization.
 
 ## 2. Protect the default branch
 
@@ -45,7 +45,7 @@ protection only where rulesets are unavailable). Start in evaluate mode if the r
 already busy, fix failures, then make it active. GitHub rulesets can require PRs, status
 checks, reviews, deployments, signed commits, and code-scanning results; push rulesets can
 restrict paths, extensions, path length, and file size. They do not inspect a file's content
-for PII or PHI. See GitHub's [available ruleset rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
+for secrets or personal data. See GitHub's [available ruleset rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
 and [push-ruleset limits](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository).
 
 | Control | Standard | Sensitive / regulated |
@@ -76,7 +76,8 @@ alerts are owned and triaged.
 1. Enable the dependency graph, Dependabot alerts, security updates, and version-update PRs.
 2. Enable secret scanning and push protection where available. Push protection blocks many
    credentials *before* they reach the repository; configure custom secret patterns only for
-   high-confidence, organization-specific secrets. It is not a generic PII/PHI detector.
+   high-confidence, organization-specific secrets. It is not a generic secrets or personal-data
+   detector.
    [GitHub push protection](https://docs.github.com/en/code-security/concepts/secret-security/push-protection)
    explains its bypass and custom-pattern behavior.
 3. Enable CodeQL code scanning. Default setup is a sensible low-maintenance start for eligible
@@ -95,48 +96,36 @@ alerts are owned and triaged.
 
 Local hooks make feedback fast; CI makes the control unavoidable. Run the same checker in
 both places and make the CI job a required check. Keep finding output minimal: report a path,
-line number, rule ID, and remediation—not the sensitive match itself. For medical or regulated
-repositories, the first-party strict gate scans every Git-indexed file (not just a PR diff),
-including tests and `.xlsx` internals, and fails closed on images, DICOM, extensionless, and
-opaque files unless an exact file hash has named human approval. See
-[`inventory/medical-data-security.md`](../inventory/medical-data-security.md).
+line number, rule ID, and remediation—not the sensitive match itself.
 
-For the same tier, install a `commit-msg` gate. File approvals must never apply to immutable
-commit prose: reject PII/PHI, local paths/usernames/hostnames, private network addresses, and
-PACS/DICOM endpoints in the message; refer to a sanitized issue or incident record instead.
+For higher-risk tiers, install a `commit-msg` gate. File approvals must never apply to immutable
+commit prose: reject personal data, local paths/usernames/hostnames, and private network
+addresses in the message; refer to a sanitized issue or incident record instead.
 
 | Risk | Local hook | Required CI job | Notes |
 |---|---|---|---|
 | Credentials | gitleaks + `detect-private-key` | gitleaks and scheduled history scan | Already included in [`hooks/.pre-commit-config.yaml`](../hooks/.pre-commit-config.yaml). |
 | Absolute local paths | A fast staged-diff rule | Re-run against the PR diff | Detect Unix home paths, Windows drive paths, and `file://` URLs; allow only documented portable examples. Prefer project-relative paths, env vars, or config values. |
-| PII / PHI | Project-specific staged-diff rule | Re-run on the PR diff and block | Match known identifiers and high-confidence formats; allow reviewed test fixtures by path and rule ID, never by silently disabling the scanner. |
 | Binary / data exports | Filename, extension, size, and allowlist rule | Re-run and scan unpacked permitted fixtures if justified | A ruleset can block risky paths/extensions/sizes; content inspection needs a hook or CI scanner. |
 
-Do not enable a broad “PII regex” as a hard gate without measuring it against representative
-synthetic fixtures. It will either miss context-sensitive data or block ordinary numbers and
-documentation. Start it in report-only mode, add domain-specific recognizers (for example,
-patient or member identifier formats), define a false-positive process, and promote only
-high-confidence rules to blocking.
+Do not enable a broad personal-data regex as a hard gate without measuring it against
+representative synthetic fixtures. It will either miss context-sensitive data or block
+ordinary numbers and documentation. Start it in report-only mode, add domain-specific
+recognizers, define a false-positive process, and promote only high-confidence rules to
+blocking.
 
-For text-heavy or sensitive projects, consider running [Microsoft Presidio](https://microsoft.github.io/presidio/)
-locally or in an approved isolated runner; it supports predefined and custom PII recognizers
-but explicitly cannot guarantee complete detection. For healthcare/FHIR projects, also evaluate
-[phi-scan](https://pypi.org/project/phi-scan/) as a local-first PHI/PII scanner: it can scan a
-Git diff and produce CI-friendly output. Pin and test it against synthetic representative data
-before relying on it—its PyPI release is currently marked alpha. For medical projects, use
-domain-approved recognizers and include OCR/image/PDF handling if those files are
-permitted—otherwise block those file types outright. Do not send repository contents to an
+Do not send repository contents to an
 external DLP, AI review, or GitHub App without confirming data residency, retention, access
 controls, contractual terms, and any required BAA/DPA.
 
 Per-commit and per-PR gates only see the current diff. For Sensitive and Regulated tiers, also
-schedule a periodic **repo-wide, full-history PII/PHI audit** (analogous to the scheduled
-credential history scan above)—the working tree and every reachable commit, not just recent
-changes. There is no official GitHub "PII audit" product; GitHub-native scanning covers
-credentials, not personal data. Use a local-first tool such as [Octopii](https://github.com/redhuntlabs/Octopii)
-(OCR + NLP + regex over images, PDFs, and documents) or a Presidio-based scan; run it offline
-against a local checkout and treat findings as triage for human review. Do not route a regulated
-repo's contents through a SaaS repo scanner without the data-residency and BAA/DPA review above.
+schedule a periodic **repo-wide, full-history secret/credential audit** (analogous to the
+scheduled credential history scan above)—the working tree and every reachable commit, not just
+recent changes. There is no official GitHub personal-data audit product; GitHub-native scanning
+covers credentials, not personal data. Use a local-first tool such as a gitleaks-style history
+scan; run it offline against a local checkout and treat findings as triage for human review.
+Do not route a regulated repo's contents through a SaaS repo scanner without the data-residency
+and BAA/DPA review above.
 This audit runs periodically, not at bootstrap—see [`prompts/maintenance-loop.md`](../prompts/maintenance-loop.md).
 
 ### Recommended implementation contract
@@ -146,12 +135,12 @@ Before wiring a sensitive-data workflow, write a small project-owned configurati
 - prohibited file paths/extensions and size caps;
 - allowed fixture directories and why they are safe;
 - absolute-path patterns, portable replacements, and narrowly scoped examples;
-- PII/PHI rule IDs, confidence levels, and test cases (positive and negative);
+- personal-data rule IDs, confidence levels, and test cases (positive and negative);
 - exception owner, expiry, and review record; and
 - the CI job name that branch rules require.
 
 For standard/sensitive projects, the checker may scan only added/changed text where justified.
-For medical/regulated projects, scan all tracked files and do not exempt directories, tests,
+For higher-risk projects, scan all tracked files and do not exempt directories, tests,
 generated files, or unknown extensions. In every tier, redact matches from logs, exit non-zero
 for blocking rules, and have tests proving it catches a synthetic representative sample. A
 pre-commit hook is a convenience; a required PR check is the merge control.

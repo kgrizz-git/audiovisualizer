@@ -23,13 +23,7 @@ pre-commit run --all-files  # first-run check
 | `scripts/check_doc_freshness.py` | Enforces [`policies/doc-freshness.md`](../policies/doc-freshness.md) |
 | `scripts/check_todo_limits.py` | Enforces living backlog size ([`policies/plans-and-todos.md`](../policies/plans-and-todos.md); soft **150** / hard **300**) |
 | `scripts/check_license_inventory.py` | Enforces [`policies/third-party-licenses.md`](../policies/third-party-licenses.md); generates/gates [`inventory/third-party-licenses.md`](../inventory/third-party-licenses.md) (`--check` / `--update` / `--human-review`). Uses pinned `license-checker@25.0.1` via npx when available. |
-| `scripts/check_sensitive_data.py` | Opt-in strict PII/PHI, hardcoded username/path, and opaque-file gate; scans **every tracked file**, including tests and `.xlsx` contents |
-| `scripts/check_commit_message_sensitive_data.py` | Opt-in `commit-msg` hard gate for sensitive details, local identities, paths, and internal endpoints in Git history |
-| `scripts/check_gitignore_protected.py` | Opt-in gate blocking removal of required `.gitignore` rules (config: `.gitignore-protected`) |
-| `scripts/check_forbidden_paths.py` | Opt-in gate blocking any tracked file under never-commit paths (config: `.forbidden-paths`) |
-| `scripts/check_scan_contract.py` | Opt-in ledger gate: blocks when a required heavy scanner is stale vs the files it covers (config: `.scan-contract.json` + `.scan-ledger.json`) |
-| `phi-security-approvals.json.example` | Root-level exact-file inventory a human must complete before enabling the strict gate |
-| `gitignore-protected.example`, `forbidden-paths.example`, `scan-contract.json.example` | Starter configs for the structural sensitive-data gates ([`policies/sensitive-data-scan-gates.md`](../policies/sensitive-data-scan-gates.md)) |
+| `scripts/check_public_repo_clean.py` | Public-release guard: scans every tracked file for emails (excluding reserved example/test domains), absolute paths, `file://` URIs, and private IPv4 addresses so a repo never leaks local identity |
 | `scripts/prune_backups.sh` | Optional: delete `backups/` dirs older than last N commits |
 
 ## Built-in secret detection and linting
@@ -47,59 +41,36 @@ The example config already includes (leave them on unless the project cannot use
 
 See [`policies/security-baseline.md`](../policies/security-baseline.md) and
 [`inventory/security-quality.md`](../inventory/security-quality.md). For a configurable
-PII/PHI and absolute-path gate that is paired with required CI, see
+secrets and absolute-path gate that is paired with required CI, see
 [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
 
-## Medical / PII / PHI repositories: strict gate
+## Public-release guard: emails, absolute paths, private IPs
 
-When the project profile identifies medical or regulated data, read
-[`prompts/strict-phi-agent-guidance.md`](../prompts/strict-phi-agent-guidance.md) and wire the
-commented `check-sensitive-data` local hook. The first-party script is intentionally stricter
-than normal pre-commit checks: it reads `git ls-files --cached` and scans all tracked files,
-not only filenames supplied by pre-commit. It inspects UTF-8 text and `.xlsx` XML/text parts,
-then blocks suspected fields/identifiers, hardcoded usernames, and absolute/home paths. It also
-blocks private IPs/internal hostnames/PACS URLs, log/cache artifacts, notebook outputs, every
-image, DICOM or DICOM-looking file, extensionless file, symbolic link, unreadable binary, and
-oversized file.
+`scripts/check_public_repo_clean.py` (wired as `check-public-repo-clean`) keeps a repository
+safe to publish without leaking the author's local identity. It reads the Git index
+(`git ls-files --cached`) and scans **every tracked file**, so pre-commit does not need to hand
+it filenames. It blocks:
 
-PDFs always require an exact human approval because they may contain rasterized or vector image
-content. If optional `pypdf` is installed, the guard also scans extracted PDF text before it
-blocks the file; human visual review remains mandatory. `.tex` and UTF-8 `.ps` files are scanned
-as text; unreadable PostScript fails closed as binary.
+- **Email addresses**, except the reserved example/test domains
+  (`example.com`, `example.org`, `example.net`, `example.test`, `example.edu`, `example.io`,
+  `example.dev`, `localhost`, `invalid`, `test`).
+- **Absolute paths** under `/Users`, `/home`, `/Volumes`, and `C:\Users`, plus `file://` URIs
+  pointing at them.
+- **Private IPv4 addresses** (`10.x`, `192.168.x`, `172.16–31.x`).
 
-The guard recursively scans ZIP/TAR/GZIP contents (including nested archives within bounded size
-and depth limits), then blocks the archive pending exact human approval; encrypted or unreadable
-archives fail closed. It scans extractable XML/text in `.docx`, `.pptx`, `.odt`, and `.ods`, but
-still requires manual review for embedded media. SQLite/Parquet/Avro/Feather/HDF5 datasets and
-audio/video files are manual-review artifacts. DICOM-SR (`.sr`) is treated as DICOM.
+Because it scans the whole index on every commit, run it once before making the repo public:
 
-Before enabling it, a **human** must create `.phi-security-approvals.json` from
-`hooks/phi-security-approvals.json.example` and remove the placeholder. The only bypass is an
-exact relative path plus a matching SHA-256 and named human approval metadata. Never add a
-directory, glob, test, generated-file, or agent exemption. Pair it with the required CI job in
-[`ci/examples/strict-sensitive-data.yml`](../ci/examples/strict-sensitive-data.yml) and protect
-the inventory, hook, workflow, and fixtures with CODEOWNERS.
+```bash
+python3 hooks/scripts/check_public_repo_clean.py --repo-root .
+```
 
-Enable the adjacent `check-commit-message-sensitive-data` block as well. Unlike file approvals,
-commit messages have no bypass: replace patient, path, username, IP/hostname, PACS endpoint, or
-other sensitive context with a sanitized issue or incident reference before committing.
+Legitimate test fixtures may be allowed by either:
 
-## Structural sensitive-data gates
+1. A root-level `.repo-clean-allowlist` file with one literal token per line (`#` comments allowed).
+2. An inline marker near the top of the file:
+   `# policy:repo-clean allow=<token>`
 
-For `regulated` (or `confidential`-with-customer-data) repos, three cheaper gates protect the
-controls themselves and force heavy scanners to run. Each is **inert until its root config file
-exists**, so the commented blocks are safe to leave wired. See
-[`policies/sensitive-data-scan-gates.md`](../policies/sensitive-data-scan-gates.md).
-
-| Gate | Config | Blocks |
-|---|---|---|
-| `check-gitignore-protected` | `.gitignore-protected` | Removal of a required `.gitignore` rule (a data dir getting silently un-ignored). |
-| `check-forbidden-paths` | `.forbidden-paths` | Any tracked file under a never-commit path — catches `git add -f` and pre-existing files a `.gitignore` rule can't. |
-| `check-scan-contract` | `.scan-contract.json` + `.scan-ledger.json` | A commit where a required heavy scanner (Presidio text/image, OCR, dicom-phi-scan, phi-scan, HoundDog local, SonarQube CE local) hasn't re-run since its covered files changed. |
-
-The scan contract records Git blob state per scanner; run the scanner, then
-`python3 hooks/scripts/check_scan_contract.py record <id>` to advance the ledger (commit it). Copy
-the `*.example` files to enable, and CODEOWNER-protect every config.
+Prefer removing the sensitive content over allowlisting it.
 
 ## When to use pre-commit vs CI vs agent-side checks
 

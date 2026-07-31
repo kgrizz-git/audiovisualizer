@@ -2,7 +2,6 @@
 
 Last reviewed: 2026-07-28
 Date: 2026-07-27
-Author: 
 Status: complete (2026-07-28)
 
 ## Goal

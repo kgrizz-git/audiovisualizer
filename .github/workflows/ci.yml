@@ -38,8 +38,11 @@ jobs:
       - name: License inventory gate
         run: python hooks/scripts/check_license_inventory.py --check
 
-      - name: License inventory unit tests
-        run: python -m unittest tests.hooks.test_check_license_inventory -v
+      - name: Public-release clean gate (emails, absolute paths, private IPs)
+        run: python hooks/scripts/check_public_repo_clean.py --repo-root .
+
+      - name: Policy hook unit tests
+        run: python -m unittest tests.test_policy_hooks_smoke tests.hooks.test_check_license_inventory -v
 
   secrets:
     name: Secret scan

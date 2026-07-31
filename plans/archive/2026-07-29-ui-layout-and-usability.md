@@ -1,9 +1,10 @@
 # Plan: UI layout and usability overhaul
 
-Last reviewed: 2026-07-29
+Last reviewed: 2026-07-30
 Date: 2026-07-29
+Completed: 2026-07-30
 Author: agent
-Status: in-progress
+Status: complete
 Linked issue/PR: n/a
 Spec / suggestions: [`dev-docs/ui-suggestions.md`](../dev-docs/ui-suggestions.md)
 

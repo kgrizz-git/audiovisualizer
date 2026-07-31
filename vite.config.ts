@@ -8,4 +8,12 @@ export default defineConfig({
   build: {
     target: 'es2022',
   },
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/core/**/*.ts', 'src/renderers/**/*.ts', 'src/cli/**/*.ts'],
+      exclude: ['**/*.d.ts', 'src/cli/renderMidi.ts'],
+    },
+  },
 });

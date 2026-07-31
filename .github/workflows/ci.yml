@@ -35,6 +35,12 @@ jobs:
       - name: Test, type-check, and production build
         run: npm run validate
 
+      - name: Test coverage (informational)
+        run: npm run coverage
+
+      - name: Audit dependencies (high/critical)
+        run: npm audit --audit-level=high
+
       - name: License inventory gate
         run: python hooks/scripts/check_license_inventory.py --check
 
@@ -57,3 +63,15 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/typescript
+            p/python-security
+          failOnError: true

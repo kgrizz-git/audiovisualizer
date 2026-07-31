@@ -51,6 +51,7 @@ cython_debug/
 .hypothesis/
 .coverage
 .coverage.*
+coverage/
 coverage.xml
 htmlcov/
 nosetests.xml

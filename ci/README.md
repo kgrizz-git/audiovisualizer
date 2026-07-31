@@ -1,14 +1,23 @@
 # CI Guidance
 
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-31
 
 Guidance for selecting, structuring, and gating CI checks. Example workflows live in
 `ci/examples/` — copy the ones you need to `.github/workflows/` to activate them.
 
-This repository’s **active** fast lane is
-[`.github/workflows/ci.yml`](../.github/workflows/ci.yml): `npm run validate` (Vitest +
-TypeScript + Vite production build), the third-party license inventory gate and its unit
-tests, and gitleaks. It is application CI, not seed-template asset validation.
+This repository’s **active** CI is
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml):
+
+- **Validate job (fast lane):** `npm run validate` (lint + Vitest + TypeScript + Vite
+  production build), informational Vitest coverage (`continue-on-error`),
+  `npm audit --audit-level=high`, the third-party license inventory gate, the
+  public-release clean gate (`check_public_repo_clean.py`), and policy-hook unit tests.
+- **Secrets job:** gitleaks.
+- **SAST job:** Semgrep (`semgrep/semgrep` container, `p/typescript` +
+  `p/python-security`) — kept as a separate job so it does not inflate the validate
+  wall-clock target.
+
+It is application CI, not seed-template asset validation.
 
 `ci/examples/` remains inactive reference material from the bootstrap template (generic
 Python/lint lanes, CodeQL, Dependabot samples, etc.). Do not treat those examples as
@@ -30,7 +39,7 @@ expand schedules/matrices/artifacts without a rough usage estimate in the PR.
 | Emails / absolute paths / private IPs (clean-repo) | ✅ primary | ✅ safety net | — | — |
 | Unit tests | — | ✅ primary | — | — |
 | Dep audit (pip-audit, npm audit) | — | ✅ primary | — | — |
-| SAST / OWASP (Semgrep) | optional | — | ✅ primary | — |
+| SAST / OWASP (Semgrep) | optional | ✅ primary (focused rulesets) | ✅ deeper suites (OWASP, etc.) | — |
 | CodeQL deep analysis | — | — | ✅ primary | — |
 | Container / IaC scan (grype, checkov) | — | — | ✅ primary | — |
 | TruffleHog history scan | — | — | ✅ primary | — |

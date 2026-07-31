@@ -105,7 +105,7 @@ addresses in the message; refer to a sanitized issue or incident record instead.
 | Risk | Local hook | Required CI job | Notes |
 |---|---|---|---|
 | Credentials | gitleaks + `detect-private-key` | gitleaks and scheduled history scan | Already included in [`hooks/.pre-commit-config.yaml`](../hooks/.pre-commit-config.yaml). |
-| Absolute local paths | A fast staged-diff rule | Re-run against the PR diff | Detect Unix home paths, Windows drive paths, and `file://` URLs; allow only documented portable examples. Prefer project-relative paths, env vars, or config values. |
+| Absolute local paths / emails / private IPs | `check_public_repo_clean.py` (full Git index) | Same script as a required Validate-job step | Wired as `check-public-repo-clean` in pre-commit and CI. Allow only documented synthetic fixtures via `.repo-clean-allowlist` or inline markers. Prefer project-relative paths, env vars, or config values. |
 | Binary / data exports | Filename, extension, size, and allowlist rule | Re-run and scan unpacked permitted fixtures if justified | A ruleset can block risky paths/extensions/sizes; content inspection needs a hook or CI scanner. |
 
 Do not enable a broad personal-data regex as a hard gate without measuring it against

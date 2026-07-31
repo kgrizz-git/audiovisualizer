@@ -134,6 +134,15 @@ class PublicRepoCleanHookTests(unittest.TestCase):
             self.stage(root)
             self.assertEqual(self.scan(root).returncode, 0)
 
+    def test_non_git_directory_fails_closed(self) -> None:
+        """Without a Git index the gate must fail, not silently pass."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "README.md").write_text("clean\n", encoding="utf-8")
+            result = self.scan(root)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("git ls-files failed", result.stderr)
+
 
 class GhaUsageScriptTests(unittest.TestCase):
     def test_help_exits_zero(self) -> None:

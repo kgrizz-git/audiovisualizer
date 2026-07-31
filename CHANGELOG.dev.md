@@ -3,13 +3,23 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
-Last reviewed: 2026-07-24
+Last reviewed: 2026-07-31
 
 ## Unreleased
 
 ### Added
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.
 - Phase 1 of that plan: `src/ui/controlApplicability.ts` plus Vitest coverage for mode-aware controls and canvas `showLegend` preview toggle. SemVer: covered in public changelog (**MINOR**).
+- CI public-release hardening on `prepare-public-release`: informational Vitest coverage
+  (`npm run coverage` / `@vitest/coverage-v8`), `npm audit --audit-level=high`, and a
+  Semgrep SAST job using the official `semgrep/semgrep` container with `p/typescript` and
+  `p/python-security` (replacing the archived `returntocorp/semgrep-action`). SemVer: none
+  (tooling only).
+- `hooks/scripts/check_public_repo_clean.py` (wired as `check-public-repo-clean` in
+  `.pre-commit-config.yaml`, `hooks/install.sh`, and `.github/workflows/ci.yml`): scans every
+  tracked file for email addresses (excluding reserved example/test domains), absolute paths,
+  `file://` URIs, and private IPv4 addresses so the repo never leaks local identity.
+  Allowlisting via `.repo-clean-allowlist` or inline `# policy:repo-clean allow=<token>`.
 
 ### Changed
 - ESLint `complexity` rule escalated from `warn` to `error` at 15, making the policy's
@@ -20,6 +30,10 @@ Last reviewed: 2026-07-24
   lizard is not used (TS-only codebase; ESLint covers it without a Python dependency);
   annotated the lizard row in `inventory/security-quality.md` accordingly.
 - Refactored oversized files to pass the 800-line hook: extracted SoundFont library UI (`src/ui/soundfontLibraryUI.ts`), audio voice options row builder (`src/ui/voiceOptionsUI.ts`), 3D geometry builders (`src/renderers/three/geometryBuilders.ts`), onset pulses (`src/renderers/three/onsetPulses.ts`), and scene atmosphere (`src/renderers/three/sceneAtmosphere.ts`) into sibling modules. Both `src/ui/app.ts` (714 lines) and `src/renderers/three/ThreeDRenderer.ts` (499 lines) now pass comfortably without exemptions.
+- Vitest excludes nested `.kilo/` / `.worktrees/` checkouts so local test and coverage runs
+  do not double-count sibling worktree suites; `.kilo/` is gitignored.
+- `check_public_repo_clean.py` fails closed when `git ls-files` cannot run (previously a Git
+  failure returned an empty file list and the gate silently passed).
 
 ### Removed
 - Public-release prep: removed the template's PHI/medical enforcement infrastructure
@@ -29,11 +43,6 @@ Last reviewed: 2026-07-24
   `inventory/medical-data-security.md`, `prompts/strict-phi-agent-guidance.md`,
   `policies/sensitive-data-scan-gates.md`, `policies/sensitive-data-runtime-leaks.md`)
   and scrubbed PHI/medical wording from the hooks, CI, policies, prompts, and inventory docs.
-- Added `hooks/scripts/check_public_repo_clean.py` (wired as `check-public-repo-clean` in
-  `.pre-commit-config.yaml`, `hooks/install.sh`, and `.github/workflows/ci.yml`): scans every
-  tracked file for email addresses (excluding reserved example/test domains), absolute paths,
-  `file://` URIs, and private IPv4 addresses so the repo never leaks local identity.
-  Allowlisting via `.repo-clean-allowlist` or inline `# policy:repo-clean allow=<token>`.
 - Replaced absolute `file:///Users/...` links with relative paths in `CHANGELOG.dev.md`,
   `assessments/`, and `plans/specs/`; dropped an author username from an archived plan.
 - Smoke tests: replaced the removed sensitive-data/scan-gate/commit-message test classes in

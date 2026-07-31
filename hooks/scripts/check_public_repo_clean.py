@@ -121,6 +121,11 @@ def check_file(path: Path, allowlist: set[str]) -> list[str]:
 
 
 def tracked_files(repo_root: Path) -> list[Path]:
+    """Return cached (index) paths, or raise RuntimeError if Git cannot be queried.
+
+    An empty list is only valid when `git ls-files` succeeds and the index is
+    empty. Swallowing Git failures would silently skip the entire scan.
+    """
     try:
         result = subprocess.run(
             ["git", "-C", str(repo_root), "ls-files", "--cached"],
@@ -128,8 +133,16 @@ def tracked_files(repo_root: Path) -> list[Path]:
             text=True,
             check=True,
         )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return []
+    except FileNotFoundError as exc:
+        raise RuntimeError(
+            "git executable not found; cannot enumerate tracked files"
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or "").strip()
+        raise RuntimeError(
+            f"git ls-files failed (exit {exc.returncode})"
+            + (f": {detail}" if detail else "")
+        ) from exc
     return [repo_root / line for line in result.stdout.splitlines() if line.strip()]
 
 
@@ -155,8 +168,14 @@ def main(argv: list[str] | None = None) -> int:
         except OSError:
             allowlist = set()
 
+    try:
+        paths = tracked_files(repo_root)
+    except RuntimeError as exc:
+        print(f"[repo-clean] ERROR {exc}", file=sys.stderr)
+        return 1
+
     findings: list[str] = []
-    for path in tracked_files(repo_root):
+    for path in paths:
         findings.extend(check_file(path, allowlist))
 
     for finding in findings:

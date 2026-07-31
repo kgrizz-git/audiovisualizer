@@ -1,7 +1,8 @@
 # .github/workflows/ci.yml
 #
-# AudioVisualizer fast-lane CI: app validate, license inventory, secret scan.
-# Target: under ~5 minutes on a cold runner.
+# AudioVisualizer CI: app validate, coverage (informational), npm audit,
+# license inventory, public-release clean gate, policy hook tests, gitleaks,
+# and Semgrep SAST. Target: validate job under ~5 minutes on a cold runner.
 
 name: CI
 
@@ -36,6 +37,9 @@ jobs:
         run: npm run validate
 
       - name: Test coverage (informational)
+        # No coverage thresholds — reports only. continue-on-error so tooling
+        # drift cannot block merges while validate already gates correctness.
+        continue-on-error: true
         run: npm run coverage
 
       - name: Audit dependencies (high/critical)
@@ -67,11 +71,16 @@ jobs:
   semgrep:
     name: SAST (Semgrep)
     runs-on: ubuntu-latest
+    # Official image — returntocorp/semgrep-action@v1 is archived/deprecated.
+    container:
+      image: semgrep/semgrep
     steps:
       - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/typescript
-            p/python-security
-          failOnError: true
+      - name: Scan TypeScript and Python security rules
+        run: |
+          semgrep scan \
+            --config=p/typescript \
+            --config=p/python-security \
+            --error \
+            --quiet \
+            .

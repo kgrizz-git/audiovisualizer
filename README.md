@@ -1,6 +1,6 @@
 # AudioVisualizer — Music → Visual Score Art
 
-Last reviewed: 2026-07-28
+Last reviewed: 2026-07-31
 
 This repository was bootstrapped and cloned from the [template-repo-v1](https://github.com/kgrizz-git/template-repo-v1) seed template.
 
@@ -31,7 +31,7 @@ npm install
 # Start local development server (Vite)
 npm run dev
 
-# Run the full local verification gate (tests, type-checking, and production build)
+# Run the full local verification gate (lint, tests with coverage, type-check, production build)
 npm run validate
 ```
 

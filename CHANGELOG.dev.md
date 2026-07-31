@@ -24,6 +24,10 @@ Last reviewed: 2026-07-31
   PRs (`dev-docs/TO_DO.md` → Repository / release hygiene). SemVer: none.
 - `.github/CODEOWNERS` (`* @kgrizz-git`), issue forms, and PR template; TO_DO updated so
   remaining work is ruleset enforcement + private vulnerability reporting. SemVer: none.
+- CI fixes: license inventory gate moved back onto **Validate** (needs `npm ci` /
+  license-checker); Semgrep uses `p/python` instead of dead `p/python-security` registry
+  pack; `.coderabbit.yaml` disables auto-review (opt-in via `@coderabbitai review`).
+  SemVer: none.
 
 ### Changed
 - ESLint `complexity` rule escalated from `warn` to `error` at 15, making the policy's

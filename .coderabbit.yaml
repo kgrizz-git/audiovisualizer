@@ -1,0 +1,14 @@
+# CodeRabbit — https://docs.coderabbit.ai/configuration/auto-review
+# Auto-review off by default; request a review with `@coderabbitai review`
+# (or `@coderabbitai full review`) on a PR when you want one.
+
+language: en-US
+reviews:
+  profile: chill
+  auto_review:
+    enabled: false
+  path_filters:
+    - "!**/package-lock.json"
+    - "!**/coverage/**"
+chat:
+  auto_reply: true

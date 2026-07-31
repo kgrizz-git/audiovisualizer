@@ -1,10 +1,11 @@
 # .github/workflows/ci.yml
 #
 # AudioVisualizer CI:
-#   Validate  — lint, Vitest+coverage, type-check, production build, npm audit
-#   Policy    — license inventory, public-release clean gate, hook unit tests
+#   Validate  — lint, Vitest+coverage, type-check, production build, npm audit,
+#               license inventory (needs node_modules / license-checker)
+#   Policy    — public-release clean gate, policy-hook unit tests
 #   Secrets   — gitleaks
-#   SAST      — Semgrep (pinned image; TypeScript + Python security rulesets)
+#   SAST      — Semgrep (pinned image; TypeScript + Python rulesets)
 #
 # Required status-check names for branch protection / rulesets:
 #   Validate, Policy, Secret scan, SAST (Semgrep)
@@ -32,6 +33,10 @@ jobs:
           node-version: "20"
           cache: npm
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Install dependencies
         run: npm ci
 
@@ -53,6 +58,11 @@ jobs:
         continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: npm audit --audit-level=high
 
+      - name: License inventory gate
+        # Must run after npm ci: inventory is compared against license-checker
+        # enrichment that needs node_modules / npx.
+        run: python hooks/scripts/check_license_inventory.py --check
+
   policy:
     name: Policy
     runs-on: ubuntu-latest
@@ -62,9 +72,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: License inventory gate
-        run: python hooks/scripts/check_license_inventory.py --check
 
       - name: Public-release clean gate (emails, absolute paths, private IPs)
         run: python hooks/scripts/check_public_repo_clean.py --repo-root .
@@ -96,11 +103,12 @@ jobs:
       image: semgrep/semgrep:1.169.0@sha256:2b33f46ba66cf8cc2ad59ccfa7d22951fd00c632c38f1339e84ec8e6e641a942
     steps:
       - uses: actions/checkout@v4
-      - name: Scan TypeScript and Python security rules
+      - name: Scan TypeScript and Python rules
+        # p/python-security 404s in the registry; use p/python + p/typescript.
         run: |
           semgrep scan \
             --config=p/typescript \
-            --config=p/python-security \
+            --config=p/python \
             --error \
             --quiet \
             src/ hooks/scripts/ tests/ ci/scripts/

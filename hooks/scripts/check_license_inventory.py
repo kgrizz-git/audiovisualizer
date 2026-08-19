@@ -623,11 +623,20 @@ def check_human_review_age(
     return errors, warnings
 
 
+# --check exit codes: CI treats stale-inventory drift (2, expected on Dependabot
+# lockfile PRs) as advisory, but always fails on license-policy violations (1).
+EXIT_PASS = 0
+EXIT_POLICY_VIOLATION = 1  # unknown license, production strong-copyleft, human-review
+EXIT_STALE_INVENTORY = 2   # committed inventory drifted from package-lock.json
+
+
 def run_check() -> int:
     """
     Read-only verification: content must match regeneration; enforce license gates.
 
-    Never writes the inventory file.
+    Never writes the inventory file. Returns EXIT_PASS (0), EXIT_POLICY_VIOLATION
+    (1) for substantive license-policy gates, or EXIT_STALE_INVENTORY (2) for
+    committed-inventory drift with no policy violation.
     """
     existing = read_existing_inventory()
     if existing is None:
@@ -635,24 +644,21 @@ def run_check() -> int:
             f"[license-inventory] ERROR {INVENTORY_PATH} is missing — run --update",
             file=sys.stderr,
         )
-        return 1
+        return EXIT_POLICY_VIOLATION
 
     deps = collect_deps_from_lockfile()
     human = extract_date(HUMAN_REVIEW_RE, existing)
     auto = extract_date(LAST_REVIEWED_RE, existing) or date.today()
-    expected = generate_inventory(
-        last_reviewed=auto,
-        human_reviewed=human,
-        deps=deps,
-    )
+    expected = generate_inventory(last_reviewed=auto, human_reviewed=human, deps=deps)
 
+    # Report stale drift (exit 2) separately so CI can make only it advisory.
     if expected != existing:
         print(
-            f"[license-inventory] ERROR {INVENTORY_PATH} is out of date with "
+            f"[license-inventory] STALE {INVENTORY_PATH} is out of date with "
             "package-lock.json / classification — run --update",
             file=sys.stderr,
         )
-        return 1
+        return EXIT_STALE_INVENTORY
 
     errors: list[str] = []
     warnings: list[str] = []
@@ -677,16 +683,16 @@ def run_check() -> int:
     errors.extend(hr_errors)
     warnings.extend(hr_warnings)
 
-    for w in warnings:
-        print(f"[license-inventory] WARN  {w}", file=sys.stderr)
+    for line, tag in ((w, "WARN") for w in warnings):
+        print(f"[license-inventory] {tag}  {line}", file=sys.stderr)
     for e in errors:
         print(f"[license-inventory] ERROR {e}", file=sys.stderr)
 
     if errors:
-        return 1
+        return EXIT_POLICY_VIOLATION
 
     print(f"[license-inventory] PASS  {INVENTORY_PATH} is up-to-date")
-    return 0
+    return EXIT_PASS
 
 
 def run_update() -> int:

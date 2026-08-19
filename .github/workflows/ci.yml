@@ -61,13 +61,27 @@ jobs:
       - name: License inventory gate
         # Must run after npm ci: inventory is compared against license-checker
         # enrichment that needs node_modules / npx.
-        # Hard gate everywhere; on Dependabot lockfile PRs the committed
-        # inventory is expected to be stale (CI cannot push back to the bot
-        # branch), so the step is advisory — the maintainer runs
-        # `python hooks/scripts/check_license_inventory.py --update` and
-        # commits before merging. Still a hard gate on main pushes / other PRs.
-        continue-on-error: ${{ github.actor == 'dependabot[bot]' }}
-        run: python hooks/scripts/check_license_inventory.py --check
+        # The script returns distinct exit codes:
+        #   0 pass, 1 license-policy violation (unknown license, production
+        #     strong-copyleft, human-review), 2 stale inventory drift only.
+        # Policy violations (1) ALWAYS fail CI. Stale drift (2) is expected on
+        # Dependabot lockfile PRs (CI cannot push back to the bot branch), so it
+        # is advisory there only — the maintainer runs
+        # `python hooks/scripts/check_license_inventory.py --update` and commits
+        # before merging. On main pushes / other PRs, stale drift also hard-fails.
+        env:
+          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
+        run: |
+          python hooks/scripts/check_license_inventory.py --check
+          rc=$?
+          if [ "$rc" -eq 0 ]; then
+            exit 0
+          fi
+          if [ "$rc" -eq 2 ] && [ "$IS_DEPENDABOT" = "true" ]; then
+            echo "::warning::License inventory is stale on a Dependabot PR — advisory only; run --update before merge."
+            exit 0
+          fi
+          exit "$rc"
 
       - name: License inventory unit tests
         # Same dependency: RepoIntegrationSmoke runs --check against this checkout.

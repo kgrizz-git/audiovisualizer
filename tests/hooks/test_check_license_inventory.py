@@ -124,16 +124,45 @@ class LicenseInventoryUnitTests(unittest.TestCase):
         inv = Path("inventory/third-party-licenses.md")
         self.assertFalse(inv.exists())
         code = self.mod.run_check()
-        self.assertEqual(code, 1)
+        self.assertEqual(code, self.mod.EXIT_POLICY_VIOLATION)
         self.assertFalse(inv.exists())
 
-    def test_check_content_drift_fails(self) -> None:
+    def test_check_content_drift_is_stale_not_policy(self) -> None:
+        # Stale committed inventory (lockfile mismatch) must be reported with the
+        # distinct stale-inventory exit code (2), NOT the policy-violation code (1),
+        # so CI can make only drift advisory while keeping policy gates blocking.
         self.mod.run_update()
         self.mod.run_human_review()
         inv = Path("inventory/third-party-licenses.md")
         text = inv.read_text(encoding="utf-8")
         inv.write_text(text.replace("`prod-direct`", "`prod-direct-REMOVED`"), encoding="utf-8")
-        self.assertEqual(self.mod.run_check(), 1)
+        self.assertEqual(self.mod.run_check(), self.mod.EXIT_STALE_INVENTORY)
+        self.assertNotEqual(self.mod.run_check(), self.mod.EXIT_POLICY_VIOLATION)
+
+    def test_check_policy_violation_is_distinct_from_drift(self) -> None:
+        # A substantive policy gate (unknown license / production strong copyleft)
+        # must fail with EXIT_POLICY_VIOLATION (1), never the stale-drift code (2),
+        # so it stays blocking even on Dependabot PRs.
+        deps = self.mod.collect_deps_from_lockfile()
+        risky = [
+            d
+            for d in deps
+            if d.category in (self.mod.Category.UNKNOWN, self.mod.Category.STRONG_COPYLEFT)
+        ]
+        self.assertTrue(risky, "fixture must include a policy-risk dependency")
+        content = self.mod.generate_inventory(
+            last_reviewed=date.today(),
+            human_reviewed=date.today(),
+            deps=deps,
+        )
+        Path("inventory/third-party-licenses.md").write_text(content, encoding="utf-8")
+        original = self.mod.collect_deps_from_lockfile
+        self.mod.collect_deps_from_lockfile = lambda: deps  # type: ignore[method-assign]
+        try:
+            self.assertEqual(self.mod.run_check(), self.mod.EXIT_POLICY_VIOLATION)
+            self.assertNotEqual(self.mod.run_check(), self.mod.EXIT_STALE_INVENTORY)
+        finally:
+            self.mod.collect_deps_from_lockfile = original  # type: ignore[method-assign]
 
     def test_check_ignores_only_human_review_date_change_via_regen_preserve(self) -> None:
         """Changing Last human reviewed then regenerating expected with that date still matches."""

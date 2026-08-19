@@ -61,6 +61,12 @@ jobs:
       - name: License inventory gate
         # Must run after npm ci: inventory is compared against license-checker
         # enrichment that needs node_modules / npx.
+        # Hard gate everywhere; on Dependabot lockfile PRs the committed
+        # inventory is expected to be stale (CI cannot push back to the bot
+        # branch), so the step is advisory — the maintainer runs
+        # `python hooks/scripts/check_license_inventory.py --update` and
+        # commits before merging. Still a hard gate on main pushes / other PRs.
+        continue-on-error: ${{ github.actor == 'dependabot[bot]' }}
         run: python hooks/scripts/check_license_inventory.py --check
 
       - name: License inventory unit tests

@@ -1,6 +1,6 @@
 # Third-Party License Inventory
 
-Last reviewed: 2026-07-31
+Last reviewed: 2026-08-19
 Last human reviewed: 2026-07-26
 
 This document catalogs third-party dependencies and their licenses for compliance,
@@ -158,7 +158,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `assertion-error` (v2.0.1) — MIT ([source](https://github.com/chaijs/assertion-error)) — see `node_modules/assertion-error/`
 - `ast-v8-to-istanbul` (v1.0.5) — MIT ([source](https://github.com/AriPerkkio/ast-v8-to-istanbul)) — see `node_modules/ast-v8-to-istanbul/`
 - `balanced-match` (v4.0.4) — MIT ([source](https://github.com/juliangruber/balanced-match)) — see `node_modules/balanced-match/`
-- `brace-expansion` (v5.0.8) — MIT ([source](https://github.com/juliangruber/brace-expansion)) — see `node_modules/brace-expansion/`
+- `brace-expansion` (v5.0.9) — MIT ([source](https://github.com/juliangruber/brace-expansion)) — see `node_modules/brace-expansion/`
 - `chai` (v6.2.2) — MIT ([source](https://github.com/chaijs/chai)) — see `node_modules/chai/`
 - `convert-source-map` (v2.0.0) — MIT ([source](https://github.com/thlorenz/convert-source-map)) — see `node_modules/convert-source-map/`
 - `cross-spawn` (v7.0.6) — MIT ([source](https://github.com/moxystudio/node-cross-spawn)) — see `node_modules/cross-spawn/`
@@ -212,7 +212,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `meshoptimizer` (v0.18.1) — MIT ([source](https://github.com/zeux/meshoptimizer)) — see `node_modules/meshoptimizer/`
 - `minimatch` (v10.2.5) — BlueOak-1.0.0 ([source](https://github.com/isaacs/minimatch)) — see `node_modules/minimatch/`
 - `ms` (v2.1.3) — MIT ([source](https://github.com/vercel/ms)) — see `node_modules/ms/`
-- `nanoid` (v3.3.16) — MIT ([source](https://github.com/ai/nanoid)) — see `node_modules/nanoid/`
+- `nanoid` (v3.3.18) — MIT ([source](https://github.com/ai/nanoid)) — see `node_modules/nanoid/`
 - `natural-compare` (v1.4.0) — MIT ([source](https://github.com/litejs/natural-compare-lite)) — see `node_modules/natural-compare/`
 - `obug` (v2.1.4) — MIT ([source](https://github.com/sxzz/obug)) — see `node_modules/obug/`
 - `optionator` (v0.9.4) — MIT ([source](https://github.com/gkz/optionator)) — see `node_modules/optionator/`
@@ -223,7 +223,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `pathe` (v2.0.3) — MIT ([source](https://github.com/unjs/pathe)) — see `node_modules/pathe/`
 - `picocolors` (v1.1.1) — ISC ([source](https://github.com/alexeyraspopov/picocolors)) — see `node_modules/picocolors/`
 - `picomatch` (v4.0.5) — MIT ([source](https://github.com/micromatch/picomatch)) — see `node_modules/picomatch/`
-- `postcss` (v8.5.21) — MIT ([source](https://github.com/postcss/postcss)) — see `node_modules/postcss/`
+- `postcss` (v8.5.26) — MIT ([source](https://github.com/postcss/postcss)) — see `node_modules/postcss/`
 - `prelude-ls` (v1.2.1) — MIT ([source](https://github.com/gkz/prelude-ls)) — see `node_modules/prelude-ls/`
 - `punycode` (v2.3.1) — MIT ([source](https://github.com/mathiasbynens/punycode.js)) — see `node_modules/punycode/`
 - `rolldown` (v1.1.5) — MIT ([source](https://github.com/rolldown/rolldown)) — see `node_modules/rolldown/`

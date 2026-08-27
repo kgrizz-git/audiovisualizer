@@ -24,7 +24,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from path_guard import confined_path
+from path_guard import confined_path, relative_to_root
 
 # ── Staleness windows ─────────────────────────────────────────────────────────
 WARN_DAYS = int(os.getenv("POLICY_FRESHNESS_WARN_DAYS", "180"))
@@ -56,28 +56,32 @@ def is_exempt(filepath: str) -> bool:
     return any(frag in norm for frag in EXEMPT_FRAGMENTS)
 
 
-def is_required(path: Path) -> bool:
-    if path.suffix.lower() != ".md":
+def is_required(rel_path: Path) -> bool:
+    """Classify using a repo-relative path (not an absolute confined path)."""
+    if rel_path.suffix.lower() != ".md":
         return False
-    norm_parts = set(path.parts)
     # Root-level docs
-    if path.name in ROOT_REQUIRED and len(path.parts) == 1:
+    if rel_path.name in ROOT_REQUIRED and len(rel_path.parts) == 1:
         return True
     # Docs inside required directories
-    return bool(REQUIRED_DIRS & norm_parts)
+    return bool(REQUIRED_DIRS & set(rel_path.parts))
 
 
 def check(filepath: str) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    if not filepath.endswith(".md") or is_exempt(filepath):
+    if not filepath.endswith(".md"):
         return errors, warnings
 
     try:
         path = confined_path(filepath)
+        rel = relative_to_root(path)
     except ValueError:
         # Reject paths that escape the working tree (pre-commit / agent args).
+        return errors, warnings
+
+    if is_exempt(rel.as_posix()):
         return errors, warnings
 
     if not path.exists():
@@ -94,7 +98,7 @@ def check(filepath: str) -> tuple[list[str], list[str]]:
     match = MARKER_RE.search(head)
 
     if not match:
-        if is_required(path):
+        if is_required(rel):
             errors.append(
                 f"{filepath}: missing 'Last reviewed: YYYY-MM-DD' marker. "
                 "Required in policies/, templates/, inventory/, docs/, and root agent docs."

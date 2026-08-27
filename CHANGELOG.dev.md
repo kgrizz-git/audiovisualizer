@@ -14,6 +14,10 @@ Last reviewed: 2026-07-31
   [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md). SemVer: none.
 
 ### Fixed
+- PR review follow-ups: classify ignore/required paths with repo-relative paths after
+  confinement (root `README.md`/`AGENTS.md` freshness and parent-dir `backups/` false
+  ignores), allow GitHub `.github` repo slugs in `check_gha_usage`, and isolate open-PR
+  stamp tests in per-test temp dirs. SemVer: none.
 - SonarCloud Security rating E: suppress false-positive path-injection Blocker on
   constant-path inventory writes (`pythonsecurity:S2083`), confine CLI file paths via
   shared `hooks/scripts/path_guard.confined_path` (with `# NOSONAR pythonsecurity:S8707`

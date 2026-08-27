@@ -43,3 +43,15 @@ def confined_path(path: Path | str, *, root: Path | None = None) -> Path:
     except ValueError as exc:
         raise ValueError(f"path escapes trusted root {base}: {path}") from exc
     return resolved
+
+
+def relative_to_root(path: Path, *, root: Path | None = None) -> Path:
+    """
+    Return ``path`` relative to ``root`` (default: cwd).
+
+    Use this for ignore/required classification so absolute confined paths do not
+    falsely match fragments that appear only in parent directories (e.g. ``backups/``)
+    or break root-file checks that expect a single path part.
+    """
+    base = (root or Path.cwd()).resolve()
+    return path.resolve().relative_to(base)

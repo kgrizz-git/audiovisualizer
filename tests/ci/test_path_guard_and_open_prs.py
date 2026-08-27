@@ -53,17 +53,16 @@ class OpenPrsStampConfinementTests(unittest.TestCase):
         )
 
     def test_stamp_is_fresh_rejects_path_outside_repo_root(self) -> None:
-        outside = Path(tempfile.gettempdir()) / "audiovisualizer-open-prs-escape.stamp"
-        outside.write_text("x", encoding="utf-8")
-        try:
+        with tempfile.TemporaryDirectory() as tmp:
+            outside = Path(tmp) / "escape.stamp"
+            outside.write_text("x", encoding="utf-8")
             self.assertFalse(self.open_prs.stamp_is_fresh(outside, max_age_hours=24.0))
-        finally:
-            outside.unlink(missing_ok=True)
 
     def test_touch_stamp_rejects_path_outside_repo_root(self) -> None:
-        outside = Path(tempfile.gettempdir()) / "audiovisualizer-open-prs-escape2.stamp"
-        with self.assertRaises(ValueError):
-            self.open_prs.touch_stamp(outside)
+        with tempfile.TemporaryDirectory() as tmp:
+            outside = Path(tmp) / "escape2.stamp"
+            with self.assertRaises(ValueError):
+                self.open_prs.touch_stamp(outside)
 
 
 class GhaSlugValidationTests(unittest.TestCase):
@@ -77,6 +76,9 @@ class GhaSlugValidationTests(unittest.TestCase):
     def test_accepts_normal_slug_and_login(self) -> None:
         self.assertEqual(self.gha.validate_repo_slug("kgrizz-git/audiovisualizer"), "kgrizz-git/audiovisualizer")
         self.assertEqual(self.gha.validate_login("kgrizz-git"), "kgrizz-git")
+
+    def test_accepts_dot_github_repo(self) -> None:
+        self.assertEqual(self.gha.validate_repo_slug("owner/.github"), "owner/.github")
 
     def test_rejects_leading_hyphen_login(self) -> None:
         with self.assertRaises(SystemExit):

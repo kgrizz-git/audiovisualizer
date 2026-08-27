@@ -24,7 +24,7 @@ import re
 import sys
 from pathlib import Path
 
-from path_guard import confined_path
+from path_guard import confined_path, relative_to_root
 
 # ── Thresholds ────────────────────────────────────────────────────────────────
 SOFT_LINE_CAP = int(os.getenv("POLICY_SOFT_LINE_CAP", "600"))
@@ -92,10 +92,11 @@ def check(filepath: str) -> tuple[list[str], list[str]]:
 
     try:
         path = confined_path(filepath)
+        rel = relative_to_root(path)
     except ValueError:
         return errors, warnings
 
-    if not path.exists() or is_ignored(filepath):
+    if not path.exists() or is_ignored(rel.as_posix()):
         return errors, warnings
 
     size = path.stat().st_size

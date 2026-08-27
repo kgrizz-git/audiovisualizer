@@ -48,8 +48,8 @@ API_VERSION = "2022-11-28"
 # GitHub login/owner: alnum + single hyphens, no leading/trailing hyphen, ≤39 chars.
 # Blocks leading "-" so values cannot be mistaken for gh CLI flags.
 _OWNER_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
-# Repo names: alnum / . _ - ; no leading hyphen; not "." / ".."; ≤100 chars.
-_REPO_NAME_RE = re.compile(r"^(?!\.\.?$)[A-Za-z0-9_][A-Za-z0-9._-]{0,99}$")
+# Repo names: alnum / . _ - ; not "." / ".."; ≤100 chars. Leading "." allowed (.github).
+_REPO_NAME_RE = re.compile(r"^(?!\.\.?$)[A-Za-z0-9_.][A-Za-z0-9._-]{0,99}$")
 
 
 def die(msg: str, code: int = 1) -> None:

@@ -26,7 +26,7 @@ import os
 import sys
 from pathlib import Path
 
-from path_guard import confined_path
+from path_guard import confined_path, relative_to_root
 
 SOFT_LINE_CAP = int(os.getenv("POLICY_TODO_SOFT_LINE_CAP", "150"))
 HARD_LINE_CAP = int(os.getenv("POLICY_TODO_HARD_LINE_CAP", "300"))
@@ -86,12 +86,15 @@ def check(filepath: Path) -> tuple[list[str], list[str]]:
     warnings: list[str] = []
     try:
         filepath = confined_path(filepath)
+        rel = relative_to_root(filepath)
     except ValueError as exc:
         errors.append(f"{filepath}: {exc}")
         return errors, warnings
-    if not filepath.exists() or is_ignored(str(filepath)):
+    # Classify ignore fragments on the repo-relative path so parent dirs outside
+    # the checkout (e.g. .../backups/<repo>/) cannot silently skip enforcement.
+    if not filepath.exists() or is_ignored(rel.as_posix()):
         return errors, warnings
-    if not is_backlog_path(filepath):
+    if not is_backlog_path(rel):
         return errors, warnings
 
     try:
@@ -129,7 +132,9 @@ def main() -> int:
     args = [Path(a) for a in sys.argv[1:]]
 
     if args:
-        files = [p for p in args if is_backlog_path(p) and not is_ignored(str(p))]
+        # Do not pre-filter with is_ignored on raw argv: absolute paths can contain
+        # ignore fragments from parent directories. check() classifies repo-relative paths.
+        files = [p for p in args if is_backlog_path(p)]
         # If pre-commit passed only non-backlog files, nothing to do
         if not files and args:
             return 0

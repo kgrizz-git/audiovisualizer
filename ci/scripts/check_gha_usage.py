@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -43,6 +44,12 @@ from typing import Any
 from urllib.parse import quote
 
 API_VERSION = "2022-11-28"
+
+# GitHub login/owner: alnum + single hyphens, no leading/trailing hyphen, ≤39 chars.
+# Blocks leading "-" so values cannot be mistaken for gh CLI flags.
+_OWNER_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
+# Repo names: alnum / . _ - ; no leading hyphen; not "." / ".."; ≤100 chars.
+_REPO_NAME_RE = re.compile(r"^(?!\.\.?$)[A-Za-z0-9_][A-Za-z0-9._-]{0,99}$")
 
 
 def die(msg: str, code: int = 1) -> None:
@@ -54,8 +61,30 @@ def warn(msg: str) -> None:
     print(f"[gha-usage] WARN: {msg}", file=sys.stderr)
 
 
+def validate_repo_slug(repo: str) -> str:
+    """Return repo if it matches owner/name with GitHub-safe characters; otherwise abort."""
+    owner, sep, name = repo.partition("/")
+    if (
+        not sep
+        or "/" in name
+        or not _OWNER_RE.fullmatch(owner)
+        or not _REPO_NAME_RE.fullmatch(name)
+    ):
+        die(f"Invalid --repo {repo!r}; expected owner/name with safe characters")
+    return f"{owner}/{name}"
+
+
+def validate_login(login: str) -> str:
+    """Return login if it matches a safe GitHub login pattern; otherwise abort."""
+    if not _OWNER_RE.fullmatch(login):
+        die(f"Invalid --account {login!r}; expected a GitHub login")
+    return login
+
+
 def run_gh(args: list[str], check: bool = False) -> subprocess.CompletedProcess[str]:
+    # List-form argv only (no shell). Callers must validate any user-derived segments.
     cmd = ["gh", *args]
+    # NOSONAR pythonsecurity:S8705 — no shell; repo/login slugs validated via allow-list regex.
     return subprocess.run(cmd, capture_output=True, text=True, check=check)
 
 
@@ -90,14 +119,14 @@ def require_gh() -> None:
 
 def resolve_repo(explicit: str | None) -> str:
     if explicit:
-        return explicit
+        return validate_repo_slug(explicit)
     code, data, err = gh_api("repos/{owner}/{repo}", jq=".full_name")
     # Prefer gh repo view — works from a git checkout
     proc = run_gh(["repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"])
     if proc.returncode == 0 and proc.stdout.strip():
-        return proc.stdout.strip()
+        return validate_repo_slug(proc.stdout.strip())
     if code == 0 and isinstance(data, str) and data:
-        return data
+        return validate_repo_slug(data)
     die(f"Could not resolve repository. Pass --repo owner/name. ({err or proc.stderr})")
 
 
@@ -124,6 +153,8 @@ def fetch_repo_run_timing(repo: str, days: int, limit: int) -> dict[str, Any]:
     owner, _, name = repo.partition("/")
     if not owner or not name:
         die(f"Invalid --repo {repo!r}; expected owner/name")
+    # Re-validate after partition so taint analysis sees a sanitizer at use sites.
+    validate_repo_slug(f"{owner}/{name}")
 
     since = iso_days_ago(days)
     # List completed runs; paginate via gh --paginate
@@ -429,6 +460,7 @@ def main() -> int:
                 ),
             }
         else:
+            login = validate_login(login)
             # When both, also filter account summary to this repo if possible
             repo_filter = repo if (do_repo and repo) else None
             out["account_report"] = fetch_account_usage(

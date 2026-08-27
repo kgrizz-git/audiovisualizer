@@ -24,6 +24,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+from path_guard import confined_path
+
 # ── Staleness windows ─────────────────────────────────────────────────────────
 WARN_DAYS = int(os.getenv("POLICY_FRESHNESS_WARN_DAYS", "180"))
 HARD_DAYS = int(os.getenv("POLICY_FRESHNESS_HARD_DAYS", "365"))
@@ -72,13 +74,19 @@ def check(filepath: str) -> tuple[list[str], list[str]]:
     if not filepath.endswith(".md") or is_exempt(filepath):
         return errors, warnings
 
-    path = Path(filepath)
+    try:
+        path = confined_path(filepath)
+    except ValueError:
+        # Reject paths that escape the working tree (pre-commit / agent args).
+        return errors, warnings
+
     if not path.exists():
         return errors, warnings
 
     try:
         # Only scan first 2 KB — marker should be near the top
-        with open(path, encoding="utf-8", errors="ignore") as fh:
+        # Path already confined via confined_path(); Sonar does not treat that as a sanitizer.
+        with open(path, encoding="utf-8", errors="ignore") as fh:  # NOSONAR pythonsecurity:S8707
             head = fh.read(2048)
     except OSError:
         return errors, warnings

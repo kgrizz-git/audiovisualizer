@@ -24,6 +24,8 @@ import re
 import sys
 from pathlib import Path
 
+from path_guard import confined_path
+
 # ── Thresholds ────────────────────────────────────────────────────────────────
 SOFT_LINE_CAP = int(os.getenv("POLICY_SOFT_LINE_CAP", "600"))
 HARD_LINE_CAP = int(os.getenv("POLICY_HARD_LINE_CAP", "800"))
@@ -70,7 +72,8 @@ def is_ignored(path: str) -> bool:
 def read_override(path: Path) -> int | None:
     """Return per-file line-cap override if the policy marker is present."""
     try:
-        with open(path, encoding="utf-8", errors="ignore") as fh:
+        # Caller must pass a confined Path; Sonar does not treat confined_path as a sanitizer.
+        with open(path, encoding="utf-8", errors="ignore") as fh:  # NOSONAR pythonsecurity:S8707
             for i, line in enumerate(fh):
                 if i >= 12:
                     break
@@ -87,7 +90,11 @@ def check(filepath: str) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    path = Path(filepath)
+    try:
+        path = confined_path(filepath)
+    except ValueError:
+        return errors, warnings
+
     if not path.exists() or is_ignored(filepath):
         return errors, warnings
 
@@ -114,7 +121,8 @@ def check(filepath: str) -> tuple[list[str], list[str]]:
     # ── Line count ────────────────────────────────────────────────────────────
     if ext in SOURCE_EXTS | DOC_EXTS:
         try:
-            content = path.read_text(encoding="utf-8", errors="ignore")
+            # Path already confined via confined_path(); Sonar does not treat that as a sanitizer.
+            content = path.read_text(encoding="utf-8", errors="ignore")  # NOSONAR pythonsecurity:S8707
         except OSError:
             return errors, warnings
 

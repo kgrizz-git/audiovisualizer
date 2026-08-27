@@ -26,6 +26,8 @@ import os
 import sys
 from pathlib import Path
 
+from path_guard import confined_path
+
 SOFT_LINE_CAP = int(os.getenv("POLICY_TODO_SOFT_LINE_CAP", "150"))
 HARD_LINE_CAP = int(os.getenv("POLICY_TODO_HARD_LINE_CAP", "300"))
 WARN_AS_ERROR = os.getenv("POLICY_WARN_AS_ERROR", "0") == "1"
@@ -82,13 +84,19 @@ def default_targets(repo_root: Path) -> list[Path]:
 def check(filepath: Path) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
+    try:
+        filepath = confined_path(filepath)
+    except ValueError as exc:
+        errors.append(f"{filepath}: {exc}")
+        return errors, warnings
     if not filepath.exists() or is_ignored(str(filepath)):
         return errors, warnings
     if not is_backlog_path(filepath):
         return errors, warnings
 
     try:
-        text = filepath.read_text(encoding="utf-8", errors="ignore")
+        # Path already confined via confined_path(); Sonar does not treat that as a sanitizer.
+        text = filepath.read_text(encoding="utf-8", errors="ignore")  # NOSONAR pythonsecurity:S8707
     except OSError as exc:
         errors.append(f"{filepath}: cannot read ({exc})")
         return errors, warnings

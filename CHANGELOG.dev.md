@@ -7,6 +7,12 @@ Last reviewed: 2026-07-31
 
 ## Unreleased
 
+### Changed
+- Agent guidance: do not add or raise policy/hook exemptions (`# policy:… allow=`,
+  allowlists, gate-silencing NOSONAR/disables, skipping hooks) without explicit human
+  approval — [`AGENTS.md`](AGENTS.md) working rule 7, mirrored under Exemptions in
+  [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md). SemVer: none.
+
 ### Fixed
 - SonarCloud Security rating E: suppress false-positive path-injection Blocker on
   constant-path inventory writes (`pythonsecurity:S2083`), confine CLI file paths via

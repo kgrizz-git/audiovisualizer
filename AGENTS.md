@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Last reviewed: 2026-07-31
+Last reviewed: 2026-08-27
 
 AudioVisualizer turns MIDI files into deterministic visual score art. This is the
 single source of truth for coding agents; tool-specific entrypoints point here.
@@ -25,6 +25,11 @@ Read these in order for implementation work:
    type-checks, and production-builds the app.
 5. Do not upload user MIDI files or add telemetry without explicit approval. Browser file handling stays local.
 6. Preserve the existing template policy and hook material unless the task explicitly changes it.
+7. Do not add or raise policy/hook exemptions without explicit human approval — including
+   `# policy:… allow=…`, allowlists, `continue-on-error`, skipping hooks, or using
+   `# NOSONAR` / linter disables only to silence a failing gate. Prefer fixing the
+   underlying limit (split or shrink the file, real remediation). If a hook blocks a
+   commit, stop and ask. See [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md).
 
 ## Plan lifecycle
 

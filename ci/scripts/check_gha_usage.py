@@ -34,7 +34,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import shutil
 import subprocess
 import sys
@@ -43,13 +42,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import quote
 
-API_VERSION = "2022-11-28"
+from github_slug import validate_login as _validate_login
+from github_slug import validate_repo_slug as _validate_repo_slug
 
-# GitHub login/owner: alnum + single hyphens, no leading/trailing hyphen, ≤39 chars.
-# Blocks leading "-" so values cannot be mistaken for gh CLI flags.
-_OWNER_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
-# Repo names: alnum / . _ - ; not "." / ".."; ≤100 chars. Leading "." allowed (.github).
-_REPO_NAME_RE = re.compile(r"^(?!\.\.?$)[A-Za-z0-9_.][A-Za-z0-9._-]{0,99}$")
+API_VERSION = "2022-11-28"
 
 
 def die(msg: str, code: int = 1) -> None:
@@ -62,23 +58,21 @@ def warn(msg: str) -> None:
 
 
 def validate_repo_slug(repo: str) -> str:
-    """Return repo if it matches owner/name with GitHub-safe characters; otherwise abort."""
-    owner, sep, name = repo.partition("/")
-    if (
-        not sep
-        or "/" in name
-        or not _OWNER_RE.fullmatch(owner)
-        or not _REPO_NAME_RE.fullmatch(name)
-    ):
-        die(f"Invalid --repo {repo!r}; expected owner/name with safe characters")
-    return f"{owner}/{name}"
+    """Return repo if safe; abort the process on invalid input."""
+    try:
+        return _validate_repo_slug(repo)
+    except ValueError as exc:
+        die(str(exc))
+        raise  # pragma: no cover — die() always exits
 
 
 def validate_login(login: str) -> str:
-    """Return login if it matches a safe GitHub login pattern; otherwise abort."""
-    if not _OWNER_RE.fullmatch(login):
-        die(f"Invalid --account {login!r}; expected a GitHub login")
-    return login
+    """Return login if safe; abort the process on invalid input."""
+    try:
+        return _validate_login(login)
+    except ValueError as exc:
+        die(str(exc))
+        raise  # pragma: no cover — die() always exits
 
 
 def run_gh(args: list[str], check: bool = False) -> subprocess.CompletedProcess[str]:

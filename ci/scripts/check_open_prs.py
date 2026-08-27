@@ -49,6 +49,7 @@ _HOOKS_SCRIPTS = Path(__file__).resolve().parents[2] / "hooks" / "scripts"
 if str(_HOOKS_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_HOOKS_SCRIPTS))
 from path_guard import confined_path  # noqa: E402
+from github_slug import validate_repo_slug  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_STAMP = Path(".context") / "open-prs-check.stamp"
@@ -234,10 +235,17 @@ def main(argv: list[str] | None = None) -> int:
         if head is None:
             die("could not resolve current branch for --branch (detached HEAD?)")
 
-    prs = list_open_prs(args.repo, head)
+    repo = args.repo
+    if repo is not None:
+        try:
+            repo = validate_repo_slug(repo)
+        except ValueError as exc:
+            die(str(exc))
+
+    prs = list_open_prs(repo, head)
     scope = f"head={head}" if head else "repo"
-    if args.repo:
-        scope = f"{args.repo} {scope}"
+    if repo:
+        scope = f"{repo} {scope}"
 
     if args.json:
         payload = {

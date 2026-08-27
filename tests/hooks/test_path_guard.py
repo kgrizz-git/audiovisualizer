@@ -20,7 +20,8 @@ from path_guard import confined_path, relative_to_root  # noqa: E402
 def _load_hook(name: str):
     path = _HOOKS_SCRIPTS / name
     spec = importlib.util.spec_from_file_location(name.replace(".", "_"), path)
-    assert spec and spec.loader
+    assert spec is not None
+    assert spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
@@ -79,6 +80,20 @@ class DocFreshnessRootRequiredTests(unittest.TestCase):
             finally:
                 os.chdir(prev)
             self.assertTrue(any("missing 'Last reviewed" in e for e in errs))
+
+    def test_escape_path_is_hard_error(self) -> None:
+        import os
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            prev = os.getcwd()
+            try:
+                os.chdir(root)
+                errs, _warns = self.doc.check("../outside.md")
+            finally:
+                os.chdir(prev)
+            self.assertTrue(errs)
+            self.assertTrue(any("escapes trusted root" in e for e in errs))
 
 
 class TodoLimitsIgnoreRelativeTests(unittest.TestCase):

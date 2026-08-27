@@ -93,7 +93,9 @@ def check(filepath: str) -> tuple[list[str], list[str]]:
     try:
         path = confined_path(filepath)
         rel = relative_to_root(path)
-    except ValueError:
+    except ValueError as exc:
+        # Fail closed: escaping paths must not silently skip the policy check.
+        errors.append(f"{filepath}: {exc}")
         return errors, warnings
 
     if not path.exists() or is_ignored(rel.as_posix()):

@@ -77,8 +77,9 @@ def check(filepath: str) -> tuple[list[str], list[str]]:
     try:
         path = confined_path(filepath)
         rel = relative_to_root(path)
-    except ValueError:
-        # Reject paths that escape the working tree (pre-commit / agent args).
+    except ValueError as exc:
+        # Fail closed: escaping paths must not silently skip the policy check.
+        errors.append(f"{filepath}: {exc}")
         return errors, warnings
 
     if is_exempt(rel.as_posix()):

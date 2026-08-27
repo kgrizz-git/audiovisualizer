@@ -21,11 +21,13 @@ CI_SCRIPTS = ROOT / "ci" / "scripts"
 
 def _load_module(name: str, path: Path):
     """Load a script module by file path (scripts are not an installed package)."""
-    # Ensure hooks/scripts is importable for path_guard when loading open_prs.
-    if str(HOOKS_SCRIPTS) not in sys.path:
-        sys.path.insert(0, str(HOOKS_SCRIPTS))
+    # Ensure hooks/scripts (path_guard) and ci/scripts (github_slug) are importable.
+    for scripts_dir in (HOOKS_SCRIPTS, CI_SCRIPTS):
+        if str(scripts_dir) not in sys.path:
+            sys.path.insert(0, str(scripts_dir))
     spec = importlib.util.spec_from_file_location(name, path)
-    assert spec and spec.loader
+    assert spec is not None
+    assert spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     sys.modules[name] = mod
     spec.loader.exec_module(mod)
@@ -79,6 +81,14 @@ class GhaSlugValidationTests(unittest.TestCase):
 
     def test_accepts_dot_github_repo(self) -> None:
         self.assertEqual(self.gha.validate_repo_slug("owner/.github"), "owner/.github")
+
+    def test_open_prs_rejects_option_like_repo(self) -> None:
+        from github_slug import validate_repo_slug
+
+        with self.assertRaises(ValueError):
+            validate_repo_slug("-evil/repo")
+        with self.assertRaises(ValueError):
+            validate_repo_slug("owner/-name")
 
     def test_rejects_leading_hyphen_login(self) -> None:
         with self.assertRaises(SystemExit):

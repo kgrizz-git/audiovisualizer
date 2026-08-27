@@ -14,6 +14,10 @@ Last reviewed: 2026-07-31
   [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md). SemVer: none.
 
 ### Fixed
+- PR review (Sonar/Sourcery): shared `ci/scripts/github_slug.py` validates `--repo` for
+  both `check_gha_usage` and `check_open_prs`; doc-freshness/file-size hooks fail closed
+  on path-escape instead of silently skipping; split composite test asserts (python:S9073).
+  SemVer: none.
 - PR review follow-ups: classify ignore/required paths with repo-relative paths after
   confinement (root `README.md`/`AGENTS.md` freshness and parent-dir `backups/` false
   ignores), allow GitHub `.github` repo slugs in `check_gha_usage`, and isolate open-PR

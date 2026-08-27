@@ -58,7 +58,8 @@ class OpenPrsStampConfinementTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             outside = Path(tmp) / "escape.stamp"
             outside.write_text("x", encoding="utf-8")
-            self.assertFalse(self.open_prs.stamp_is_fresh(outside, max_age_hours=24.0))
+            with self.assertRaises(ValueError):
+                self.open_prs.stamp_is_fresh(outside, max_age_hours=24.0)
 
     def test_touch_stamp_rejects_path_outside_repo_root(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

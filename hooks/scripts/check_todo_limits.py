@@ -105,22 +105,22 @@ def check(filepath: Path) -> tuple[list[str], list[str]]:
         return errors, warnings
 
     lines = text.count("\n") + (0 if text.endswith("\n") or text == "" else 1)
-    rel = str(filepath)
+    display = str(filepath)
 
     checked_count = sum(1 for line in text.splitlines() if "- [x]" in line or "- [X]" in line)
     if checked_count > 0:
         errors.append(
-            f"{rel}: found {checked_count} checked-off [x] item(s). Policy requires removing completed items after recording them in CHANGELOG.md or CHANGELOG.dev.md (see policies/plans-and-todos.md)."
+            f"{display}: found {checked_count} checked-off [x] item(s). Policy requires removing completed items after recording them in CHANGELOG.md or CHANGELOG.dev.md (see policies/plans-and-todos.md)."
         )
 
     if lines > HARD_LINE_CAP:
         errors.append(
-            f"{rel}: {lines} lines > hard cap {HARD_LINE_CAP} for living TODO/backlog. "
+            f"{display}: {lines} lines > hard cap {HARD_LINE_CAP} for living TODO/backlog. "
             "Prune done items, move large work into plans/, or split the backlog."
         )
     elif lines > SOFT_LINE_CAP:
         warnings.append(
-            f"{rel}: {lines} lines > soft cap {SOFT_LINE_CAP} "
+            f"{display}: {lines} lines > soft cap {SOFT_LINE_CAP} "
             f"(hard cap {HARD_LINE_CAP}). Prune or promote items to plans/."
         )
 

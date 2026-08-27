@@ -76,10 +76,13 @@ def ensure_gh() -> None:
 
 
 def stamp_is_fresh(stamp_path: Path, max_age_hours: float) -> bool:
-    try:
-        stamp_path = confined_path(stamp_path, root=REPO_ROOT)
-    except ValueError:
-        return False
+    """
+    Return True if the stamp exists and is newer than max_age_hours.
+
+    Raises ``ValueError`` when ``stamp_path`` escapes ``REPO_ROOT`` (same fail-closed
+    contract as ``touch_stamp``). Callers must not treat an escape as "not fresh".
+    """
+    stamp_path = confined_path(stamp_path, root=REPO_ROOT)
     if not stamp_path.is_file():
         return False
     age_s = time.time() - stamp_path.stat().st_mtime
@@ -221,7 +224,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
     if args.once_per_day and not args.force:
-        if stamp_is_fresh(args.stamp_file, args.max_age_hours):
+        try:
+            fresh = stamp_is_fresh(args.stamp_file, args.max_age_hours)
+        except ValueError as exc:
+            die(str(exc))
+        if fresh:
             info(
                 f"skipped (stamp fresh < {args.max_age_hours:g}h): {args.stamp_file}"
             )

@@ -12,8 +12,14 @@ Last reviewed: 2026-07-31
   allowlists, gate-silencing NOSONAR/disables, skipping hooks) without explicit human
   approval — [`AGENTS.md`](AGENTS.md) working rule 7, mirrored under Exemptions in
   [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md). SemVer: none.
+- CI secret scan: bump `gitleaks/gitleaks-action` from `@v2` (Node 20) to pinned `@v3`
+  (`e0c47f4…`, Node 24). No input/behavior change. SemVer: none.
 
 ### Fixed
+- Hy3 review nits: `stamp_is_fresh` fails closed on path escape (aligned with
+  `touch_stamp`); document `github_slug` `ValueError` vs gha `die()`/`SystemExit`
+  contracts; rename shadowed `rel` in todo-limits; add symlink-escape and
+  `policy:file-size allow=` tests. SemVer: none.
 - PR review (Sonar/Sourcery): shared `ci/scripts/github_slug.py` validates `--repo` for
   both `check_gha_usage` and `check_open_prs`; doc-freshness/file-size hooks fail closed
   on path-escape instead of silently skipping; split composite test asserts (python:S9073).
@@ -29,8 +35,7 @@ Last reviewed: 2026-07-31
   owner/repo/login allow-lists before `gh` argv construction (`# NOSONAR` for S8705),
   use `npm ci --ignore-scripts` in CI, and pin `gitleaks/gitleaks-action` to a full
   commit SHA. Tests: `tests.hooks.test_path_guard`, `tests.ci.test_path_guard_and_open_prs`.
-  SemVer: none (tooling/CI). Follow-up: gitleaks-action `@v3` before Node 20 removal
-  (2026-09-16).
+  SemVer: none (tooling/CI).
 
 ### Added
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.

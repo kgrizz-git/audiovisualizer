@@ -6,6 +6,13 @@ Used by CI helpers before passing user- or env-supplied values into ``gh`` argv
 (list form, no shell). Rejects leading hyphens and other characters that could
 be mistaken for CLI flags, while allowing GitHub-valid names such as ``.github``.
 
+Exception contract:
+  - These helpers raise ``ValueError`` on invalid input.
+  - ``check_gha_usage.py`` wraps them with ``die()`` (``SystemExit``) for CLI abort.
+  - ``check_open_prs.py`` catches ``ValueError`` and calls its own ``die()``.
+  Tests that import this module directly should expect ``ValueError``; tests that
+  go through the gha wrappers should expect ``SystemExit``.
+
 Inputs:
   - repo: ``owner/name`` slug
   - login: GitHub user or org login

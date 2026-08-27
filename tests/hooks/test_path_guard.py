@@ -47,10 +47,21 @@ class ConfinedPathTests(unittest.TestCase):
     def test_relative_to_root_strips_absolute_prefix(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            abs_path = confined_path("README.md", root=root)
-            # File need not exist for relative_to_root after we construct under root.
             abs_path = (root / "README.md").resolve()
             self.assertEqual(relative_to_root(abs_path, root=root), Path("README.md"))
+
+    def test_rejects_symlink_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            outside = Path(tmp) / "outside"
+            root.mkdir()
+            outside.mkdir()
+            target = outside / "secret.txt"
+            target.write_text("x", encoding="utf-8")
+            link = root / "link.txt"
+            link.symlink_to(target)
+            with self.assertRaises(ValueError):
+                confined_path("link.txt", root=root)
 
 
 class DocFreshnessRootRequiredTests(unittest.TestCase):
@@ -124,6 +135,37 @@ class TodoLimitsIgnoreRelativeTests(unittest.TestCase):
                 errs,
                 "expected TODO limits to enforce even when absolute path contains 'backups/'",
             )
+
+
+class FileSizeOverrideTests(unittest.TestCase):
+    """Basic coverage for the human-approved `# policy:file-size allow=` mechanism."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.size = _load_hook("check_file_size.py")
+
+    def test_allow_override_raises_hard_cap(self) -> None:
+        import os
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            # Soft default 600 / hard 800; override to 50 so a short file still errors.
+            body = "\n".join(
+                [
+                    "# policy:file-size allow=50 reason=unit-test",
+                    *("line" for _ in range(60)),
+                    "",
+                ]
+            )
+            target = root / "sample.py"
+            target.write_text(body, encoding="utf-8")
+            prev = os.getcwd()
+            try:
+                os.chdir(root)
+                errs, _warns = self.size.check("sample.py")
+            finally:
+                os.chdir(prev)
+            self.assertTrue(any("hard cap 50" in e for e in errs))
 
 
 if __name__ == "__main__":

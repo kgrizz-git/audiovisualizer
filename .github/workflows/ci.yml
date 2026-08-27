@@ -124,7 +124,8 @@ jobs:
         with:
           fetch-depth: 0
       # Pin to full commit SHA (Sonar S7637 / supply-chain hygiene).
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+      # v3 = Node 24 runtime (v2/Node 20 removed from hosted runners 2026-09-16).
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -1,6 +1,6 @@
 # Policy: File Size & Counts ("file life counts")
 
-Last reviewed: 2026-07-27
+Last reviewed: 2026-08-27
 Enforced by: [`hooks/scripts/check_file_size.py`](../hooks/scripts/check_file_size.py)
 
 ## Why
@@ -30,6 +30,10 @@ variables (see [`hooks/README.md`](../hooks/README.md)) or the script defaults.
   style imports are exempt. Mark exempt paths in the checker's ignore list.
 - A file may exceed a soft cap with a one-line justification comment:
   `# policy:file-size allow=600 reason=<why>`.
+- **Agents must not add or raise an `allow=` exemption without explicit human
+  approval.** Prefer splitting or shrinking the file. If the hard gate blocks a
+  commit, stop and ask rather than self-authorizing an override (see
+  [`AGENTS.md`](../AGENTS.md) working rule 7).
 
 ## Function size & complexity
 
@@ -70,6 +74,8 @@ these as signals to extract helpers, not mandatory refactors on day one.
 2. Extract long functions; push helpers down.
 3. Move large data/fixtures out of source (LFS, release assets, or `data/`).
 4. For docs, split into topic files and link them from an index.
+5. Only after human approval: add `# policy:file-size allow=<n> reason=<why>` near
+   the top of the file (scanned within the first 12 lines).
 
 ## Rationale notes
 

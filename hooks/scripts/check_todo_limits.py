@@ -26,6 +26,8 @@ import os
 import sys
 from pathlib import Path
 
+from path_guard import confined_path, relative_to_root
+
 SOFT_LINE_CAP = int(os.getenv("POLICY_TODO_SOFT_LINE_CAP", "150"))
 HARD_LINE_CAP = int(os.getenv("POLICY_TODO_HARD_LINE_CAP", "300"))
 WARN_AS_ERROR = os.getenv("POLICY_WARN_AS_ERROR", "0") == "1"
@@ -82,34 +84,43 @@ def default_targets(repo_root: Path) -> list[Path]:
 def check(filepath: Path) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
-    if not filepath.exists() or is_ignored(str(filepath)):
+    try:
+        filepath = confined_path(filepath)
+        rel = relative_to_root(filepath)
+    except ValueError as exc:
+        errors.append(f"{filepath}: {exc}")
         return errors, warnings
-    if not is_backlog_path(filepath):
+    # Classify ignore fragments on the repo-relative path so parent dirs outside
+    # the checkout (e.g. .../backups/<repo>/) cannot silently skip enforcement.
+    if not filepath.exists() or is_ignored(rel.as_posix()):
+        return errors, warnings
+    if not is_backlog_path(rel):
         return errors, warnings
 
     try:
-        text = filepath.read_text(encoding="utf-8", errors="ignore")
+        # Path already confined via confined_path(); Sonar does not treat that as a sanitizer.
+        text = filepath.read_text(encoding="utf-8", errors="ignore")  # NOSONAR pythonsecurity:S8707
     except OSError as exc:
         errors.append(f"{filepath}: cannot read ({exc})")
         return errors, warnings
 
     lines = text.count("\n") + (0 if text.endswith("\n") or text == "" else 1)
-    rel = str(filepath)
+    display = str(filepath)
 
     checked_count = sum(1 for line in text.splitlines() if "- [x]" in line or "- [X]" in line)
     if checked_count > 0:
         errors.append(
-            f"{rel}: found {checked_count} checked-off [x] item(s). Policy requires removing completed items after recording them in CHANGELOG.md or CHANGELOG.dev.md (see policies/plans-and-todos.md)."
+            f"{display}: found {checked_count} checked-off [x] item(s). Policy requires removing completed items after recording them in CHANGELOG.md or CHANGELOG.dev.md (see policies/plans-and-todos.md)."
         )
 
     if lines > HARD_LINE_CAP:
         errors.append(
-            f"{rel}: {lines} lines > hard cap {HARD_LINE_CAP} for living TODO/backlog. "
+            f"{display}: {lines} lines > hard cap {HARD_LINE_CAP} for living TODO/backlog. "
             "Prune done items, move large work into plans/, or split the backlog."
         )
     elif lines > SOFT_LINE_CAP:
         warnings.append(
-            f"{rel}: {lines} lines > soft cap {SOFT_LINE_CAP} "
+            f"{display}: {lines} lines > soft cap {SOFT_LINE_CAP} "
             f"(hard cap {HARD_LINE_CAP}). Prune or promote items to plans/."
         )
 
@@ -121,7 +132,9 @@ def main() -> int:
     args = [Path(a) for a in sys.argv[1:]]
 
     if args:
-        files = [p for p in args if is_backlog_path(p) and not is_ignored(str(p))]
+        # Do not pre-filter with is_ignored on raw argv: absolute paths can contain
+        # ignore fragments from parent directories. check() classifies repo-relative paths.
+        files = [p for p in args if is_backlog_path(p)]
         # If pre-commit passed only non-backlog files, nothing to do
         if not files and args:
             return 0

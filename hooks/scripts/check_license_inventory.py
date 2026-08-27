@@ -704,7 +704,8 @@ def run_update() -> int:
         human_reviewed=human,
     )
     INVENTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    INVENTORY_PATH.write_text(content, encoding="utf-8")
+    # Constant INVENTORY_PATH; content-only write (Sonar S2083 FP).
+    INVENTORY_PATH.write_text(content, encoding="utf-8")  # NOSONAR pythonsecurity:S2083
     print(f"[license-inventory] Updated {INVENTORY_PATH}")
     if human is None:
         print(
@@ -758,7 +759,8 @@ def run_human_review() -> int:
 
     today = date.today()
     updated = stamp_human_review(existing, today)
-    INVENTORY_PATH.write_text(updated, encoding="utf-8")
+    # Constant INVENTORY_PATH; content-only write (Sonar S2083 FP).
+    INVENTORY_PATH.write_text(updated, encoding="utf-8")  # NOSONAR pythonsecurity:S2083
     print(f"[license-inventory] Stamped Last human reviewed: {today.isoformat()}")
     return 0
 

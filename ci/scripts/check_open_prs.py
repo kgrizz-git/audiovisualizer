@@ -44,6 +44,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+# Canonical path_guard lives under hooks/scripts (avoid a duplicated ci copy).
+_HOOKS_SCRIPTS = Path(__file__).resolve().parents[2] / "hooks" / "scripts"
+if str(_HOOKS_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_HOOKS_SCRIPTS))
+from path_guard import confined_path  # noqa: E402
+from github_slug import validate_repo_slug  # noqa: E402
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_STAMP = Path(".context") / "open-prs-check.stamp"
 DEFAULT_MAX_AGE_HOURS = 24
 API_VERSION = "2022-11-28"
@@ -68,6 +76,13 @@ def ensure_gh() -> None:
 
 
 def stamp_is_fresh(stamp_path: Path, max_age_hours: float) -> bool:
+    """
+    Return True if the stamp exists and is newer than max_age_hours.
+
+    Raises ``ValueError`` when ``stamp_path`` escapes ``REPO_ROOT`` (same fail-closed
+    contract as ``touch_stamp``). Callers must not treat an escape as "not fresh".
+    """
+    stamp_path = confined_path(stamp_path, root=REPO_ROOT)
     if not stamp_path.is_file():
         return False
     age_s = time.time() - stamp_path.stat().st_mtime
@@ -75,8 +90,10 @@ def stamp_is_fresh(stamp_path: Path, max_age_hours: float) -> bool:
 
 
 def touch_stamp(stamp_path: Path) -> None:
-    stamp_path.parent.mkdir(parents=True, exist_ok=True)
-    stamp_path.write_text(
+    stamp_path = confined_path(stamp_path, root=REPO_ROOT)
+    # Path confined under REPO_ROOT; Sonar does not treat confined_path as a sanitizer.
+    stamp_path.parent.mkdir(parents=True, exist_ok=True)  # NOSONAR pythonsecurity:S8707
+    stamp_path.write_text(  # NOSONAR pythonsecurity:S8707
         datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ\n"),
         encoding="utf-8",
     )
@@ -207,7 +224,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
     if args.once_per_day and not args.force:
-        if stamp_is_fresh(args.stamp_file, args.max_age_hours):
+        try:
+            fresh = stamp_is_fresh(args.stamp_file, args.max_age_hours)
+        except ValueError as exc:
+            die(str(exc))
+        if fresh:
             info(
                 f"skipped (stamp fresh < {args.max_age_hours:g}h): {args.stamp_file}"
             )
@@ -221,10 +242,17 @@ def main(argv: list[str] | None = None) -> int:
         if head is None:
             die("could not resolve current branch for --branch (detached HEAD?)")
 
-    prs = list_open_prs(args.repo, head)
+    repo = args.repo
+    if repo is not None:
+        try:
+            repo = validate_repo_slug(repo)
+        except ValueError as exc:
+            die(str(exc))
+
+    prs = list_open_prs(repo, head)
     scope = f"head={head}" if head else "repo"
-    if args.repo:
-        scope = f"{args.repo} {scope}"
+    if repo:
+        scope = f"{repo} {scope}"
 
     if args.json:
         payload = {
@@ -242,7 +270,10 @@ def main(argv: list[str] | None = None) -> int:
             info("No open PR for this branch yet — open one when the change is ready to review.")
 
     if args.once_per_day or args.force:
-        touch_stamp(args.stamp_file)
+        try:
+            touch_stamp(args.stamp_file)
+        except ValueError as exc:
+            die(str(exc))
 
     return 0
 

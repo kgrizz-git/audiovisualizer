@@ -38,7 +38,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: npm ci
+        # --ignore-scripts: block package lifecycle scripts in CI (Sonar S6505).
+        # prepare (hooks/install.sh) is not needed on runners.
+        run: npm ci --ignore-scripts
 
       - name: Lint, test with coverage, type-check, and production build
         run: npm run validate
@@ -104,7 +106,12 @@ jobs:
         run: python hooks/scripts/check_public_repo_clean.py --repo-root . --redact
 
       - name: Policy hook unit tests
-        run: python -m unittest tests.test_policy_hooks_smoke -v
+        run: >
+          python -m unittest
+          tests.test_policy_hooks_smoke
+          tests.hooks.test_path_guard
+          tests.ci.test_path_guard_and_open_prs
+          -v
 
   secrets:
     name: Secret scan
@@ -116,7 +123,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      # Pin to full commit SHA (Sonar S7637 / supply-chain hygiene).
+      # v3 = Node 24 runtime (v2/Node 20 removed from hosted runners 2026-09-16).
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

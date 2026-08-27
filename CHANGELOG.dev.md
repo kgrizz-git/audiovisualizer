@@ -7,6 +7,36 @@ Last reviewed: 2026-07-31
 
 ## Unreleased
 
+### Changed
+- Agent guidance: do not add or raise policy/hook exemptions (`# policy:… allow=`,
+  allowlists, gate-silencing NOSONAR/disables, skipping hooks) without explicit human
+  approval — [`AGENTS.md`](AGENTS.md) working rule 7, mirrored under Exemptions in
+  [`policies/file-size-and-counts.md`](policies/file-size-and-counts.md). SemVer: none.
+- CI secret scan: bump `gitleaks/gitleaks-action` from `@v2` (Node 20) to pinned `@v3`
+  (`e0c47f4…`, Node 24). No input/behavior change. SemVer: none.
+
+### Fixed
+- Hy3 review nits: `stamp_is_fresh` fails closed on path escape (aligned with
+  `touch_stamp`); document `github_slug` `ValueError` vs gha `die()`/`SystemExit`
+  contracts; rename shadowed `rel` in todo-limits; add symlink-escape and
+  `policy:file-size allow=` tests. SemVer: none.
+- PR review (Sonar/Sourcery): shared `ci/scripts/github_slug.py` validates `--repo` for
+  both `check_gha_usage` and `check_open_prs`; doc-freshness/file-size hooks fail closed
+  on path-escape instead of silently skipping; split composite test asserts (python:S9073).
+  SemVer: none.
+- PR review follow-ups: classify ignore/required paths with repo-relative paths after
+  confinement (root `README.md`/`AGENTS.md` freshness and parent-dir `backups/` false
+  ignores), allow GitHub `.github` repo slugs in `check_gha_usage`, and isolate open-PR
+  stamp tests in per-test temp dirs. SemVer: none.
+- SonarCloud Security rating E: suppress false-positive path-injection Blocker on
+  constant-path inventory writes (`pythonsecurity:S2083`), confine CLI file paths via
+  shared `hooks/scripts/path_guard.confined_path` (with `# NOSONAR pythonsecurity:S8707`
+  on sinks — Sonar does not treat custom helpers as sanitizers), tighten GitHub
+  owner/repo/login allow-lists before `gh` argv construction (`# NOSONAR` for S8705),
+  use `npm ci --ignore-scripts` in CI, and pin `gitleaks/gitleaks-action` to a full
+  commit SHA. Tests: `tests.hooks.test_path_guard`, `tests.ci.test_path_guard_and_open_prs`.
+  SemVer: none (tooling/CI).
+
 ### Added
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.
 - Phase 1 of that plan: `src/ui/controlApplicability.ts` plus Vitest coverage for mode-aware controls and canvas `showLegend` preview toggle. SemVer: covered in public changelog (**MINOR**).

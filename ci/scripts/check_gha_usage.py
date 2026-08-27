@@ -42,6 +42,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import quote
 
+from github_slug import validate_login as _validate_login
+from github_slug import validate_repo_slug as _validate_repo_slug
+
 API_VERSION = "2022-11-28"
 
 
@@ -54,8 +57,28 @@ def warn(msg: str) -> None:
     print(f"[gha-usage] WARN: {msg}", file=sys.stderr)
 
 
+def validate_repo_slug(repo: str) -> str:
+    """Return repo if safe; abort the process on invalid input."""
+    try:
+        return _validate_repo_slug(repo)
+    except ValueError as exc:
+        die(str(exc))
+        raise  # pragma: no cover — die() always exits
+
+
+def validate_login(login: str) -> str:
+    """Return login if safe; abort the process on invalid input."""
+    try:
+        return _validate_login(login)
+    except ValueError as exc:
+        die(str(exc))
+        raise  # pragma: no cover — die() always exits
+
+
 def run_gh(args: list[str], check: bool = False) -> subprocess.CompletedProcess[str]:
+    # List-form argv only (no shell). Callers must validate any user-derived segments.
     cmd = ["gh", *args]
+    # NOSONAR pythonsecurity:S8705 — no shell; repo/login slugs validated via allow-list regex.
     return subprocess.run(cmd, capture_output=True, text=True, check=check)
 
 
@@ -90,14 +113,14 @@ def require_gh() -> None:
 
 def resolve_repo(explicit: str | None) -> str:
     if explicit:
-        return explicit
+        return validate_repo_slug(explicit)
     code, data, err = gh_api("repos/{owner}/{repo}", jq=".full_name")
     # Prefer gh repo view — works from a git checkout
     proc = run_gh(["repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"])
     if proc.returncode == 0 and proc.stdout.strip():
-        return proc.stdout.strip()
+        return validate_repo_slug(proc.stdout.strip())
     if code == 0 and isinstance(data, str) and data:
-        return data
+        return validate_repo_slug(data)
     die(f"Could not resolve repository. Pass --repo owner/name. ({err or proc.stderr})")
 
 
@@ -124,6 +147,8 @@ def fetch_repo_run_timing(repo: str, days: int, limit: int) -> dict[str, Any]:
     owner, _, name = repo.partition("/")
     if not owner or not name:
         die(f"Invalid --repo {repo!r}; expected owner/name")
+    # Re-validate after partition so taint analysis sees a sanitizer at use sites.
+    validate_repo_slug(f"{owner}/{name}")
 
     since = iso_days_ago(days)
     # List completed runs; paginate via gh --paginate
@@ -429,6 +454,7 @@ def main() -> int:
                 ),
             }
         else:
+            login = validate_login(login)
             # When both, also filter account summary to this repo if possible
             repo_filter = repo if (do_repo and repo) else None
             out["account_report"] = fetch_account_usage(

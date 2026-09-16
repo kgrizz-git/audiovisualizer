@@ -7,6 +7,12 @@ Last reviewed: 2026-07-31
 
 ## Unreleased
 
+### Added
+- Dependabot: activate `.github/dependabot.yml` (from `ci/examples/dependabot.yml`,
+  pip entry omitted — no Python manifest) for weekly npm + GitHub Actions
+  minor/patch updates. CI already treats bot PRs leniently (advisory license drift,
+  skipped Semgrep). SemVer: none (tooling only).
+
 ### Changed
 - Agent guidance: do not add or raise policy/hook exemptions (`# policy:… allow=`,
   allowlists, gate-silencing NOSONAR/disables, skipping hooks) without explicit human
@@ -16,6 +22,10 @@ Last reviewed: 2026-07-31
   (`e0c47f4…`, Node 24). No input/behavior change. SemVer: none.
 
 ### Fixed
+- Security: bump `vitest` and `@vitest/coverage-v8` from `^4.1.10` to `^4.1.11`
+  (resolves CVE-2026-84373, path traversal / arbitrary file read via
+  `@vitest/mocker` redirect mock on exposed dev servers). Patch-only release,
+  `npm audit` clean, `npm run validate` passes. SemVer: none (dev-only).
 - Hy3 review nits: `stamp_is_fresh` fails closed on path escape (aligned with
   `touch_stamp`); document `github_slug` `ValueError` vs gha `die()`/`SystemExit`
   contracts; rename shadowed `rel` in todo-limits; add symlink-escape and

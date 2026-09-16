@@ -1,0 +1,27 @@
+# .github/dependabot.yml
+# Copied from ci/examples/dependabot.yml (pip entry omitted: this repo has no
+# Python package manifest — hooks/ and ci/ scripts are stdlib-only).
+# Dependabot keeps dependencies and GitHub Actions versions current.
+# CI already handles bot PRs: the license-inventory gate is advisory on
+# Dependabot branches and Semgrep skips them (see .github/workflows/ci.yml).
+
+version: 2
+updates:
+  # Node / npm dependencies
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    groups:
+      npm-minor:
+        update-types: ["minor", "patch"]
+
+  # GitHub Actions versions — always enable this
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"

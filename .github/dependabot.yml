@@ -2,8 +2,9 @@
 # Copied from ci/examples/dependabot.yml (pip entry omitted: this repo has no
 # Python package manifest — hooks/ and ci/ scripts are stdlib-only).
 # Dependabot keeps dependencies and GitHub Actions versions current.
-# CI already handles bot PRs: the license-inventory gate is advisory on
-# Dependabot branches and Semgrep skips them (see .github/workflows/ci.yml).
+# CI already tolerates bot PRs: license-inventory drift is advisory on
+# Dependabot branches and Semgrep skips them; Secret scan still runs
+# (see .github/workflows/ci.yml).
 
 version: 2
 updates:
@@ -14,6 +15,7 @@ updates:
       interval: weekly
       day: monday
       time: "06:00"
+      timezone: "UTC"
     groups:
       npm-minor:
         update-types: ["minor", "patch"]
@@ -25,3 +27,4 @@ updates:
       interval: weekly
       day: monday
       time: "06:00"
+      timezone: "UTC"

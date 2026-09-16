@@ -3,7 +3,7 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
-Last reviewed: 2026-07-31
+Last reviewed: 2026-09-16
 
 ## Unreleased
 
@@ -14,6 +14,11 @@ Last reviewed: 2026-07-31
   skipped Semgrep). SemVer: none (tooling only).
 
 ### Changed
+- README restructure: founding vision / mapping thesis / roadmap moved verbatim to
+  [`docs/vision.md`](docs/vision.md) (new, with `Last reviewed` marker), README
+  reduced to task-oriented entry point with pointer section; dropped stale
+  template-seed boilerplate; refreshed `Last reviewed`. No rule or behavior change.
+  SemVer: none (docs only).
 - Agent guidance: do not add or raise policy/hook exemptions (`# policy:… allow=`,
   allowlists, gate-silencing NOSONAR/disables, skipping hooks) without explicit human
   approval — [`AGENTS.md`](AGENTS.md) working rule 7, mirrored under Exemptions in
@@ -24,8 +29,10 @@ Last reviewed: 2026-07-31
 ### Fixed
 - Security: bump `vitest` and `@vitest/coverage-v8` from `^4.1.10` to `^4.1.11`
   (resolves CVE-2026-84373, path traversal / arbitrary file read via
-  `@vitest/mocker` redirect mock on exposed dev servers). Patch-only release,
-  `npm audit` clean, `npm run validate` passes. SemVer: none (dev-only).
+  `@vitest/mocker` redirect mock on exposed dev servers). Patch-only release
+  (plus incidental transitive patch bumps: `es-module-lexer`, `obug`,
+  `tinyexec`, `tinyrainbow`), `npm audit` clean, `npm run validate` passes.
+  SemVer: none (dev-only).
 - Hy3 review nits: `stamp_is_fresh` fails closed on path escape (aligned with
   `touch_stamp`); document `github_slug` `ValueError` vs gha `die()`/`SystemExit`
   contracts; rename shadowed `rel` in todo-limits; add symlink-escape and

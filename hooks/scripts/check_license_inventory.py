@@ -42,9 +42,17 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import date
-from enum import Enum
 from pathlib import Path
 from typing import Iterable
+
+from license_taxonomy import (
+    LICENSE_REFERENCES,
+    PERMISSIVE_LICENSES,
+    STRONG_COPYLEFT,
+    SYNONYMS,
+    WEAK_COPYLEFT,
+    Category,
+)
 
 # ── Configuration ────────────────────────────────────────────────────────────
 INVENTORY_PATH = Path("inventory/third-party-licenses.md")
@@ -62,64 +70,6 @@ HUMAN_REVIEW_RE = re.compile(
     r"^Last human reviewed:\s*(\d{4}-\d{2}-\d{2})$", re.MULTILINE
 )
 LAST_REVIEWED_RE = re.compile(r"^Last reviewed:\s*(\d{4}-\d{2}-\d{2})$", re.MULTILINE)
-
-# License category sets (canonical SPDX-ish tokens after normalization).
-PERMISSIVE_LICENSES = {
-    "MIT",
-    "ISC",
-    "BSD-2-CLAUSE",
-    "BSD-3-CLAUSE",
-    "APACHE-2.0",
-    "UNLICENSE",
-    "0BSD",
-    "CC0-1.0",
-    "BLUEOAK-1.0.0",
-    "PYTHON-2.0",
-}
-WEAK_COPYLEFT = {
-    "MPL-2.0",
-    "LGPL-2.1",
-    "LGPL-2.1-ONLY",
-    "LGPL-2.1-OR-LATER",
-    "LGPL-3.0",
-    "LGPL-3.0-ONLY",
-    "LGPL-3.0-OR-LATER",
-}
-STRONG_COPYLEFT = {
-    "GPL-2.0",
-    "GPL-2.0-ONLY",
-    "GPL-2.0-OR-LATER",
-    "GPL-3.0",
-    "GPL-3.0-ONLY",
-    "GPL-3.0-OR-LATER",
-    "AGPL-3.0",
-    "AGPL-3.0-ONLY",
-    "AGPL-3.0-OR-LATER",
-}
-
-SYNONYMS = {
-    "APACHE 2.0": "APACHE-2.0",
-    "APACHE-2": "APACHE-2.0",
-    "APACHE2": "APACHE-2.0",
-    "BSD": "BSD-3-CLAUSE",
-    "BSD-2": "BSD-2-CLAUSE",
-    "BSD-3": "BSD-3-CLAUSE",
-    "MPL2": "MPL-2.0",
-    "MPL-2": "MPL-2.0",
-    "GPLV2": "GPL-2.0",
-    "GPLV3": "GPL-3.0",
-    "LGPLV2.1": "LGPL-2.1",
-    "LGPLV3": "LGPL-3.0",
-}
-
-
-class Category(Enum):
-    """Restrictiveness order used for dual-license gating (higher = worse)."""
-
-    PERMISSIVE = 1
-    WEAK_COPYLEFT = 2
-    STRONG_COPYLEFT = 3
-    UNKNOWN = 4
 
 
 @dataclass(frozen=True)
@@ -536,13 +486,7 @@ def generate_inventory(
             "",
             "## License References",
             "",
-            "- **MIT** — Permissive, attribution required",
-            "- **ISC** — Permissive, similar to MIT",
-            "- **Apache-2.0** — Permissive with patent grant, attribution required",
-            "- **MPL-2.0** — Weak copyleft, file-level disclosure for modifications",
-            "- **GPL-2.0/GPL-3.0** — Strong copyleft, derivative works must be open source",
-            "- **LGPL-2.1/LGPL-3.0** — Weak copyleft, dynamic linking allowed",
-            "- **BSD-2-Clause/BSD-3-Clause** — Permissive with minimal restrictions",
+            *LICENSE_REFERENCES,
             "",
             "## Generating & Updating",
             "",

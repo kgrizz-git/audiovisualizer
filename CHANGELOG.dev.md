@@ -7,12 +7,6 @@ Last reviewed: 2026-09-16
 
 ## Unreleased
 
-### Added
-- Dependabot: activate `.github/dependabot.yml` (from `ci/examples/dependabot.yml`,
-  pip entry omitted — no Python manifest) for weekly npm + GitHub Actions
-  minor/patch updates. CI already treats bot PRs leniently (advisory license drift,
-  skipped Semgrep). SemVer: none (tooling only).
-
 ### Changed
 - README restructure: founding vision / mapping thesis / roadmap moved verbatim to
   [`docs/vision.md`](docs/vision.md) (new, with `Last reviewed` marker), README
@@ -33,6 +27,13 @@ Last reviewed: 2026-09-16
   (plus incidental transitive patch bumps: `es-module-lexer`, `obug`,
   `tinyexec`, `tinyrainbow`), `npm audit` clean, `npm run validate` passes.
   SemVer: none (dev-only).
+- Critical-review follow-ups: license-inventory generator glossary now documents
+  `0BSD` and `BlueOak-1.0.0` (both already classified permissive and cataloged —
+  `tslib`, `minimatch` — but unglossed); taxonomy tables (`PERMISSIVE_LICENSES`,
+  copyleft sets, `SYNONYMS`, `Category`, glossary) extracted to new
+  `hooks/scripts/license_taxonomy.py` so the generator (744 lines) stays under the
+  800-line hard cap; merged the duplicate `### Added` sections in this changelog;
+  unified the `docs/modes.md` link text. SemVer: none.
 - Hy3 review nits: `stamp_is_fresh` fails closed on path escape (aligned with
   `touch_stamp`); document `github_slug` `ValueError` vs gha `die()`/`SystemExit`
   contracts; rename shadowed `rel` in todo-limits; add symlink-escape and
@@ -55,6 +56,10 @@ Last reviewed: 2026-09-16
   SemVer: none (tooling/CI).
 
 ### Added
+- Dependabot: activate `.github/dependabot.yml` (from `ci/examples/dependabot.yml`,
+  pip entry omitted — no Python manifest) for weekly npm + GitHub Actions
+  minor/patch updates. CI already treats bot PRs leniently (advisory license drift,
+  skipped Semgrep). SemVer: none (tooling only).
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.
 - Phase 1 of that plan: `src/ui/controlApplicability.ts` plus Vitest coverage for mode-aware controls and canvas `showLegend` preview toggle. SemVer: covered in public changelog (**MINOR**).
 - CI public-release hardening on `prepare-public-release`: Vitest coverage folded into

@@ -277,6 +277,8 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - **MIT** — Permissive, attribution required
 - **ISC** — Permissive, similar to MIT
 - **Apache-2.0** — Permissive with patent grant, attribution required
+- **0BSD** — Permissive, no attribution required
+- **BlueOak-1.0.0** — Permissive, OSI-approved
 - **MPL-2.0** — Weak copyleft, file-level disclosure for modifications
 - **GPL-2.0/GPL-3.0** — Strong copyleft, derivative works must be open source
 - **LGPL-2.1/LGPL-3.0** — Weak copyleft, dynamic linking allowed

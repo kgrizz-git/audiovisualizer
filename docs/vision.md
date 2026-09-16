@@ -5,7 +5,7 @@ Last reviewed: 2026-09-16
 Moved from `README.md` (2026-09-16) to keep the README a task-oriented entry
 point. The concept below is the founding vision; the normative visual rules live
 in [`DESIGN.md`](../DESIGN.md) and the per-mode/control reference in
-[`modes.md`](modes.md).
+[`docs/modes.md`](./modes.md).
 
 ## Core Concept & Vision
 

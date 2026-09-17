@@ -45,18 +45,18 @@ PERMISSIVE_LICENSES = {
 }
 WEAK_COPYLEFT = {
     _MPL_20,
-    "LGPL-2.1",
+    _LGPL_21,
     "LGPL-2.1-ONLY",
     "LGPL-2.1-OR-LATER",
-    "LGPL-3.0",
+    _LGPL_30,
     "LGPL-3.0-ONLY",
     "LGPL-3.0-OR-LATER",
 }
 STRONG_COPYLEFT = {
-    "GPL-2.0",
+    _GPL_20,
     "GPL-2.0-ONLY",
     "GPL-2.0-OR-LATER",
-    "GPL-3.0",
+    _GPL_30,
     "GPL-3.0-ONLY",
     "GPL-3.0-OR-LATER",
     "AGPL-3.0",

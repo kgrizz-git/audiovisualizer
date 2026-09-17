@@ -90,7 +90,7 @@ def _read_json(path: Path) -> dict:
     if not path.exists():
         return {}
     try:
-        with open(path, encoding="utf-8") as fh:  # nosemgrep — callers pass only repo-constant paths; no attacker input.
+        with open(path, encoding="utf-8") as fh:  # nosemgrep: AIK_py_LFI — callers pass only repo-constant paths; no attacker input.
             data = json.load(fh)
         return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):

@@ -28,3 +28,6 @@ updates:
       day: monday
       time: "06:00"
       timezone: "UTC"
+    groups:
+      github-actions-minor:
+        update-types: ["minor", "patch"]

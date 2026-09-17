@@ -61,7 +61,7 @@ Last reviewed: 2026-09-16
 
 ### Added
 - Dependabot: activate `.github/dependabot.yml` (from `ci/examples/dependabot.yml`,
-  pip entry omitted — no Python manifest) for weekly npm + GitHub Actions
+  pip entry omitted — no Python manifest) for weekly grouped npm + GitHub Actions
   minor/patch updates. CI already treats bot PRs leniently (advisory license drift,
   skipped Semgrep). SemVer: none (tooling only).
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.

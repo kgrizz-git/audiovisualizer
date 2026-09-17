@@ -38,3 +38,6 @@ updates:
       interval: weekly
       day: monday
       time: "06:00"
+    groups:
+      github-actions-minor:
+        update-types: ["minor", "patch"]

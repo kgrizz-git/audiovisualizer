@@ -3,11 +3,16 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
-Last reviewed: 2026-07-31
+Last reviewed: 2026-09-16
 
 ## Unreleased
 
 ### Changed
+- README restructure: founding vision / mapping thesis / roadmap moved verbatim to
+  [`docs/vision.md`](docs/vision.md) (new, with `Last reviewed` marker), README
+  reduced to task-oriented entry point with pointer section; dropped stale
+  template-seed boilerplate; refreshed `Last reviewed`. No rule or behavior change.
+  SemVer: none (docs only).
 - Agent guidance: do not add or raise policy/hook exemptions (`# policy:… allow=`,
   allowlists, gate-silencing NOSONAR/disables, skipping hooks) without explicit human
   approval — [`AGENTS.md`](AGENTS.md) working rule 7, mirrored under Exemptions in
@@ -16,6 +21,23 @@ Last reviewed: 2026-07-31
   (`e0c47f4…`, Node 24). No input/behavior change. SemVer: none.
 
 ### Fixed
+- Security: bump `vitest` and `@vitest/coverage-v8` from `^4.1.10` to `^4.1.11`
+  (resolves CVE-2026-84373, path traversal / arbitrary file read via
+  `@vitest/mocker` redirect mock on exposed dev servers). Patch-only release
+  (plus incidental transitive patch bumps: `es-module-lexer`, `obug`,
+  `tinyexec`, `tinyrainbow`), `npm audit` clean, `npm run validate` passes.
+  SemVer: none (dev-only).
+- Critical-review follow-ups: license-inventory generator glossary now documents
+  `0BSD` and `BlueOak-1.0.0` (both already classified permissive and cataloged —
+  `tslib`, `minimatch` — but unglossed); taxonomy tables (`PERMISSIVE_LICENSES`,
+  copyleft sets, `SYNONYMS`, `Category`, glossary) extracted to new
+  `hooks/scripts/license_taxonomy.py` so the generator (744 lines) stays under the
+  800-line hard cap; canonical synonym-target tokens named once as module
+  constants and consumed by the sets (fixes Sonar S1192 duplication); suppression
+  scoped to `# nosemgrep: AIK_py_LFI` (verified via control probe); merged the
+  duplicate `### Added` sections in this changelog; unified the `docs/modes.md`
+  link text; folded the untracked-note provenance into the `docs/vision.md`
+  header instead of the stale inline line. SemVer: none.
 - Hy3 review nits: `stamp_is_fresh` fails closed on path escape (aligned with
   `touch_stamp`); document `github_slug` `ValueError` vs gha `die()`/`SystemExit`
   contracts; rename shadowed `rel` in todo-limits; add symlink-escape and
@@ -38,6 +60,10 @@ Last reviewed: 2026-07-31
   SemVer: none (tooling/CI).
 
 ### Added
+- Dependabot: activate `.github/dependabot.yml` (from `ci/examples/dependabot.yml`,
+  pip entry omitted — no Python manifest) for weekly grouped npm + GitHub Actions
+  minor/patch updates. CI already treats bot PRs leniently (advisory license drift,
+  skipped Semgrep). SemVer: none (tooling only).
 - UI layout/usability plan [`plans/2026-07-29-ui-layout-and-usability.md`](plans/2026-07-29-ui-layout-and-usability.md) and expanded recommendations in [`dev-docs/ui-suggestions.md`](dev-docs/ui-suggestions.md) (mode-aware controls, overlay header, geometry picker, config URL, paper theme, etc.). SemVer: docs only until phases ship.
 - Phase 1 of that plan: `src/ui/controlApplicability.ts` plus Vitest coverage for mode-aware controls and canvas `showLegend` preview toggle. SemVer: covered in public changelog (**MINOR**).
 - CI public-release hardening on `prepare-public-release`: Vitest coverage folded into

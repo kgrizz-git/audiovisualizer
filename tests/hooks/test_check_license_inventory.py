@@ -27,6 +27,11 @@ FIXTURES = ROOT / "tests" / "fixtures" / "license-inventory"
 
 def load_module():
     """Import the license inventory script as a module."""
+    # Ensure hooks/scripts is importable: the script now imports its sibling
+    # license_taxonomy module (same pattern as path_guard in CI tests).
+    scripts_dir = str(ROOT / "hooks" / "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
     spec = importlib.util.spec_from_file_location("check_license_inventory", SCRIPT)
     assert spec and spec.loader
     mod = importlib.util.module_from_spec(spec)

@@ -4,10 +4,9 @@ Last reviewed: 2026-09-16
 
 Moved from `README.md` (2026-09-16) to keep the README a task-oriented entry
 point; the text was originally copied from the untracked founding note
-`music-to-visual-score-art.md`. The concept below is the founding vision; the
-normative visual rules live
-in [`DESIGN.md`](../DESIGN.md) and the per-mode/control reference in
-[`docs/modes.md`](./modes.md).
+`music-to-visual-score-art.md`. The concept below is the founding vision;
+the normative visual rules live in [`DESIGN.md`](../DESIGN.md) and the
+per-mode/control reference in [`docs/modes.md`](./modes.md).
 
 ## Core Concept & Vision
 

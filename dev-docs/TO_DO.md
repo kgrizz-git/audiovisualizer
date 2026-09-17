@@ -12,12 +12,13 @@ Last updated: 2026-07-31
   (`.github/CODEOWNERS` already maps `* @kgrizz-git`); dismiss stale approvals on new
   pushes; block force-pushes and branch deletion; keep the bypass list empty or
   maintainer-only. Restrict who can push/create branches if needed. Revisit the README
-  “PRs not solicited” note only after this is live and trusted. When requiring
-  `SAST (Semgrep)`, confirm a skipped conclusion satisfies the rule: the job is
-  intentionally skipped on Dependabot PRs (`ci.yml`, low signal on lockfile-only
-  diffs) and classic protection accepts `successful`/`skipped`/`neutral` — verify
-  the same holds for rulesets before relying on it, else move the actor guard to
-  the step level. See
+  “PRs not solicited” note only after this is live and trusted. Ruleset `KGmain1`
+  is active on the default branch but currently sets no required status checks;
+  if `SAST (Semgrep)` is ever added as one, confirm a skipped conclusion
+  satisfies the rule first: the job is intentionally skipped on Dependabot PRs
+  (`ci.yml`, low signal on lockfile-only diffs) and classic protection accepts
+  `successful`/`skipped`/`neutral` — verify the same holds for rulesets before
+  relying on it, else move the actor guard to the step level. See
   [`ci/README.md`](../ci/README.md) and
   [`policies/github-repository-hygiene.md`](../policies/github-repository-hygiene.md).
   Also enable **GitHub private vulnerability reporting** when the repo is public

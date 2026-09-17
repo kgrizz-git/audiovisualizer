@@ -32,8 +32,9 @@ Last reviewed: 2026-09-16
   `tslib`, `minimatch` — but unglossed); taxonomy tables (`PERMISSIVE_LICENSES`,
   copyleft sets, `SYNONYMS`, `Category`, glossary) extracted to new
   `hooks/scripts/license_taxonomy.py` so the generator (744 lines) stays under the
-  800-line hard cap; merged the duplicate `### Added` sections in this changelog;
-  unified the `docs/modes.md` link text. SemVer: none.
+  800-line hard cap; canonical synonym-target tokens named once as module
+  constants (fixes Sonar S1192 duplication); merged the duplicate `### Added`
+  sections in this changelog; unified the `docs/modes.md` link text. SemVer: none.
 - Hy3 review nits: `stamp_is_fresh` fails closed on path escape (aligned with
   `touch_stamp`); document `github_slug` `ValueError` vs gha `die()`/`SystemExit`
   contracts; rename shadowed `rel` in todo-limits; add symlink-escape and

@@ -18,13 +18,25 @@ from __future__ import annotations
 
 from enum import Enum
 
+# Canonical tokens reused as synonym targets. Named once so the category sets
+# and the synonym map cannot drift apart (and string literals are not
+# duplicated across the tables).
+_APACHE_20 = "APACHE-2.0"
+_BSD_2 = "BSD-2-CLAUSE"
+_BSD_3 = "BSD-3-CLAUSE"
+_MPL_20 = "MPL-2.0"
+_GPL_20 = "GPL-2.0"
+_GPL_30 = "GPL-3.0"
+_LGPL_21 = "LGPL-2.1"
+_LGPL_30 = "LGPL-3.0"
+
 # License category sets (canonical SPDX-ish tokens after normalization).
 PERMISSIVE_LICENSES = {
     "MIT",
     "ISC",
-    "BSD-2-CLAUSE",
-    "BSD-3-CLAUSE",
-    "APACHE-2.0",
+    _BSD_2,
+    _BSD_3,
+    _APACHE_20,
     "UNLICENSE",
     "0BSD",
     "CC0-1.0",
@@ -32,7 +44,7 @@ PERMISSIVE_LICENSES = {
     "PYTHON-2.0",
 }
 WEAK_COPYLEFT = {
-    "MPL-2.0",
+    _MPL_20,
     "LGPL-2.1",
     "LGPL-2.1-ONLY",
     "LGPL-2.1-OR-LATER",
@@ -53,18 +65,18 @@ STRONG_COPYLEFT = {
 }
 
 SYNONYMS = {
-    "APACHE 2.0": "APACHE-2.0",
-    "APACHE-2": "APACHE-2.0",
-    "APACHE2": "APACHE-2.0",
-    "BSD": "BSD-3-CLAUSE",
-    "BSD-2": "BSD-2-CLAUSE",
-    "BSD-3": "BSD-3-CLAUSE",
-    "MPL2": "MPL-2.0",
-    "MPL-2": "MPL-2.0",
-    "GPLV2": "GPL-2.0",
-    "GPLV3": "GPL-3.0",
-    "LGPLV2.1": "LGPL-2.1",
-    "LGPLV3": "LGPL-3.0",
+    "APACHE 2.0": _APACHE_20,
+    "APACHE-2": _APACHE_20,
+    "APACHE2": _APACHE_20,
+    "BSD": _BSD_3,
+    "BSD-2": _BSD_2,
+    "BSD-3": _BSD_3,
+    "MPL2": _MPL_20,
+    "MPL-2": _MPL_20,
+    "GPLV2": _GPL_20,
+    "GPLV3": _GPL_30,
+    "LGPLV2.1": _LGPL_21,
+    "LGPLV3": _LGPL_30,
 }
 
 

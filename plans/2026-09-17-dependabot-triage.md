@@ -2,7 +2,7 @@
 
 Date: 2026-09-17
 Author: Kiro
-Status: draft
+Status: in-progress
 Linked issue/PR: n/a
 
 ## Goal
@@ -60,12 +60,17 @@ CHANGELOG.dev.md                         — record merged developer-only mainte
 
 ### Phase 1: Refresh and classify
 
-- [ ] Re-list open Dependabot PRs, inspect each diff and Validate result, and update
+- [x] Re-list open Dependabot PRs, inspect each diff and Validate result, and update
   this snapshot if it has changed.
-- [ ] Check Dependabot alerts separately from version-update PRs; prioritize an
+- [x] Check Dependabot alerts separately from version-update PRs; prioritize an
   active security remediation over this ordering.
-- [ ] Confirm the active ruleset, required approvals, and current default-branch
+- [x] Confirm the active ruleset, required approvals, and current default-branch
   head before opening any maintainer-owned PR.
+
+Verified 2026-09-18: the snapshot is unchanged; `main` remains
+`c0e8f6fb3176ef777d4d4c8d68e5041359c64371`, no Dependabot alerts are open,
+and `KGmain1` remains active with code-owner and unattributed-change approval
+requirements.
 
 ### Phase 2: Actions maintenance
 

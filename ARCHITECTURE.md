@@ -17,14 +17,14 @@ remote services and CDN-only runtime dependencies are not part of the architectu
 
 | Area | Current choice | Responsibility |
 |---|---|---|
-| Application | TypeScript + Vite | Browser build, development server, strict type checking |
+| Application | TypeScript 5.9 + Vite | Browser build, development server, strict type checking |
 | MIDI parsing | `@tonejs/midi` | MIDI binary to normalized score |
 | Live rendering | Canvas 2D | Device-pixel-ratio-aware preview and PNG capture |
 | 3D rendering | `three` (dynamically imported) | WebGL renderer for the 3D score modes; loaded only when a 3D variation is first selected |
 | Vector export | Internal SVG builder | Deterministic SVG and plotter output (2D modes only) |
 | CLI rasterization | `@resvg/resvg-js` | SVG-to-PNG in Node CLI |
 | SoundFont playback | Custom patch loader + Gleitz soundbank audio | Sample-based General MIDI soundbank playback with CacheStorage caching and oscillator fallback |
-| Testing | Vitest | Core mapping, parser, layout, and SVG behavior |
+| Testing | Vitest 5 + v8 coverage | Core mapping, parser, layout, and SVG behavior |
 | Planned audio transcription | `@spotify/basic-pitch` in a Worker | Local, estimated audio-to-note events; not yet installed |
 | Planned desktop shell | Tauri 2 | Offline macOS-first package with scoped native file access; not yet installed |
 

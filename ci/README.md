@@ -8,6 +8,9 @@ Guidance for selecting, structuring, and gating CI checks. Example workflows liv
 This repository’s **active** CI is
 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml):
 
+The Validate job runs on Node 24, satisfying the supported runtime range for the
+Vitest 5 test and v8-coverage pair.
+
 | Job (status-check name) | What it runs |
 |---|---|
 | **Validate** | `npm run validate` (lint + Vitest with coverage + TypeScript + Vite build), uploads `coverage/lcov.info`, `npm audit --audit-level=high` (hard on `main` pushes; `continue-on-error` on PRs), license inventory gate + license-inventory unit tests (after `npm ci`) |

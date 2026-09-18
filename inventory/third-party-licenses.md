@@ -25,13 +25,13 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 - `@eslint/js` (v10.0.1) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/@eslint/js/`
 - `@types/three` (v0.160.0) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/three/`
-- `@vitest/coverage-v8` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/coverage-v8/`
+- `@vitest/coverage-v8` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/coverage-v8/`
 - `esbuild` (v0.28.2) — MIT ([source](https://github.com/evanw/esbuild)) — see `node_modules/esbuild/`
 - `eslint` (v10.10.0) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/eslint/`
 - `typescript` (v5.9.3) — Apache-2.0 ([source](https://github.com/microsoft/TypeScript)) — see `node_modules/typescript/`
 - `typescript-eslint` (v8.70.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/typescript-eslint/`
 - `vite` (v8.3.0) — MIT ([source](https://github.com/vitejs/vite)) — see `node_modules/vite/`
-- `vitest` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/vitest/`
+- `vitest` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/vitest/`
 
 ## Transitive Production Dependencies
 
@@ -61,8 +61,8 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 - `@babel/helper-string-parser` (v7.29.7) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/helper-string-parser/`
 - `@babel/helper-validator-identifier` (v7.29.7) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/helper-validator-identifier/`
-- `@babel/parser` (v7.29.7) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/parser/`
-- `@babel/types` (v7.29.7) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/types/`
+- `@babel/parser` (v7.29.9) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/parser/`
+- `@babel/types` (v7.29.8) — MIT ([source](https://github.com/babel/babel)) — see `node_modules/@babel/types/`
 - `@bcoe/v8-coverage` (v1.0.2) — MIT ([source](https://github.com/bcoe/v8-coverage)) — see `node_modules/@bcoe/v8-coverage/`
 - `@cacheable/memory` (v2.2.0) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/@cacheable/memory/`
 - `@cacheable/utils` (v2.5.0) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/@cacheable/utils/`
@@ -105,7 +105,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@humanwhocodes/module-importer` (v1.0.1) — Apache-2.0 ([source](https://github.com/humanwhocodes/module-importer)) — see `node_modules/@humanwhocodes/module-importer/`
 - `@humanwhocodes/retry` (v0.4.3) — Apache-2.0 ([source](https://github.com/humanwhocodes/retry)) — see `node_modules/@humanwhocodes/retry/`
 - `@jridgewell/resolve-uri` (v3.1.2) — MIT ([source](https://github.com/jridgewell/resolve-uri)) — see `node_modules/@jridgewell/resolve-uri/`
-- `@jridgewell/sourcemap-codec` (v1.5.5) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/sourcemap-codec/`
+- `@jridgewell/sourcemap-codec` (v1.6.0) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/sourcemap-codec/`
 - `@jridgewell/trace-mapping` (v0.3.31) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/trace-mapping/`
 - `@keyv/bigmap` (v1.3.1) — MIT ([source](https://github.com/jaredwray/keyv)) — see `node_modules/@keyv/bigmap/`
 - `@keyv/serialize` (v1.1.1) — MIT ([source](https://github.com/jaredwray/keyv)) — see `node_modules/@keyv/serialize/`
@@ -126,7 +126,6 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@rolldown/binding-win32-arm64-msvc` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-win32-arm64-msvc/`
 - `@rolldown/binding-win32-x64-msvc` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-win32-x64-msvc/`
 - `@rolldown/pluginutils` (v1.0.1) — MIT ([source](https://github.com/rolldown/plugins)) — see `node_modules/@rolldown/pluginutils/`
-- `@standard-schema/spec` (v1.1.0) — MIT ([source](https://github.com/standard-schema/standard-schema)) — see `node_modules/@standard-schema/spec/`
 - `@types/chai` (v5.2.3) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/chai/`
 - `@types/deep-eql` (v4.0.2) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/deep-eql/`
 - `@types/esrecurse` (v4.3.1) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/esrecurse/`
@@ -144,13 +143,10 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@typescript-eslint/typescript-estree` (v8.70.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/typescript-estree/`
 - `@typescript-eslint/utils` (v8.70.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/utils/`
 - `@typescript-eslint/visitor-keys` (v8.70.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/visitor-keys/`
-- `@vitest/expect` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/expect/`
-- `@vitest/mocker` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/mocker/`
-- `@vitest/pretty-format` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/pretty-format/`
-- `@vitest/runner` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/runner/`
-- `@vitest/snapshot` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/snapshot/`
-- `@vitest/spy` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/spy/`
-- `@vitest/utils` (v4.1.11) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/utils/`
+- `@vitest/istanbul-lib-coverage` (v1.0.1) — MIT ([source](https://github.com/vitest-dev/istanbuljs)) — see `node_modules/@vitest/istanbul-lib-coverage/`
+- `@vitest/istanbul-lib-report` (v1.0.1) — MIT ([source](https://github.com/vitest-dev/istanbuljs)) — see `node_modules/@vitest/istanbul-lib-report/`
+- `@vitest/mocker` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/mocker/`
+- `@vitest/spy` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/spy/`
 - `acorn` (v8.17.0) — MIT ([source](https://github.com/acornjs/acorn)) — see `node_modules/acorn/`
 - `acorn-jsx` (v5.3.2) — MIT ([source](https://github.com/acornjs/acorn-jsx)) — see `node_modules/acorn-jsx/`
 - `ajv` (v6.15.0) — MIT ([source](https://github.com/ajv-validator/ajv)) — see `node_modules/ajv/`
@@ -160,7 +156,6 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `brace-expansion` (v5.0.9) — MIT ([source](https://github.com/juliangruber/brace-expansion)) — see `node_modules/brace-expansion/`
 - `cacheable` (v2.5.0) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/cacheable/`
 - `chai` (v6.2.2) — MIT ([source](https://github.com/chaijs/chai)) — see `node_modules/chai/`
-- `convert-source-map` (v2.0.0) — MIT ([source](https://github.com/thlorenz/convert-source-map)) — see `node_modules/convert-source-map/`
 - `cross-spawn` (v7.0.6) — MIT ([source](https://github.com/moxystudio/node-cross-spawn)) — see `node_modules/cross-spawn/`
 - `debug` (v4.4.3) — MIT ([source](https://github.com/debug-js/debug)) — see `node_modules/debug/`
 - `deep-is` (v0.1.4) — MIT ([source](https://github.com/thlorenz/deep-is)) — see `node_modules/deep-is/`
@@ -188,29 +183,23 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `flatted` (v3.4.4) — ISC ([source](https://github.com/WebReflection/flatted)) — see `node_modules/flatted/`
 - `fsevents` (v2.3.3) — MIT — see `node_modules/fsevents/`
 - `glob-parent` (v6.0.2) — ISC ([source](https://github.com/gulpjs/glob-parent)) — see `node_modules/glob-parent/`
-- `has-flag` (v4.0.0) — MIT ([source](https://github.com/sindresorhus/has-flag)) — see `node_modules/has-flag/`
 - `hashery` (v1.5.1) — MIT ([source](https://github.com/jaredwray/hashery)) — see `node_modules/hashery/`
 - `hookified` (v1.15.1) — MIT ([source](https://github.com/jaredwray/hookified)) — see `node_modules/hookified/`
 - `hookified` (v2.2.0) — MIT ([source](https://github.com/jaredwray/hookified)) — see `node_modules/hookified/`
-- `html-escaper` (v2.0.2) — MIT ([source](https://github.com/WebReflection/html-escaper)) — see `node_modules/html-escaper/`
 - `ignore` (v5.3.2) — MIT ([source](https://github.com/kaelzhang/node-ignore)) — see `node_modules/ignore/`
 - `ignore` (v7.0.9) — MIT ([source](https://github.com/kaelzhang/node-ignore)) — see `node_modules/ignore/`
 - `imurmurhash` (v0.1.4) — MIT ([source](https://github.com/jensyt/imurmurhash-js)) — see `node_modules/imurmurhash/`
 - `is-extglob` (v2.1.1) — MIT ([source](https://github.com/jonschlinkert/is-extglob)) — see `node_modules/is-extglob/`
 - `is-glob` (v4.0.3) — MIT ([source](https://github.com/micromatch/is-glob)) — see `node_modules/is-glob/`
 - `isexe` (v2.0.0) — ISC ([source](https://github.com/isaacs/isexe)) — see `node_modules/isexe/`
-- `istanbul-lib-coverage` (v3.2.2) — BSD-3-Clause ([source](https://github.com/istanbuljs/istanbuljs)) — see `node_modules/istanbul-lib-coverage/`
-- `istanbul-lib-report` (v3.0.1) — BSD-3-Clause ([source](https://github.com/istanbuljs/istanbuljs)) — see `node_modules/istanbul-lib-report/`
-- `istanbul-reports` (v3.2.0) — BSD-3-Clause ([source](https://github.com/istanbuljs/istanbuljs)) — see `node_modules/istanbul-reports/`
 - `js-tokens` (v10.0.0) — MIT ([source](https://github.com/lydell/js-tokens)) — see `node_modules/js-tokens/`
 - `json-schema-traverse` (v0.4.1) — MIT ([source](https://github.com/epoberezkin/json-schema-traverse)) — see `node_modules/json-schema-traverse/`
 - `json-stable-stringify-without-jsonify` (v1.0.1) — MIT ([source](https://github.com/samn/json-stable-stringify)) — see `node_modules/json-stable-stringify-without-jsonify/`
 - `keyv` (v5.6.0) — MIT ([source](https://github.com/jaredwray/keyv)) — see `node_modules/keyv/`
 - `levn` (v0.4.1) — MIT ([source](https://github.com/gkz/levn)) — see `node_modules/levn/`
 - `locate-path` (v6.0.0) — MIT ([source](https://github.com/sindresorhus/locate-path)) — see `node_modules/locate-path/`
-- `magic-string` (v0.30.21) — MIT ([source](https://github.com/Rich-Harris/magic-string)) — see `node_modules/magic-string/`
-- `magicast` (v0.5.3) — MIT ([source](https://github.com/unjs/magicast)) — see `node_modules/magicast/`
-- `make-dir` (v4.0.0) — MIT ([source](https://github.com/sindresorhus/make-dir)) — see `node_modules/make-dir/`
+- `magic-string` (v1.4.1) — MIT ([source](https://github.com/Rich-Harris/magic-string)) — see `node_modules/magic-string/`
+- `magicast` (v0.5.5) — MIT ([source](https://github.com/unjs/magicast)) — see `node_modules/magicast/`
 - `meshoptimizer` (v0.18.1) — MIT ([source](https://github.com/zeux/meshoptimizer)) — see `node_modules/meshoptimizer/`
 - `minimatch` (v10.2.5) — BlueOak-1.0.0 ([source](https://github.com/isaacs/minimatch)) — see `node_modules/minimatch/`
 - `ms` (v2.1.3) — MIT ([source](https://github.com/vercel/ms)) — see `node_modules/ms/`
@@ -222,7 +211,6 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `p-locate` (v5.0.0) — MIT ([source](https://github.com/sindresorhus/p-locate)) — see `node_modules/p-locate/`
 - `path-exists` (v4.0.0) — MIT ([source](https://github.com/sindresorhus/path-exists)) — see `node_modules/path-exists/`
 - `path-key` (v3.1.1) — MIT ([source](https://github.com/sindresorhus/path-key)) — see `node_modules/path-key/`
-- `pathe` (v2.0.3) — MIT ([source](https://github.com/unjs/pathe)) — see `node_modules/pathe/`
 - `picocolors` (v1.1.1) — ISC ([source](https://github.com/alexeyraspopov/picocolors)) — see `node_modules/picocolors/`
 - `picomatch` (v4.0.7) — MIT ([source](https://github.com/micromatch/picomatch)) — see `node_modules/picomatch/`
 - `postcss` (v8.5.28) — MIT ([source](https://github.com/postcss/postcss)) — see `node_modules/postcss/`
@@ -237,9 +225,8 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `source-map-js` (v1.2.1) — BSD-3-Clause ([source](https://github.com/7rulnik/source-map-js)) — see `node_modules/source-map-js/`
 - `stackback` (v0.0.2) — MIT ([source](https://github.com/shtylman/node-stackback)) — see `node_modules/stackback/`
 - `std-env` (v4.2.0) — MIT ([source](https://github.com/unjs/std-env)) — see `node_modules/std-env/`
-- `supports-color` (v7.2.0) — MIT ([source](https://github.com/chalk/supports-color)) — see `node_modules/supports-color/`
-- `tinybench` (v2.9.0) — MIT ([source](https://github.com/tinylibs/tinybench)) — see `node_modules/tinybench/`
-- `tinyexec` (v1.3.1) — MIT ([source](https://github.com/tinylibs/tinyexec)) — see `node_modules/tinyexec/`
+- `tinybench` (v6.1.4) — MIT ([source](https://github.com/tinylibs/tinybench)) — see `node_modules/tinybench/`
+- `tinyexec` (v1.3.0) — MIT ([source](https://github.com/tinylibs/tinyexec)) — see `node_modules/tinyexec/`
 - `tinyglobby` (v0.2.17) — MIT ([source](https://github.com/SuperchupuDev/tinyglobby)) — see `node_modules/tinyglobby/`
 - `tinyrainbow` (v3.1.1) — MIT ([source](https://github.com/tinylibs/tinyrainbow)) — see `node_modules/tinyrainbow/`
 - `ts-api-utils` (v2.5.0) — MIT ([source](https://github.com/JoshuaKGoldberg/ts-api-utils)) — see `node_modules/ts-api-utils/`
@@ -269,7 +256,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 | Category | Production | Development |
 |----------|------------|-------------|
-| Permissive | 4 | 199 |
+| Permissive | 4 | 186 |
 | Weak Copyleft | 13 | 12 |
 | Strong Copyleft | 0 | 0 |
 | Unknown/Check | 0 | 0 |

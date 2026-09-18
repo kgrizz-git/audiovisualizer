@@ -8,6 +8,7 @@ Last reviewed: 2026-09-16
 ## Unreleased
 
 ### Changed
+- CI: update `actions/setup-node`, `actions/setup-python`, `actions/upload-artifact`, and `actions/checkout` from their current v4/v5 tags to v7 after refreshed Dependabot PR checks passed. No workflow input changes. SemVer: none (tooling only).
 - README restructure: founding vision / mapping thesis / roadmap moved verbatim to
   [`docs/vision.md`](docs/vision.md) (new, with `Last reviewed` marker), README
   reduced to task-oriented entry point with pointer section; dropped stale

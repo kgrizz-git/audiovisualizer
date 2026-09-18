@@ -1,9 +1,10 @@
 # AudioVisualizer Development TODOs
 
-Last updated: 2026-07-31
+Last updated: 2026-09-17
 
 ## Repository / release hygiene
 
+- [ ] **Triage Dependabot updates safely**: Consolidate the green Actions updates, split and validate the red npm-minor group, and track coordinated Vitest 5, Three, and TypeScript 7 upgrades before closing their red bot PRs. Do not add Dependabot ignores without an explicit, scoped security-impact decision. See [`plans/2026-09-17-dependabot-triage.md`](../plans/2026-09-17-dependabot-triage.md).
 - [ ] **Make unsolicited PRs safe before inviting them**: Configure a default-branch
   ruleset (or classic branch protection) so outsiders cannot land code without review.
   Minimum: require a PR to merge; require status checks `Validate`, `Policy`,

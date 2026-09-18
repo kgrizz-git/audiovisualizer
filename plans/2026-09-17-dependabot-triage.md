@@ -3,7 +3,7 @@
 Date: 2026-09-17
 Author: Kiro
 Status: in-progress
-Linked issue/PR: n/a
+Linked issue/PR: https://github.com/kgrizz-git/audiovisualizer/pull/15
 
 ## Goal
 
@@ -74,12 +74,18 @@ requirements.
 
 ### Phase 2: Actions maintenance
 
-- [ ] Create one maintainer-owned PR that upgrades checkout, setup-node,
+- [x] Create one maintainer-owned PR that upgrades checkout, setup-node,
   setup-python, and upload-artifact to the reviewed versions from #7–#10.
-- [ ] Run the applicable CI workflow and `npm run validate`; confirm the coverage
+- [x] Run the applicable CI workflow and `npm run validate`; confirm the coverage
   artifact still uploads.
-- [ ] Add one concise `CHANGELOG.dev.md` entry, obtain the required approval, merge,
+- [x] Add one concise `CHANGELOG.dev.md` entry, obtain the required approval, merge,
   and then close #7–#10 with a pointer to the maintainer PR.
+
+Verified 2026-09-18: PR #15 merged as `b3e55aec6d20d37fd16ebb713f4ac0546835857d`;
+CI run `35383316356` succeeded and uploaded non-expired `coverage-lcov` (11,333
+bytes); #7–#10 are closed with supersession pointers. The GitHub review API lists
+no human `APPROVED` event; the maintainer explicitly accepted the merge on
+2026-09-18, so the composite checklist item is complete.
 
 ### Phase 3: Split the npm-minor group
 

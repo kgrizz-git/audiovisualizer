@@ -8,6 +8,12 @@ Last reviewed: 2026-09-16
 ## Unreleased
 
 ### Changed
+- Tooling: upgrade exact peers Vitest and `@vitest/coverage-v8` from 4.1.11 to
+  5.0.1, align the declared TypeScript version with the active compatible 5.9.3 release,
+  and raise the CI Node runtime from 20 to 24. The existing 317-test suite passes without
+  upgrade-exposed behavior changes; ESLint remains at the current compatible 10.10.0.
+  TypeScript 7 remains deferred because `typescript-eslint` does not yet support it.
+  SemVer: none (tooling only).
 - Tooling: bump Vite 8.1.5→8.3.0, ESLint 10.8.0→10.10.0, typescript-eslint 8.65.0→8.70.0, and esbuild 0.28.1→0.28.2. The Three.js and `@types/three` updates remain deferred. SemVer: none (tooling only).
 - CI: update `actions/setup-node`, `actions/setup-python`, `actions/upload-artifact`, and `actions/checkout` from their current v4/v5 tags to v7 after refreshed Dependabot PR checks passed. No workflow input changes. SemVer: none (tooling only).
 - README restructure: founding vision / mapping thesis / roadmap moved verbatim to

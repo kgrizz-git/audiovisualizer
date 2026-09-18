@@ -3,7 +3,7 @@
 Date: 2026-09-17
 Author: Kiro
 Status: in-progress
-Linked issue/PR: https://github.com/kgrizz-git/audiovisualizer/pull/15
+Linked issue/PR: https://github.com/kgrizz-git/audiovisualizer/pull/15, https://github.com/kgrizz-git/audiovisualizer/pull/16
 
 ## Goal
 
@@ -89,23 +89,36 @@ no human `APPROVED` event; the maintainer explicitly accepted the merge on
 
 ### Phase 3: Split the npm-minor group
 
-- [ ] Create a separate PR for only Vite, ESLint, typescript-eslint, and esbuild from
+- [x] Create a separate PR for only Vite, ESLint, typescript-eslint, and esbuild from
   #11; do not describe this as safe until its own validation is green.
-- [ ] Regenerate the license inventory after the lockfile update and review any new
+- [x] Regenerate the license inventory after the lockfile update and review any new
   license classifications; do not update the human-review marker without a real
   human review.
-- [ ] Run `npm run validate`, the license inventory check, and CI; add the
+- [x] Run `npm run validate`, the license inventory check, and CI; add the
   developer-changelog entry before requesting merge.
-- [ ] Close #11 only after the replacement PR has superseded or intentionally
+- [x] Close #11 only after the replacement PR has superseded or intentionally
   deferred every update in its diff.
+
+Verified 2026-09-18: PR #16 merged as `31828ff0a6df13adbc3cbcb89f5139f4ed46fadb`;
+CI run `35387408499` succeeded and uploaded non-expired `coverage-lcov` (11,337
+bytes); #11 is closed with a supersession pointer. The approved direct updates were
+Vite, ESLint, typescript-eslint, and esbuild; Three.js and `@types/three` remain
+deferred.
 
 ### Phase 4: Track and decide deferred majors
 
-- [ ] Add concise, linked backlog tasks before closing #12–#14: coordinated
+- [x] Add concise, linked backlog tasks before closing #12–#14: coordinated
   Vitest/coverage-v8 5 + Node runtime upgrade; Three/`@types/three` compatibility
   upgrade; and TypeScript 7 + compatible typescript-eslint upgrade.
-- [ ] For the Vitest task, re-check supported Node engines and breaking changes at
-  execution time; upgrade the exact-peered packages together.
+- [x] Re-check Vitest 5's supported Node engines and upgrade its exact-peered
+  coverage package together.
+
+Verified 2026-09-18: Vitest 5.0.1 supports Node `^22.12.0 || ^24.0.0 || >=26.0.0`;
+the exact-peer `@vitest/coverage-v8` 5.0.1 and CI Node 24 upgrade passed all 317
+tests, coverage, lint, strict type-checking, and production build. The manifest now
+declares the active compatible TypeScript 5.9.3 release. TypeScript 7 is blocked:
+the latest `typescript-eslint@8.70.0` peers TypeScript `>=4.8.4 <6.1.0`; do not
+force or suppress that conflict.
 - [ ] For the Three task, reproduce the r186 OrbitControls test failure and fix the
   canvas test double before considering a renderer change.
 - [ ] Close the red single-package major PRs with links to their durable backlog task.
@@ -136,7 +149,8 @@ When all phases and verification are done:
 ## Open questions
 
 - [ ] Should coordinated major updates be grouped in Dependabot rather than ignored?
-- [ ] What Node LTS target should the eventual Vitest 5 task use: 22.12+ or 24?
+- [x] Node 24 selected: it satisfies Vitest 5 and the current ESLint engine range.
+- [ ] When will typescript-eslint publish a TypeScript 7-compatible release?
 
 ## Risks
 

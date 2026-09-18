@@ -3,7 +3,7 @@
 Date: 2026-09-17
 Author: Kiro
 Status: in-progress
-Linked issue/PR: https://github.com/kgrizz-git/audiovisualizer/pull/15
+Linked issue/PR: https://github.com/kgrizz-git/audiovisualizer/pull/15, https://github.com/kgrizz-git/audiovisualizer/pull/16
 
 ## Goal
 
@@ -89,15 +89,21 @@ no human `APPROVED` event; the maintainer explicitly accepted the merge on
 
 ### Phase 3: Split the npm-minor group
 
-- [ ] Create a separate PR for only Vite, ESLint, typescript-eslint, and esbuild from
+- [x] Create a separate PR for only Vite, ESLint, typescript-eslint, and esbuild from
   #11; do not describe this as safe until its own validation is green.
-- [ ] Regenerate the license inventory after the lockfile update and review any new
+- [x] Regenerate the license inventory after the lockfile update and review any new
   license classifications; do not update the human-review marker without a real
   human review.
-- [ ] Run `npm run validate`, the license inventory check, and CI; add the
+- [x] Run `npm run validate`, the license inventory check, and CI; add the
   developer-changelog entry before requesting merge.
-- [ ] Close #11 only after the replacement PR has superseded or intentionally
+- [x] Close #11 only after the replacement PR has superseded or intentionally
   deferred every update in its diff.
+
+Verified 2026-09-18: PR #16 merged as `31828ff0a6df13adbc3cbcb89f5139f4ed46fadb`;
+CI run `35387408499` succeeded and uploaded non-expired `coverage-lcov` (11,337
+bytes); #11 is closed with a supersession pointer. The approved direct updates were
+Vite, ESLint, typescript-eslint, and esbuild; Three.js and `@types/three` remain
+deferred.
 
 ### Phase 4: Track and decide deferred majors
 

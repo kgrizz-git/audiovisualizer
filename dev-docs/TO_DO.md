@@ -1,12 +1,11 @@
 # AudioVisualizer Development TODOs
 
-Last updated: 2026-09-18
+Last updated: 2026-10-05
 
 ## Repository / release hygiene
 
-- [ ] **Triage Dependabot updates safely**: Consolidate the green Actions updates, split and validate the red npm-minor group, and track coordinated Vitest 5, Three, and TypeScript 7 upgrades before closing their red bot PRs. Do not add Dependabot ignores without an explicit, scoped security-impact decision. See [`plans/2026-09-17-dependabot-triage.md`](../plans/2026-09-17-dependabot-triage.md).
+- [ ] **Triage Dependabot updates safely**: Consolidate the green Actions updates, split and validate the red npm-minor group (Vitest 5 and Three r186 done 2026-10; Three landed via chore/npm-minor-safe-three), and track the remaining TypeScript 7 upgrade before closing its red bot PRs. Do not add Dependabot ignores without an explicit, scoped security-impact decision. See [`plans/2026-09-17-dependabot-triage.md`](../plans/2026-09-17-dependabot-triage.md).
 - [ ] **Upgrade TypeScript 7 with compatible typescript-eslint**: Blocked while the latest `typescript-eslint@8.70.0` peers TypeScript `<6.1.0`; do not force the conflict. Recheck registry support, then upgrade the compatible lint stack together. See [`plans/2026-09-17-dependabot-triage.md`](../plans/2026-09-17-dependabot-triage.md).
-- [ ] **Upgrade Three.js and `@types/three` to r186**: First update the OrbitControls canvas test double (`ownerDocument` / `getRootNode`), then validate renderer compatibility. See [`plans/2026-09-17-dependabot-triage.md`](../plans/2026-09-17-dependabot-triage.md).
 - [ ] **Make unsolicited PRs safe before inviting them**: Configure a default-branch
   ruleset (or classic branch protection) so outsiders cannot land code without review.
   Minimum: require a PR to merge; require status checks `Validate`, `Policy`,

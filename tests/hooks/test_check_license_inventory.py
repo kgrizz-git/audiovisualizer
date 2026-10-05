@@ -136,13 +136,32 @@ class LicenseInventoryUnitTests(unittest.TestCase):
         # Stale committed inventory (lockfile mismatch) must be reported with the
         # distinct stale-inventory exit code (2), NOT the policy-violation code (1),
         # so CI can make only drift advisory while keeping policy gates blocking.
-        self.mod.run_update()
-        self.mod.run_human_review()
+        # Strip policy-risk fixture deps so this fixture isolates drift-only
+        # (policy violations now outrank drift by design).
+        deps = [
+            d
+            for d in self.mod.collect_deps_from_lockfile()
+            if d.category
+            not in (self.mod.Category.UNKNOWN, self.mod.Category.STRONG_COPYLEFT)
+        ]
+        content = self.mod.generate_inventory(
+            last_reviewed=date.today(),
+            human_reviewed=date.today(),
+            deps=deps,
+        )
         inv = Path("inventory/third-party-licenses.md")
-        text = inv.read_text(encoding="utf-8")
-        inv.write_text(text.replace("`prod-direct`", "`prod-direct-REMOVED`"), encoding="utf-8")
-        self.assertEqual(self.mod.run_check(), self.mod.EXIT_STALE_INVENTORY)
-        self.assertNotEqual(self.mod.run_check(), self.mod.EXIT_POLICY_VIOLATION)
+        inv.write_text(content, encoding="utf-8")
+        original = self.mod.collect_deps_from_lockfile
+        self.mod.collect_deps_from_lockfile = lambda: deps  # type: ignore[method-assign]
+        try:
+            inv.write_text(
+                content.replace("`prod-direct`", "`prod-direct-REMOVED`"),
+                encoding="utf-8",
+            )
+            self.assertEqual(self.mod.run_check(), self.mod.EXIT_STALE_INVENTORY)
+            self.assertNotEqual(self.mod.run_check(), self.mod.EXIT_POLICY_VIOLATION)
+        finally:
+            self.mod.collect_deps_from_lockfile = original  # type: ignore[method-assign]
 
     def test_check_policy_violation_is_distinct_from_drift(self) -> None:
         # A substantive policy gate (unknown license / production strong copyleft)
@@ -166,6 +185,33 @@ class LicenseInventoryUnitTests(unittest.TestCase):
         try:
             self.assertEqual(self.mod.run_check(), self.mod.EXIT_POLICY_VIOLATION)
             self.assertNotEqual(self.mod.run_check(), self.mod.EXIT_STALE_INVENTORY)
+        finally:
+            self.mod.collect_deps_from_lockfile = original  # type: ignore[method-assign]
+
+    def test_check_stale_with_violation_returns_policy(self) -> None:
+        # Stale committed inventory AND a policy violation must return the
+        # policy-violation code (1), blocking even on Dependabot PRs, where the
+        # ci.yml guard would otherwise downgrade stale-only drift to advisory.
+        deps = self.mod.collect_deps_from_lockfile()
+        risky = [
+            d
+            for d in deps
+            if d.category in (self.mod.Category.UNKNOWN, self.mod.Category.STRONG_COPYLEFT)
+        ]
+        self.assertTrue(risky, "fixture must include a policy-risk dependency")
+        content = self.mod.generate_inventory(
+            last_reviewed=date.today(),
+            human_reviewed=date.today(),
+            deps=deps,
+        )
+        Path("inventory/third-party-licenses.md").write_text(
+            content.replace("`prod-direct`", "`prod-direct-REMOVED`"),
+            encoding="utf-8",
+        )
+        original = self.mod.collect_deps_from_lockfile
+        self.mod.collect_deps_from_lockfile = lambda: deps  # type: ignore[method-assign]
+        try:
+            self.assertEqual(self.mod.run_check(), self.mod.EXIT_POLICY_VIOLATION)
         finally:
             self.mod.collect_deps_from_lockfile = original  # type: ignore[method-assign]
 

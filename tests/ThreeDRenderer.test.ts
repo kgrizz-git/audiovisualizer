@@ -189,12 +189,13 @@ describe('ThreeDRenderer - mount controls', () => {
     try {
       // Minimal canvas stand-in: OrbitControls only needs a style object and
       // event-listener hooks at construction time.
+      const rootNode = { addEventListener: () => {}, removeEventListener: () => {} };
       const canvas = {
         style: {},
         addEventListener: () => {},
         removeEventListener: () => {},
-        ownerDocument: { addEventListener: () => {}, removeEventListener: () => {} },
-        getRootNode: () => ({ addEventListener: () => {}, removeEventListener: () => {} }),
+        ownerDocument: rootNode,
+        getRootNode: () => rootNode,
         setPointerCapture: () => {},
         releasePointerCapture: () => {},
         clientWidth: 900,

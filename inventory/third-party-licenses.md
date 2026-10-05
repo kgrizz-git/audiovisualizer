@@ -1,6 +1,6 @@
 # Third-Party License Inventory
 
-Last reviewed: 2026-10-04
+Last reviewed: 2026-10-05
 Last human reviewed: 2026-09-16
 
 This document catalogs third-party dependencies and their licenses for compliance,
@@ -155,7 +155,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `assertion-error` (v2.0.1) — MIT ([source](https://github.com/chaijs/assertion-error)) — see `node_modules/assertion-error/`
 - `ast-v8-to-istanbul` (v1.0.5) — MIT ([source](https://github.com/AriPerkkio/ast-v8-to-istanbul)) — see `node_modules/ast-v8-to-istanbul/`
 - `balanced-match` (v4.0.4) — MIT ([source](https://github.com/juliangruber/balanced-match)) — see `node_modules/balanced-match/`
-- `brace-expansion` (v5.0.9) — MIT ([source](https://github.com/juliangruber/brace-expansion)) — see `node_modules/brace-expansion/`
+- `brace-expansion` (v5.0.12) — MIT ([source](https://github.com/juliangruber/brace-expansion)) — see `node_modules/brace-expansion/`
 - `cacheable` (v2.5.0) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/cacheable/`
 - `chai` (v6.2.2) — MIT ([source](https://github.com/chaijs/chai)) — see `node_modules/chai/`
 - `cross-spawn` (v7.0.6) — MIT ([source](https://github.com/moxystudio/node-cross-spawn)) — see `node_modules/cross-spawn/`

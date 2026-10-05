@@ -3,11 +3,18 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
-Last reviewed: 2026-09-16
+Last reviewed: 2026-10-05
 
 ## Unreleased
 
 ### Changed
+- Tooling: bump ESLint 10.10.0→10.11.0, typescript-eslint 8.70.0→8.70.1, and
+  Vite 8.3.0→8.3.1. `npm run validate` passes (317 tests). SemVer: none
+  (tooling only).
+- Runtime/rendering: upgrade `three` 0.160.1→0.186.1 and `@types/three`
+  0.160.0→0.186.0 with the OrbitControls canvas test double extended
+  (`ownerDocument` / `getRootNode`). Visual 3D smoke check recommended before
+  relying on the new renderer output. SemVer: none (runtime/rendering change).
 - Tooling: upgrade exact peers Vitest and `@vitest/coverage-v8` from 4.1.11 to
   5.0.1, align the declared TypeScript version with the active compatible 5.9.3 release,
   and raise the CI Node runtime from 20 to 24. The existing 317-test suite passes without

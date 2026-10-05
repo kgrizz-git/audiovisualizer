@@ -119,8 +119,11 @@ tests, coverage, lint, strict type-checking, and production build. The manifest 
 declares the active compatible TypeScript 5.9.3 release. TypeScript 7 is blocked:
 the latest `typescript-eslint@8.70.0` peers TypeScript `>=4.8.4 <6.1.0`; do not
 force or suppress that conflict.
-- [ ] For the Three task, reproduce the r186 OrbitControls test failure and fix the
+- [x] For the Three task, reproduce the r186 OrbitControls test failure and fix the
   canvas test double before considering a renderer change.
+  Done 2026-10-05 on `chore/npm-minor-safe-three`: canvas test double now provides
+  `ownerDocument` and `getRootNode`; no renderer change needed; `npm run validate`
+  passes. Supersedes Dependabot PR #19 (closed).
 - [ ] Close the red single-package major PRs with links to their durable backlog task.
 - [ ] If recurring noise warrants a Dependabot grouping or ignore rule, obtain
   explicit approval first and document its exact scope, security effect, owner, and

@@ -333,9 +333,13 @@ class RepoIntegrationSmoke(unittest.TestCase):
             text=True,
             env=env,
         )
-        self.assertEqual(
+        # Drift (rc=2) is advisory on Dependabot PRs only, mirroring the gate
+        # step in ci.yml. rc=1 (policy violation) always fails, and non-bot
+        # actors (incl. local runs) stay strict at rc=0.
+        allowed = {0, 2} if os.environ.get("IS_DEPENDABOT") == "true" else {0}
+        self.assertIn(
             result.returncode,
-            0,
+            allowed,
             msg=f"stdout={result.stdout}\nstderr={result.stderr}",
         )
 

@@ -595,14 +595,13 @@ def run_check() -> int:
     auto = extract_date(LAST_REVIEWED_RE, existing) or date.today()
     expected = generate_inventory(last_reviewed=auto, human_reviewed=human, deps=deps)
 
-    # Report stale drift (exit 2) separately so CI can make only it advisory.
-    if expected != existing:
+    stale = expected != existing
+    if stale:
         print(
             f"[license-inventory] STALE {INVENTORY_PATH} is out of date with "
             "package-lock.json / classification — run --update",
             file=sys.stderr,
         )
-        return EXIT_STALE_INVENTORY
 
     errors: list[str] = []
     warnings: list[str] = []
@@ -632,8 +631,14 @@ def run_check() -> int:
     for e in errors:
         print(f"[license-inventory] ERROR {e}", file=sys.stderr)
 
+    # Policy violations always fail CI — even on a stale bot branch, where
+    # drift alone (rc=2) is advisory via the ci.yml Dependabot guard.
     if errors:
         return EXIT_POLICY_VIOLATION
+    # Stale drift is expected on Dependabot lockfile PRs (CI cannot push back
+    # to the bot branch), so CI treats it as advisory there only.
+    if stale:
+        return EXIT_STALE_INVENTORY
 
     print(f"[license-inventory] PASS  {INVENTORY_PATH} is up-to-date")
     return EXIT_PASS

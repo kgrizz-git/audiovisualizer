@@ -74,8 +74,8 @@ jobs:
         env:
           IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
         run: |
-          python hooks/scripts/check_license_inventory.py --check
-          rc=$?
+          rc=0
+          python hooks/scripts/check_license_inventory.py --check || rc=$?
           if [ "$rc" -eq 0 ]; then
             exit 0
           fi

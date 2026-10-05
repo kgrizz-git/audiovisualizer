@@ -36,6 +36,11 @@ Last reviewed: 2026-10-05
   (`e0c47f4…`, Node 24). No input/behavior change. SemVer: none.
 
 ### Fixed
+- CI: repair the dead Dependabot actor-guard in the license-inventory gate —
+  `bash -e` aborted the step on the failed `--check` before `rc=$?` ran, so
+  stale-drift (`rc=2`) hard-failed Dependabot lockfile PRs instead of downgrading
+  to the intended advisory warning. Exit code now captured via
+  `python ... --check || rc=$?`. SemVer: none (CI only).
 - Security: bump `vitest` and `@vitest/coverage-v8` from `^4.1.10` to `^4.1.11`
   (resolves CVE-2026-84373, path traversal / arbitrary file read via
   `@vitest/mocker` redirect mock on exposed dev servers). Patch-only release

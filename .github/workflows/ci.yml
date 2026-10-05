@@ -87,6 +87,8 @@ jobs:
 
       - name: License inventory unit tests
         # Same dependency: RepoIntegrationSmoke runs --check against this checkout.
+        env:
+          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
         run: python -m unittest tests.hooks.test_check_license_inventory -v
 
   policy:

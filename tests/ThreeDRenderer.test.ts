@@ -193,6 +193,8 @@ describe('ThreeDRenderer - mount controls', () => {
         style: {},
         addEventListener: () => {},
         removeEventListener: () => {},
+        ownerDocument: { addEventListener: () => {}, removeEventListener: () => {} },
+        getRootNode: () => ({ addEventListener: () => {}, removeEventListener: () => {} }),
         setPointerCapture: () => {},
         releasePointerCapture: () => {},
         clientWidth: 900,

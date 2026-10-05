@@ -21,11 +21,11 @@
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@tonejs/midi": "^2.0.28",
-    "three": "^0.160.1"
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/three": "^0.160.0",
+    "@types/three": "^0.186.0",
     "@vitest/coverage-v8": "^5.0.1",
     "esbuild": "^0.28.2",
     "eslint": "^10.11.0",

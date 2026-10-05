@@ -13,7 +13,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 ### Permissive Licenses
 
 - `@tonejs/midi` (v2.0.28) — MIT ([source](https://github.com/Tonejs/Midi)) — see `node_modules/@tonejs/midi/`
-- `three` (v0.160.1) — MIT ([source](https://github.com/mrdoob/three.js)) — see `node_modules/three/`
+- `three` (v0.186.1) — MIT ([source](https://github.com/mrdoob/three.js)) — see `node_modules/three/`
 
 ### Weak Copyleft Licenses
 
@@ -24,7 +24,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 ### Permissive Licenses
 
 - `@eslint/js` (v10.0.1) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/@eslint/js/`
-- `@types/three` (v0.160.0) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/three/`
+- `@types/three` (v0.186.0) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/three/`
 - `@vitest/coverage-v8` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/coverage-v8/`
 - `esbuild` (v0.28.2) — MIT ([source](https://github.com/evanw/esbuild)) — see `node_modules/esbuild/`
 - `eslint` (v10.11.0) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/eslint/`
@@ -66,6 +66,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@bcoe/v8-coverage` (v1.0.2) — MIT ([source](https://github.com/bcoe/v8-coverage)) — see `node_modules/@bcoe/v8-coverage/`
 - `@cacheable/memory` (v2.2.0) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/@cacheable/memory/`
 - `@cacheable/utils` (v2.5.0) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/@cacheable/utils/`
+- `@dimforge/rapier3d-compat` (v0.12.0) — Apache-2.0 ([source](https://github.com/dimforge/rapier.js)) — see `node_modules/@dimforge/rapier3d-compat/`
 - `@esbuild/aix-ppc64` (v0.28.2) — MIT — see `node_modules/@esbuild/aix-ppc64/`
 - `@esbuild/android-arm` (v0.28.2) — MIT — see `node_modules/@esbuild/android-arm/`
 - `@esbuild/android-arm64` (v0.28.2) — MIT — see `node_modules/@esbuild/android-arm64/`
@@ -126,6 +127,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@rolldown/binding-win32-arm64-msvc` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-win32-arm64-msvc/`
 - `@rolldown/binding-win32-x64-msvc` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-win32-x64-msvc/`
 - `@rolldown/pluginutils` (v1.0.1) — MIT ([source](https://github.com/rolldown/plugins)) — see `node_modules/@rolldown/pluginutils/`
+- `@tweenjs/tween.js` (v23.1.3) — MIT ([source](https://github.com/tweenjs/tween.js)) — see `node_modules/@tweenjs/tween.js/`
 - `@types/chai` (v5.2.3) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/chai/`
 - `@types/deep-eql` (v4.0.2) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/deep-eql/`
 - `@types/esrecurse` (v4.3.1) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/esrecurse/`
@@ -176,7 +178,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `fast-json-stable-stringify` (v2.1.0) — MIT ([source](https://github.com/epoberezkin/fast-json-stable-stringify)) — see `node_modules/fast-json-stable-stringify/`
 - `fast-levenshtein` (v2.0.6) — MIT ([source](https://github.com/hiddentao/fast-levenshtein)) — see `node_modules/fast-levenshtein/`
 - `fdir` (v6.5.0) — MIT ([source](https://github.com/thecodrr/fdir)) — see `node_modules/fdir/`
-- `fflate` (v0.6.11) — MIT ([source](https://github.com/101arrowz/fflate)) — see `node_modules/fflate/`
+- `fflate` (v0.8.3) — MIT ([source](https://github.com/101arrowz/fflate)) — see `node_modules/fflate/`
 - `file-entry-cache` (v11.1.5) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/file-entry-cache/`
 - `find-up` (v5.0.0) — MIT ([source](https://github.com/sindresorhus/find-up)) — see `node_modules/find-up/`
 - `flat-cache` (v6.1.23) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/flat-cache/`
@@ -200,7 +202,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `locate-path` (v6.0.0) — MIT ([source](https://github.com/sindresorhus/locate-path)) — see `node_modules/locate-path/`
 - `magic-string` (v1.4.1) — MIT ([source](https://github.com/Rich-Harris/magic-string)) — see `node_modules/magic-string/`
 - `magicast` (v0.5.5) — MIT ([source](https://github.com/unjs/magicast)) — see `node_modules/magicast/`
-- `meshoptimizer` (v0.18.1) — MIT ([source](https://github.com/zeux/meshoptimizer)) — see `node_modules/meshoptimizer/`
+- `meshoptimizer` (v1.1.1) — MIT ([source](https://github.com/zeux/meshoptimizer)) — see `node_modules/meshoptimizer/`
 - `minimatch` (v10.2.5) — BlueOak-1.0.0 ([source](https://github.com/isaacs/minimatch)) — see `node_modules/minimatch/`
 - `ms` (v2.1.3) — MIT ([source](https://github.com/vercel/ms)) — see `node_modules/ms/`
 - `nanoid` (v3.3.19) — MIT ([source](https://github.com/ai/nanoid)) — see `node_modules/nanoid/`
@@ -256,7 +258,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 | Category | Production | Development |
 |----------|------------|-------------|
-| Permissive | 4 | 186 |
+| Permissive | 4 | 188 |
 | Weak Copyleft | 13 | 12 |
 | Strong Copyleft | 0 | 0 |
 | Unknown/Check | 0 | 0 |

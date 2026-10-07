@@ -60,7 +60,7 @@ jobs:
       - name: Audit dependencies (high/critical)
         # Hard gate on main pushes; advisory on PRs so fresh advisories do not
         # block unrelated work overnight (still visible as a failed step).
-        continue-on-error: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: ${{ github.event_name != 'push' }}
         run: npm audit --audit-level=high
 
       - name: License inventory gate
@@ -70,12 +70,12 @@ jobs:
         #   0 pass, 1 license-policy violation (unknown license, production
         #     strong-copyleft, human-review), 2 stale inventory drift only.
         # Policy violations (1) ALWAYS fail CI. Stale drift (2) is expected on
-        # Dependabot lockfile PRs (CI cannot push back to the bot branch), so it
-        # is advisory there only — the maintainer runs
-        # `python hooks/scripts/check_license_inventory.py --update` and commits
-        # before merging. On main pushes / other PRs, stale drift also hard-fails.
+        # Dependabot lockfile PRs, so it is advisory there only;
+        # dependabot-license-inventory.yml regenerates and commits the inventory
+        # (or run `python hooks/scripts/check_license_inventory.py --update`).
+        # On main pushes / other PRs, stale drift also hard-fails.
         env:
-          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
+          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' || startsWith(github.ref_name, 'dependabot/') }}
         run: |
           rc=0
           python hooks/scripts/check_license_inventory.py --check || rc=$?
@@ -91,7 +91,7 @@ jobs:
       - name: License inventory unit tests
         # Same dependency: RepoIntegrationSmoke runs --check against this checkout.
         env:
-          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
+          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' || startsWith(github.ref_name, 'dependabot/') }}
         run: python -m unittest tests.hooks.test_check_license_inventory -v
 
   policy:
@@ -136,8 +136,9 @@ jobs:
 
   semgrep:
     name: SAST (Semgrep)
-    # Skip Dependabot lockfile PRs — SAST adds little signal there.
-    if: github.actor != 'dependabot[bot]'
+    # Skip Dependabot lockfile PRs — SAST adds little signal there. The ref
+    # check also covers runs dispatched by dependabot-license-inventory.yml.
+    if: github.actor != 'dependabot[bot]' && !startsWith(github.ref_name, 'dependabot/')
     runs-on: ubuntu-latest
     # Pin tag + digest; bump deliberately when refreshing Semgrep.
     container:

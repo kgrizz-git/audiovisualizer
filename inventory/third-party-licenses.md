@@ -1,6 +1,6 @@
 # Third-Party License Inventory
 
-Last reviewed: 2026-10-06
+Last reviewed: 2026-10-07
 Last human reviewed: 2026-09-16
 
 This document catalogs third-party dependencies and their licenses for compliance,
@@ -25,13 +25,13 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 - `@eslint/js` (v10.0.1) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/@eslint/js/`
 - `@types/three` (v0.186.0) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/three/`
-- `@vitest/coverage-v8` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/coverage-v8/`
+- `@vitest/coverage-v8` (v5.0.3) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/coverage-v8/`
 - `esbuild` (v0.28.2) — MIT ([source](https://github.com/evanw/esbuild)) — see `node_modules/esbuild/`
-- `eslint` (v10.11.0) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/eslint/`
+- `eslint` (v10.12.0) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/eslint/`
 - `typescript` (v5.9.3) — Apache-2.0 ([source](https://github.com/microsoft/TypeScript)) — see `node_modules/typescript/`
-- `typescript-eslint` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/typescript-eslint/`
-- `vite` (v8.3.1) — MIT ([source](https://github.com/vitejs/vite)) — see `node_modules/vite/`
-- `vitest` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/vitest/`
+- `typescript-eslint` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/typescript-eslint/`
+- `vite` (v8.3.2) — MIT ([source](https://github.com/vitejs/vite)) — see `node_modules/vite/`
+- `vitest` (v5.0.3) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/vitest/`
 
 ## Transitive Production Dependencies
 
@@ -110,22 +110,22 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@jridgewell/trace-mapping` (v0.3.31) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/trace-mapping/`
 - `@keyv/bigmap` (v1.3.1) — MIT ([source](https://github.com/jaredwray/keyv)) — see `node_modules/@keyv/bigmap/`
 - `@keyv/serialize` (v1.1.1) — MIT ([source](https://github.com/jaredwray/keyv)) — see `node_modules/@keyv/serialize/`
-- `@oxc-project/types` (v0.150.0) — MIT ([source](https://github.com/oxc-project/oxc)) — see `node_modules/@oxc-project/types/`
-- `@rolldown/binding-android-arm-eabi` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-android-arm-eabi/`
-- `@rolldown/binding-android-arm64` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-android-arm64/`
-- `@rolldown/binding-darwin-arm64` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-darwin-arm64/`
-- `@rolldown/binding-darwin-x64` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-darwin-x64/`
-- `@rolldown/binding-freebsd-x64` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-freebsd-x64/`
-- `@rolldown/binding-linux-arm-gnueabihf` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-linux-arm-gnueabihf/`
-- `@rolldown/binding-linux-arm64-gnu` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-linux-arm64-gnu/`
-- `@rolldown/binding-linux-arm64-musl` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-linux-arm64-musl/`
-- `@rolldown/binding-linux-ppc64-gnu` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-linux-ppc64-gnu/`
-- `@rolldown/binding-linux-s390x-gnu` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-linux-s390x-gnu/`
-- `@rolldown/binding-linux-x64-gnu` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-linux-x64-gnu/`
-- `@rolldown/binding-linux-x64-musl` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-linux-x64-musl/`
-- `@rolldown/binding-openharmony-arm64` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-openharmony-arm64/`
-- `@rolldown/binding-win32-arm64-msvc` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-win32-arm64-msvc/`
-- `@rolldown/binding-win32-x64-msvc` (v1.2.9) — MIT — see `node_modules/@rolldown/binding-win32-x64-msvc/`
+- `@oxc-project/types` (v0.152.0) — MIT ([source](https://github.com/oxc-project/oxc)) — see `node_modules/@oxc-project/types/`
+- `@rolldown/binding-android-arm-eabi` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-android-arm-eabi/`
+- `@rolldown/binding-android-arm64` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-android-arm64/`
+- `@rolldown/binding-darwin-arm64` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-darwin-arm64/`
+- `@rolldown/binding-darwin-x64` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-darwin-x64/`
+- `@rolldown/binding-freebsd-x64` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-freebsd-x64/`
+- `@rolldown/binding-linux-arm-gnueabihf` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-linux-arm-gnueabihf/`
+- `@rolldown/binding-linux-arm64-gnu` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-linux-arm64-gnu/`
+- `@rolldown/binding-linux-arm64-musl` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-linux-arm64-musl/`
+- `@rolldown/binding-linux-ppc64-gnu` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-linux-ppc64-gnu/`
+- `@rolldown/binding-linux-s390x-gnu` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-linux-s390x-gnu/`
+- `@rolldown/binding-linux-x64-gnu` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-linux-x64-gnu/`
+- `@rolldown/binding-linux-x64-musl` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-linux-x64-musl/`
+- `@rolldown/binding-openharmony-arm64` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-openharmony-arm64/`
+- `@rolldown/binding-win32-arm64-msvc` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-win32-arm64-msvc/`
+- `@rolldown/binding-win32-x64-msvc` (v1.2.12) — MIT — see `node_modules/@rolldown/binding-win32-x64-msvc/`
 - `@rolldown/pluginutils` (v1.0.1) — MIT ([source](https://github.com/rolldown/plugins)) — see `node_modules/@rolldown/pluginutils/`
 - `@tweenjs/tween.js` (v23.1.3) — MIT ([source](https://github.com/tweenjs/tween.js)) — see `node_modules/@tweenjs/tween.js/`
 - `@types/chai` (v5.2.3) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/chai/`
@@ -135,20 +135,20 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@types/json-schema` (v7.0.15) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/json-schema/`
 - `@types/stats.js` (v0.17.4) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/stats.js/`
 - `@types/webxr` (v0.5.24) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/webxr/`
-- `@typescript-eslint/eslint-plugin` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/eslint-plugin/`
-- `@typescript-eslint/parser` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/parser/`
-- `@typescript-eslint/project-service` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/project-service/`
-- `@typescript-eslint/scope-manager` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/scope-manager/`
-- `@typescript-eslint/tsconfig-utils` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/tsconfig-utils/`
-- `@typescript-eslint/type-utils` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/type-utils/`
-- `@typescript-eslint/types` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/types/`
-- `@typescript-eslint/typescript-estree` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/typescript-estree/`
-- `@typescript-eslint/utils` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/utils/`
-- `@typescript-eslint/visitor-keys` (v8.70.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/visitor-keys/`
+- `@typescript-eslint/eslint-plugin` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/eslint-plugin/`
+- `@typescript-eslint/parser` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/parser/`
+- `@typescript-eslint/project-service` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/project-service/`
+- `@typescript-eslint/scope-manager` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/scope-manager/`
+- `@typescript-eslint/tsconfig-utils` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/tsconfig-utils/`
+- `@typescript-eslint/type-utils` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/type-utils/`
+- `@typescript-eslint/types` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/types/`
+- `@typescript-eslint/typescript-estree` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/typescript-estree/`
+- `@typescript-eslint/utils` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/utils/`
+- `@typescript-eslint/visitor-keys` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/visitor-keys/`
 - `@vitest/istanbul-lib-coverage` (v1.0.1) — MIT ([source](https://github.com/vitest-dev/istanbuljs)) — see `node_modules/@vitest/istanbul-lib-coverage/`
 - `@vitest/istanbul-lib-report` (v1.0.1) — MIT ([source](https://github.com/vitest-dev/istanbuljs)) — see `node_modules/@vitest/istanbul-lib-report/`
-- `@vitest/mocker` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/mocker/`
-- `@vitest/spy` (v5.0.1) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/spy/`
+- `@vitest/mocker` (v5.0.3) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/mocker/`
+- `@vitest/spy` (v5.0.3) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/spy/`
 - `acorn` (v8.17.0) — MIT ([source](https://github.com/acornjs/acorn)) — see `node_modules/acorn/`
 - `acorn-jsx` (v5.3.2) — MIT ([source](https://github.com/acornjs/acorn-jsx)) — see `node_modules/acorn-jsx/`
 - `ajv` (v6.15.0) — MIT ([source](https://github.com/ajv-validator/ajv)) — see `node_modules/ajv/`
@@ -200,7 +200,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `keyv` (v5.6.0) — MIT ([source](https://github.com/jaredwray/keyv)) — see `node_modules/keyv/`
 - `levn` (v0.4.1) — MIT ([source](https://github.com/gkz/levn)) — see `node_modules/levn/`
 - `locate-path` (v6.0.0) — MIT ([source](https://github.com/sindresorhus/locate-path)) — see `node_modules/locate-path/`
-- `magic-string` (v1.4.1) — MIT ([source](https://github.com/Rich-Harris/magic-string)) — see `node_modules/magic-string/`
+- `magic-string` (v1.4.2) — MIT ([source](https://github.com/Rich-Harris/magic-string)) — see `node_modules/magic-string/`
 - `magicast` (v0.5.5) — MIT ([source](https://github.com/unjs/magicast)) — see `node_modules/magicast/`
 - `meshoptimizer` (v1.1.1) — MIT ([source](https://github.com/zeux/meshoptimizer)) — see `node_modules/meshoptimizer/`
 - `minimatch` (v10.2.5) — BlueOak-1.0.0 ([source](https://github.com/isaacs/minimatch)) — see `node_modules/minimatch/`
@@ -219,13 +219,11 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `prelude-ls` (v1.2.1) — MIT ([source](https://github.com/gkz/prelude-ls)) — see `node_modules/prelude-ls/`
 - `punycode` (v2.3.1) — MIT ([source](https://github.com/mathiasbynens/punycode.js)) — see `node_modules/punycode/`
 - `qified` (v0.10.1) — MIT ([source](https://github.com/jaredwray/qified)) — see `node_modules/qified/`
-- `rolldown` (v1.2.9) — MIT ([source](https://github.com/rolldown/rolldown)) — see `node_modules/rolldown/`
+- `rolldown` (v1.2.12) — MIT ([source](https://github.com/rolldown/rolldown)) — see `node_modules/rolldown/`
 - `semver` (v7.8.5) — ISC ([source](https://github.com/npm/node-semver)) — see `node_modules/semver/`
 - `shebang-command` (v2.0.0) — MIT ([source](https://github.com/kevva/shebang-command)) — see `node_modules/shebang-command/`
 - `shebang-regex` (v3.0.0) — MIT ([source](https://github.com/sindresorhus/shebang-regex)) — see `node_modules/shebang-regex/`
-- `siginfo` (v2.0.0) — ISC ([source](https://github.com/emilbayes/siginfo)) — see `node_modules/siginfo/`
 - `source-map-js` (v1.2.2) — BSD-3-Clause ([source](https://github.com/7rulnik/source-map-js)) — see `node_modules/source-map-js/`
-- `stackback` (v0.0.2) — MIT ([source](https://github.com/shtylman/node-stackback)) — see `node_modules/stackback/`
 - `std-env` (v4.2.0) — MIT ([source](https://github.com/unjs/std-env)) — see `node_modules/std-env/`
 - `tinybench` (v6.1.4) — MIT ([source](https://github.com/tinylibs/tinybench)) — see `node_modules/tinybench/`
 - `tinyexec` (v1.3.0) — MIT ([source](https://github.com/tinylibs/tinyexec)) — see `node_modules/tinyexec/`
@@ -235,7 +233,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `type-check` (v0.4.0) — MIT ([source](https://github.com/gkz/type-check)) — see `node_modules/type-check/`
 - `uri-js` (v4.4.1) — BSD-2-Clause ([source](https://github.com/garycourt/uri-js)) — see `node_modules/uri-js/`
 - `which` (v2.0.2) — ISC ([source](https://github.com/isaacs/node-which)) — see `node_modules/which/`
-- `why-is-node-running` (v2.3.0) — MIT ([source](https://github.com/mafintosh/why-is-node-running)) — see `node_modules/why-is-node-running/`
+- `why-is-node-running` (v3.2.1) — MIT ([source](https://github.com/mafintosh/why-is-node-running)) — see `node_modules/why-is-node-running/`
 - `word-wrap` (v1.2.5) — MIT ([source](https://github.com/jonschlinkert/word-wrap)) — see `node_modules/word-wrap/`
 - `yocto-queue` (v0.1.0) — MIT ([source](https://github.com/sindresorhus/yocto-queue)) — see `node_modules/yocto-queue/`
 
@@ -258,7 +256,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 | Category | Production | Development |
 |----------|------------|-------------|
-| Permissive | 4 | 188 |
+| Permissive | 4 | 186 |
 | Weak Copyleft | 13 | 12 |
 | Strong Copyleft | 0 | 0 |
 | Unknown/Check | 0 | 0 |

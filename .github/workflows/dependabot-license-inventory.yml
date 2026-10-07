@@ -1,0 +1,160 @@
+# Dependabot license-inventory autofix
+#
+# Dependabot PRs change package-lock.json, which makes
+# inventory/third-party-licenses.md stale. CI treats that drift as advisory on
+# Dependabot PRs but hard-fails on main after merge. This workflow regenerates
+# the inventory on the PR branch, commits it, and labels/comments the PR so the
+# merge into main stays green.
+#
+# Security: split into two jobs. `generate` installs dependencies and runs the
+# inventory script with a read-only token and no persisted git credentials;
+# `commit` never runs npm or repo code — it only commits the generated file
+# (after checking nothing else changed) with a write token.
+#
+# Exit codes from check_license_inventory.py: 0 pass, 1 policy violation,
+# 2 stale drift only. Only drift (2) is auto-fixed; violations need a human.
+#
+# Commits pushed with GITHUB_TOKEN don't start pull_request runs, so after
+# pushing, `commit` dispatches CI on the PR branch itself. The resulting checks
+# (Validate, Policy, ...) attach to the new commit and satisfy required status
+# checks with no manual re-run.
+
+name: Dependabot license inventory
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions: {}
+
+concurrency:
+  group: dependabot-license-${{ github.event.pull_request.number }}
+  # Never cancel mid-run: a cancel between push and dispatch would leave the
+  # PR with a new commit and no CI.
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    # Only Dependabot-authored PRs from this repository's own branches.
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.head_ref, 'dependabot/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      status: ${{ steps.check.outputs.status }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        # Same as ci.yml: no lifecycle scripts from (newly bumped) packages.
+        run: npm ci --ignore-scripts
+
+      - name: Check and regenerate inventory
+        id: check
+        run: |
+          rc=0
+          python hooks/scripts/check_license_inventory.py --check || rc=$?
+          case "$rc" in
+            0) echo "status=clean" >> "$GITHUB_OUTPUT" ;;
+            1) echo "status=violation" >> "$GITHUB_OUTPUT" ;;
+            2)
+              python hooks/scripts/check_license_inventory.py --update
+              python hooks/scripts/check_license_inventory.py --check
+              echo "status=updated" >> "$GITHUB_OUTPUT"
+              ;;
+            *) exit "$rc" ;;
+          esac
+
+      - name: Upload regenerated inventory
+        if: steps.check.outputs.status == 'updated'
+        uses: actions/upload-artifact@v7
+        with:
+          name: license-inventory
+          path: inventory/third-party-licenses.md
+          retention-days: 1
+
+  commit:
+    needs: generate
+    if: needs.generate.outputs.status == 'updated' || needs.generate.outputs.status == 'violation'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # push the inventory commit
+      pull-requests: write  # labels + comment
+      actions: write        # dispatch CI on the inventory commit
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      STATUS: ${{ needs.generate.outputs.status }}
+      LABEL_UPDATED: "license-inventory: auto-updated"
+      LABEL_REVIEW: "license-inventory: needs-review"
+    steps:
+      - name: Report policy violation
+        if: env.STATUS == 'violation'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh label create "$LABEL_REVIEW" --color d93f0b --force \
+            --description "License policy violation — needs human review"
+          gh pr edit "$PR" --add-label "$LABEL_REVIEW"
+          gh pr comment "$PR" --body "⚠️ **License policy violation** — \`check_license_inventory.py --check\` reported a license that needs human review. Not auto-fixed; see the *Dependabot license inventory* workflow log."
+          exit 1
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: license-inventory
+          path: inventory/
+
+      - name: Commit and push
+        run: |
+          changed=$(git status --porcelain)
+          if [ "$changed" != " M inventory/third-party-licenses.md" ]; then
+            echo "::error::Unexpected working-tree changes:"; echo "$changed"; exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: refresh third-party license inventory"
+          # Fails (instead of clobbering) if Dependabot pushed in the meantime;
+          # the newer push re-runs this workflow.
+          git push --force-with-lease="refs/heads/$HEAD_REF:$HEAD_SHA" origin "HEAD:refs/heads/$HEAD_REF"
+
+      - name: Start CI, label, and comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh label create "$LABEL_UPDATED" --color 0e8a16 --force \
+            --description "License inventory regenerated automatically"
+          gh pr edit "$PR" --add-label "$LABEL_UPDATED"
+
+          if gh workflow run ci.yml --ref "$HEAD_REF"; then
+            ci_note="**CI:** a fresh CI run was started automatically on the new commit — you don't need to approve or re-run anything. Wait for the checks to go green, then merge. (If checks ever sit at *Expected — waiting for status*, open the **Actions** tab → **CI** → **Run workflow** on this PR's branch.)"
+          else
+            ci_note="**CI: action needed.** Starting CI automatically failed, so the new commit has no checks yet. Open the **Actions** tab → **CI** → **Run workflow**, pick this PR's branch (\`$HEAD_REF\`), and merge once it's green."
+          fi
+
+          gh pr comment "$PR" --body "🤖 **License inventory auto-updated.** \`inventory/third-party-licenses.md\` was regenerated with \`check_license_inventory.py --update\` and committed to this PR, so merging won't break CI on \`main\`.
+
+          $ci_note
+
+          Because this PR now has a non-Dependabot commit, Dependabot won't auto-rebase it. Comment \`@dependabot recreate\` if you need a fresh version; this workflow will run again."

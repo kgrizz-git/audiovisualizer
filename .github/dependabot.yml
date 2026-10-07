@@ -4,7 +4,8 @@
 # Dependabot keeps dependencies and GitHub Actions versions current.
 # CI already tolerates bot PRs: license-inventory drift is advisory on
 # Dependabot branches and Semgrep skips them; Secret scan still runs
-# (see .github/workflows/ci.yml).
+# (see .github/workflows/ci.yml). Stale inventory is regenerated and committed
+# automatically by .github/workflows/dependabot-license-inventory.yml.
 
 version: 2
 updates:
@@ -16,6 +17,8 @@ updates:
       day: monday
       time: "06:00"
       timezone: "UTC"
+    # Custom labels replace Dependabot's defaults, so keep "dependencies".
+    labels: ["dependencies", "javascript", "license-inventory"]
     groups:
       npm-minor:
         update-types: ["minor", "patch"]

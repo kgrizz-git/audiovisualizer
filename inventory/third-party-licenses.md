@@ -1,6 +1,6 @@
 # Third-Party License Inventory
 
-Last reviewed: 2026-10-05
+Last reviewed: 2026-10-06
 Last human reviewed: 2026-09-16
 
 This document catalogs third-party dependencies and their licenses for compliance,
@@ -224,7 +224,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `shebang-command` (v2.0.0) — MIT ([source](https://github.com/kevva/shebang-command)) — see `node_modules/shebang-command/`
 - `shebang-regex` (v3.0.0) — MIT ([source](https://github.com/sindresorhus/shebang-regex)) — see `node_modules/shebang-regex/`
 - `siginfo` (v2.0.0) — ISC ([source](https://github.com/emilbayes/siginfo)) — see `node_modules/siginfo/`
-- `source-map-js` (v1.2.1) — BSD-3-Clause ([source](https://github.com/7rulnik/source-map-js)) — see `node_modules/source-map-js/`
+- `source-map-js` (v1.2.2) — BSD-3-Clause ([source](https://github.com/7rulnik/source-map-js)) — see `node_modules/source-map-js/`
 - `stackback` (v0.0.2) — MIT ([source](https://github.com/shtylman/node-stackback)) — see `node_modules/stackback/`
 - `std-env` (v4.2.0) — MIT ([source](https://github.com/unjs/std-env)) — see `node_modules/std-env/`
 - `tinybench` (v6.1.4) — MIT ([source](https://github.com/tinylibs/tinybench)) — see `node_modules/tinybench/`

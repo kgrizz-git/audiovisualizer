@@ -1,6 +1,6 @@
 # Third-Party License Inventory
 
-Last reviewed: 2026-10-07
+Last reviewed: 2026-10-12
 Last human reviewed: 2026-09-16
 
 This document catalogs third-party dependencies and their licenses for compliance,
@@ -29,8 +29,8 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `esbuild` (v0.28.2) — MIT ([source](https://github.com/evanw/esbuild)) — see `node_modules/esbuild/`
 - `eslint` (v10.12.0) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/eslint/`
 - `typescript` (v5.9.3) — Apache-2.0 ([source](https://github.com/microsoft/TypeScript)) — see `node_modules/typescript/`
-- `typescript-eslint` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/typescript-eslint/`
-- `vite` (v8.3.2) — MIT ([source](https://github.com/vitejs/vite)) — see `node_modules/vite/`
+- `typescript-eslint` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/typescript-eslint/`
+- `vite` (v8.3.4) — MIT ([source](https://github.com/vitejs/vite)) — see `node_modules/vite/`
 - `vitest` (v5.0.3) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/vitest/`
 
 ## Transitive Production Dependencies
@@ -135,16 +135,16 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@types/json-schema` (v7.0.15) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/json-schema/`
 - `@types/stats.js` (v0.17.4) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/stats.js/`
 - `@types/webxr` (v0.5.24) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/webxr/`
-- `@typescript-eslint/eslint-plugin` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/eslint-plugin/`
-- `@typescript-eslint/parser` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/parser/`
-- `@typescript-eslint/project-service` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/project-service/`
-- `@typescript-eslint/scope-manager` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/scope-manager/`
-- `@typescript-eslint/tsconfig-utils` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/tsconfig-utils/`
-- `@typescript-eslint/type-utils` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/type-utils/`
-- `@typescript-eslint/types` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/types/`
-- `@typescript-eslint/typescript-estree` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/typescript-estree/`
-- `@typescript-eslint/utils` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/utils/`
-- `@typescript-eslint/visitor-keys` (v8.71.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/visitor-keys/`
+- `@typescript-eslint/eslint-plugin` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/eslint-plugin/`
+- `@typescript-eslint/parser` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/parser/`
+- `@typescript-eslint/project-service` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/project-service/`
+- `@typescript-eslint/scope-manager` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/scope-manager/`
+- `@typescript-eslint/tsconfig-utils` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/tsconfig-utils/`
+- `@typescript-eslint/type-utils` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/type-utils/`
+- `@typescript-eslint/types` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/types/`
+- `@typescript-eslint/typescript-estree` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/typescript-estree/`
+- `@typescript-eslint/utils` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/utils/`
+- `@typescript-eslint/visitor-keys` (v8.71.1) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/visitor-keys/`
 - `@vitest/istanbul-lib-coverage` (v1.0.1) — MIT ([source](https://github.com/vitest-dev/istanbuljs)) — see `node_modules/@vitest/istanbul-lib-coverage/`
 - `@vitest/istanbul-lib-report` (v1.0.1) — MIT ([source](https://github.com/vitest-dev/istanbuljs)) — see `node_modules/@vitest/istanbul-lib-report/`
 - `@vitest/mocker` (v5.0.3) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/mocker/`
@@ -205,7 +205,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `meshoptimizer` (v1.1.1) — MIT ([source](https://github.com/zeux/meshoptimizer)) — see `node_modules/meshoptimizer/`
 - `minimatch` (v10.2.5) — BlueOak-1.0.0 ([source](https://github.com/isaacs/minimatch)) — see `node_modules/minimatch/`
 - `ms` (v2.1.3) — MIT ([source](https://github.com/vercel/ms)) — see `node_modules/ms/`
-- `nanoid` (v3.3.19) — MIT ([source](https://github.com/ai/nanoid)) — see `node_modules/nanoid/`
+- `nanoid` (v3.3.20) — MIT ([source](https://github.com/ai/nanoid)) — see `node_modules/nanoid/`
 - `natural-compare` (v1.4.0) — MIT ([source](https://github.com/litejs/natural-compare-lite)) — see `node_modules/natural-compare/`
 - `obug` (v2.2.1) — MIT ([source](https://github.com/sxzz/obug)) — see `node_modules/obug/`
 - `optionator` (v0.9.4) — MIT ([source](https://github.com/gkz/optionator)) — see `node_modules/optionator/`
@@ -215,7 +215,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `path-key` (v3.1.1) — MIT ([source](https://github.com/sindresorhus/path-key)) — see `node_modules/path-key/`
 - `picocolors` (v1.1.1) — ISC ([source](https://github.com/alexeyraspopov/picocolors)) — see `node_modules/picocolors/`
 - `picomatch` (v4.0.7) — MIT ([source](https://github.com/micromatch/picomatch)) — see `node_modules/picomatch/`
-- `postcss` (v8.5.28) — MIT ([source](https://github.com/postcss/postcss)) — see `node_modules/postcss/`
+- `postcss` (v8.5.29) — MIT ([source](https://github.com/postcss/postcss)) — see `node_modules/postcss/`
 - `prelude-ls` (v1.2.1) — MIT ([source](https://github.com/gkz/prelude-ls)) — see `node_modules/prelude-ls/`
 - `punycode` (v2.3.1) — MIT ([source](https://github.com/mathiasbynens/punycode.js)) — see `node_modules/punycode/`
 - `qified` (v0.10.1) — MIT ([source](https://github.com/jaredwray/qified)) — see `node_modules/qified/`

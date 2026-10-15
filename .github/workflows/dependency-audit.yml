@@ -1,17 +1,24 @@
 # .github/workflows/dependency-audit.yml
 #
-# Weekly scheduled npm audit. ci.yml only audits on push/PR (advisory on PRs),
-# so on a quiet repo a newly published high/critical advisory against
-# package-lock.json would never turn CI red. This run fails on the same scope
-# as ci.yml's "Audit dependencies (high/critical)" step.
+# Weekly scheduled npm audit, plus a known-vulnerable-actions check (below).
+# ci.yml only audits on push/PR (advisory on PRs), so on a quiet repo a newly
+# published high/critical advisory against package-lock.json would never turn
+# CI red. This run fails on the same scope as ci.yml's "Audit dependencies
+# (high/critical)" step.
 #
 # npm audit reads package-lock.json directly — no `npm ci` / node_modules, and
 # no npm cache (setup-node's cache post-step fails when ~/.npm was never
 # populated).
 #
+# Second job (vulnerable-actions): zizmor's known-vulnerable-actions audit over
+# the workflows, checking every action reference against GitHub's advisory
+# database. Dependabot alerts never cover SHA-pinned actions (here
+# gitleaks/gitleaks-action in ci.yml); zizmor resolves the SHA to its tag. Other
+# zizmor audits are ignored; zizmor itself erroring fails the job.
+#
 # GHA usage estimate (policies/github-actions-usage.md): ~4–5 scheduled runs per
-# month (+ occasional manual dispatch) × <1 min on ubuntu-latest ≈ <5 min/month;
-# no artifacts or caches.
+# month (+ occasional manual dispatch) × 2 jobs × ~1 min on ubuntu-latest
+# ≈ <10 min/month; no artifacts or caches.
 
 name: Dependency audit
 
@@ -42,3 +49,55 @@ jobs:
       - name: Audit dependencies (high/critical)
         # Hard gate (no continue-on-error): a failing scheduled run is the signal.
         run: npm audit --audit-level=high
+
+  # Dependabot alerts are never raised for actions pinned by commit SHA (only
+  # for semver tags), so check pinned actions against GitHub's advisory
+  # database here. zizmor resolves each SHA to its release tag. Only the
+  # known-vulnerable-actions audit fails the job; other zizmor findings are
+  # out of scope for this check.
+  vulnerable-actions:
+    name: Known-vulnerable actions (zizmor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install zizmor
+        run: "pip install --only-binary=:all: zizmor==1.31.0"
+      - name: Check actions against GitHub security advisories
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          zizmor --format=json . > zizmor.json
+          rc=$?
+          set -e
+          # 0 = no findings, 10-14 = findings by severity; anything else
+          # (e.g. 1) means the audit itself failed, which must not pass.
+          if [ "$rc" -ne 0 ] && { [ "$rc" -lt 10 ] || [ "$rc" -gt 14 ]; }; then
+            echo "::error::zizmor failed (exit $rc)"
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          import sys
+
+          findings = [
+              f for f in json.load(open("zizmor.json"))
+              if f["ident"] == "known-vulnerable-actions" and not f.get("ignored")
+          ]
+          for f in findings:
+              loc = f["locations"][0]
+              path = loc["symbolic"]["key"]["Local"]["verbatim_path"]
+              line = loc["concrete"]["location"]["start_point"]["row"] + 1
+              note = loc["symbolic"].get("annotation", "")
+              print(f"::error file={path},line={line}::{f['desc']}: {note}")
+          print(f"{len(findings)} known-vulnerable action reference(s)")
+          sys.exit(1 if findings else 0)
+          PY

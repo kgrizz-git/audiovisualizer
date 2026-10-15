@@ -1,0 +1,44 @@
+# .github/workflows/dependency-audit.yml
+#
+# Weekly scheduled npm audit. ci.yml only audits on push/PR (advisory on PRs),
+# so on a quiet repo a newly published high/critical advisory against
+# package-lock.json would never turn CI red. This run fails on the same scope
+# as ci.yml's "Audit dependencies (high/critical)" step.
+#
+# npm audit reads package-lock.json directly — no `npm ci` / node_modules, and
+# no npm cache (setup-node's cache post-step fails when ~/.npm was never
+# populated).
+#
+# GHA usage estimate (policies/github-actions-usage.md): ~4–5 scheduled runs per
+# month (+ occasional manual dispatch) × <1 min on ubuntu-latest ≈ <5 min/month;
+# no artifacts or caches.
+
+name: Dependency audit
+
+on:
+  schedule:
+    # Mondays 05:17 UTC — ahead of Dependabot's 06:00 UTC weekly run, off the
+    # top of the hour to avoid scheduler congestion.
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: npm audit (high/critical)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Audit dependencies (high/critical)
+        # Hard gate (no continue-on-error): a failing scheduled run is the signal.
+        run: npm audit --audit-level=high

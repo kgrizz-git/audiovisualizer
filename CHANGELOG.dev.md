@@ -3,9 +3,18 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
-Last reviewed: 2026-10-05
+Last reviewed: 2026-10-15
 
 ## Unreleased
+
+### Added
+- CI: weekly scheduled dependency audit
+  ([`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml),
+  Mondays 05:17 UTC + `workflow_dispatch`, `contents: read`) running
+  `npm audit --audit-level=high` against `package-lock.json` as a hard gate, so a newly
+  published high/critical advisory turns CI red even when no pushes/PRs happen.
+  Same scope, Node 24, and action versions as `ci.yml`; `ci.yml` unchanged.
+  Estimated <5 Actions minutes/month. SemVer: none (tooling/CI).
 
 ### Changed
 - Tooling: bump ESLint 10.10.0→10.11.0, typescript-eslint 8.70.0→8.70.1, and

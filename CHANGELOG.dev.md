@@ -8,6 +8,7 @@ Last reviewed: 2026-10-15
 ## Unreleased
 
 ### Added
+- CI: in the `vulnerable-actions` job, the zizmor JSON report is now written to `$RUNNER_TEMP` instead of the checkout, so a PR that commits a `zizmor.json` symlink cannot make the shell redirect truncate a workflow file before zizmor scans it (hiding a vulnerable action). SemVer: none (CI).
 - CI: weekly scheduled dependency audit
   ([`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml),
   Mondays 05:17 UTC + `workflow_dispatch`, `contents: read`) running

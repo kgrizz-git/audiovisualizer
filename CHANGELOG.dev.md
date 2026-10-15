@@ -21,8 +21,10 @@ Last reviewed: 2026-10-15
   `known-vulnerable-actions` audit against GitHub's advisory database. Dependabot alerts
   never cover actions pinned by commit SHA (here `gitleaks/gitleaks-action`); zizmor
   resolves the SHA to its tag. Fails on any such finding or if zizmor itself errors; other
-  zizmor audits are ignored. The workflow's two jobs together cost ~6 Actions
-  minutes/month. SemVer: none (CI).
+  zizmor audits are ignored. The workflow's two jobs together cost ~8–10 Actions
+  minutes/month (each job bills at least 1 minute). GitHub disables scheduled
+  workflows after 60 days without repository activity; re-enable from the Actions
+  tab if so. SemVer: none (CI).
 - CI: the zizmor step fails closed when `GH_TOKEN` is empty (without a token zizmor
   silently skips its online audits, including `known-vulnerable-actions`, and would
   pass), and per-finding location parsing tolerates findings without a local path

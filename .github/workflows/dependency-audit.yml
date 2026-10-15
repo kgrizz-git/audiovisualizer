@@ -17,8 +17,12 @@
 # zizmor audits are ignored; zizmor itself erroring fails the job.
 #
 # GHA usage estimate (policies/github-actions-usage.md): ~4–5 scheduled runs per
-# month (+ occasional manual dispatch) × 2 short jobs on ubuntu-latest
-# ≈ ~6 min/month total (npm audit + zizmor); no artifacts or caches.
+# month (+ occasional manual dispatch) × 2 jobs on ubuntu-latest, each billed as
+# at least 1 minute ≈ 8–10 min/month; no artifacts or caches.
+#
+# GitHub disables scheduled workflows in a public repository after 60 days with
+# no repository activity. If that happens, re-enable this workflow from the
+# Actions tab; Dependabot alerts keep working regardless.
 
 name: Dependency audit
 

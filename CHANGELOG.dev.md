@@ -3,9 +3,33 @@
 Internal / developer-facing changes that do not belong in the public
 [`CHANGELOG.md`](CHANGELOG.md). See [`policies/changelog-conventions.md`](policies/changelog-conventions.md).
 
-Last reviewed: 2026-10-05
+Last reviewed: 2026-10-15
 
 ## Unreleased
+
+### Added
+- CI: in the `vulnerable-actions` job, the zizmor JSON report is now written to `$RUNNER_TEMP` instead of the checkout, so a PR that commits a `zizmor.json` symlink cannot make the shell redirect truncate a workflow file before zizmor scans it (hiding a vulnerable action). SemVer: none (CI).
+- CI: weekly scheduled dependency audit
+  ([`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml),
+  Mondays 05:17 UTC + `workflow_dispatch`, `contents: read`) running
+  `npm audit --audit-level=high` against `package-lock.json` as a hard gate, so a newly
+  published high/critical advisory turns CI red even when no pushes/PRs happen.
+  Same scope, Node 24, and action versions as `ci.yml`; `ci.yml` unchanged.
+  SemVer: none (tooling/CI).
+- CI: known-vulnerable GitHub Actions check — a `vulnerable-actions` job in
+  [`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml)
+  (same weekly + `workflow_dispatch` triggers, `contents: read`) runs pinned zizmor 1.31.0's
+  `known-vulnerable-actions` audit against GitHub's advisory database. Dependabot alerts
+  never cover actions pinned by commit SHA (here `gitleaks/gitleaks-action`); zizmor
+  resolves the SHA to its tag. Fails on any such finding or if zizmor itself errors; other
+  zizmor audits are ignored. The workflow's two jobs together cost ~8–10 Actions
+  minutes/month (each job bills at least 1 minute). GitHub disables scheduled
+  workflows after 60 days without repository activity; re-enable from the Actions
+  tab if so. SemVer: none (CI).
+- CI: the zizmor step fails closed when `GH_TOKEN` is empty (without a token zizmor
+  silently skips its online audits, including `known-vulnerable-actions`, and would
+  pass), and per-finding location parsing tolerates findings without a local path
+  instead of raising `KeyError`. SemVer: none (CI).
 
 ### Changed
 - Tooling: bump ESLint 10.10.0→10.11.0, typescript-eslint 8.70.0→8.70.1, and

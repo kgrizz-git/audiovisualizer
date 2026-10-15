@@ -21,6 +21,11 @@ Vitest 5 test and v8-coverage pair.
 Use those exact job names when configuring required checks in a repository ruleset /
 branch protection. It is application CI, not seed-template asset validation.
 
+Scheduled (weekly + `workflow_dispatch`, not PR checks):
+[`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml) runs
+`npm audit --audit-level=high` and a zizmor `known-vulnerable-actions` audit (Dependabot never
+alerts on SHA-pinned actions such as `gitleaks/gitleaks-action`); either failing turns the run red.
+
 `ci/examples/` remains inactive reference material from the bootstrap template (generic
 Python/lint lanes, CodeQL, Dependabot samples, etc.). Do not treat those examples as
 required checks unless you deliberately copy one into `.github/workflows/`.

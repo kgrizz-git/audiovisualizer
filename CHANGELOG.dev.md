@@ -14,14 +14,19 @@ Last reviewed: 2026-10-15
   `npm audit --audit-level=high` against `package-lock.json` as a hard gate, so a newly
   published high/critical advisory turns CI red even when no pushes/PRs happen.
   Same scope, Node 24, and action versions as `ci.yml`; `ci.yml` unchanged.
-  Estimated <5 Actions minutes/month. SemVer: none (tooling/CI).
+  SemVer: none (tooling/CI).
 - CI: known-vulnerable GitHub Actions check — a `vulnerable-actions` job in
   [`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml)
   (same weekly + `workflow_dispatch` triggers, `contents: read`) runs pinned zizmor 1.31.0's
   `known-vulnerable-actions` audit against GitHub's advisory database. Dependabot alerts
   never cover actions pinned by commit SHA (here `gitleaks/gitleaks-action`); zizmor
   resolves the SHA to its tag. Fails on any such finding or if zizmor itself errors; other
-  zizmor audits are ignored. ~1 extra Actions minute per run (<5/month). SemVer: none (CI).
+  zizmor audits are ignored. The workflow's two jobs together cost ~6 Actions
+  minutes/month. SemVer: none (CI).
+- CI: the zizmor step fails closed when `GH_TOKEN` is empty (without a token zizmor
+  silently skips its online audits, including `known-vulnerable-actions`, and would
+  pass), and per-finding location parsing tolerates findings without a local path
+  instead of raising `KeyError`. SemVer: none (CI).
 
 ### Changed
 - Tooling: bump ESLint 10.10.0→10.11.0, typescript-eslint 8.70.0→8.70.1, and

@@ -17,8 +17,8 @@
 # zizmor audits are ignored; zizmor itself erroring fails the job.
 #
 # GHA usage estimate (policies/github-actions-usage.md): ~4–5 scheduled runs per
-# month (+ occasional manual dispatch) × 2 jobs × ~1 min on ubuntu-latest
-# ≈ <10 min/month; no artifacts or caches.
+# month (+ occasional manual dispatch) × 2 short jobs on ubuntu-latest
+# ≈ ~6 min/month total (npm audit + zizmor); no artifacts or caches.
 
 name: Dependency audit
 
@@ -74,6 +74,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Without a token zizmor silently skips its online audits (including
+          # known-vulnerable-actions) and would pass; fail closed instead.
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::GH_TOKEN is empty; zizmor would skip its online audits"
+            exit 1
+          fi
           set +e
           zizmor --format=json . > zizmor.json
           rc=$?
@@ -93,10 +99,11 @@ jobs:
               if f["ident"] == "known-vulnerable-actions" and not f.get("ignored")
           ]
           for f in findings:
-              loc = f["locations"][0]
-              path = loc["symbolic"]["key"]["Local"]["verbatim_path"]
-              line = loc["concrete"]["location"]["start_point"]["row"] + 1
-              note = loc["symbolic"].get("annotation", "")
+              loc = (f.get("locations") or [{}])[0]
+              key = loc.get("symbolic", {}).get("key", {})
+              path = key.get("Local", {}).get("verbatim_path", "?") if isinstance(key, dict) else "?"
+              line = loc.get("concrete", {}).get("location", {}).get("start_point", {}).get("row", 0) + 1
+              note = loc.get("symbolic", {}).get("annotation", "")
               print(f"::error file={path},line={line}::{f['desc']}: {note}")
           print(f"{len(findings)} known-vulnerable action reference(s)")
           sys.exit(1 if findings else 0)

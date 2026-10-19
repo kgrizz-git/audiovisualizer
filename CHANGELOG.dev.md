@@ -40,6 +40,9 @@ Last reviewed: 2026-10-15
   instead of raising `KeyError`. SemVer: none (CI).
 
 ### Changed
+- Tooling: `package.json` / `package-lock.json` version synced to `VERSION` (0.5.0);
+  it had stayed at 0.1.0. README gains a version badge read from `package.json`.
+  SemVer: none (metadata).
 - Docs: README rewritten with a hero icon, badges (CI, zizmor, license, stack), a render
   gallery and studio screenshots; dense SoundFont details moved into a collapsible
   section. Images and the alternate icon concepts live in

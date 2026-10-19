@@ -9,6 +9,7 @@
 <p align="center">
   <a href="https://github.com/kgrizz-git/audiovisualizer/actions/workflows/ci.yml"><img src="https://github.com/kgrizz-git/audiovisualizer/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <a href="https://github.com/kgrizz-git/audiovisualizer/actions/workflows/zizmor.yml"><img src="https://github.com/kgrizz-git/audiovisualizer/actions/workflows/zizmor.yml/badge.svg?branch=main" alt="zizmor workflow audit"></a>
+  <a href="VERSION"><img src="https://img.shields.io/github/package-json/v/kgrizz-git/audiovisualizer?label=version" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/kgrizz-git/audiovisualizer" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Three.js-000000?logo=threedotjs&logoColor=white" alt="Three.js">

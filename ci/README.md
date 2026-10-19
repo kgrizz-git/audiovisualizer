@@ -23,8 +23,13 @@ branch protection. It is application CI, not seed-template asset validation.
 
 Scheduled (weekly + `workflow_dispatch`, not PR checks):
 [`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml) runs
-`npm audit --audit-level=high` and a zizmor `known-vulnerable-actions` audit (Dependabot never
-alerts on SHA-pinned actions such as `gitleaks/gitleaks-action`); either failing turns the run red.
+`npm audit --audit-level=high`; a failure turns the run red.
+
+[`.github/workflows/zizmor.yml`](../.github/workflows/zizmor.yml) runs every default zizmor audit
+on PRs/pushes that touch workflows or Dependabot config, plus weekly. It requires every action
+to be SHA-pinned, verifies each pin is a real commit in the action's repo (`impostor-commit`) and
+matches its version comment (`ref-version-mismatch`), and checks pins against GitHub's advisory
+database (Dependabot never alerts on SHA-pinned actions). Any finding fails the job.
 
 `ci/examples/` remains inactive reference material from the bootstrap template (generic
 Python/lint lanes, CodeQL, Dependabot samples, etc.). Do not treat those examples as
@@ -77,8 +82,8 @@ Make the Policy job a required default-branch check when needed; see
    workflow times in half.
 4. **Least-privilege tokens.** Set `permissions:` explicitly at the workflow and job
    level; default to `contents: read`.
-5. **Pin action versions.** Use `uses: actions/checkout@v4` with a SHA comment for
-   high-value steps; prevents supply-chain drift. Pin container images by tag+digest.
+5. **Pin action versions by commit SHA.** Use `uses: actions/checkout@<40-char SHA> # vX.Y.Z`
+   for every action; Dependabot bumps the SHA and comment together, and zizmor enforces it. Pin container images by tag+digest.
 6. **Dependabot for Actions.** Enable `package-ecosystem: github-actions` in
    `dependabot.yml` so action versions stay current.
 7. **Estimate minutes/storage** when changing triggers, schedules, matrices, runners,

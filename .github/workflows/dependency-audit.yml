@@ -1,6 +1,7 @@
 # .github/workflows/dependency-audit.yml
 #
-# Weekly scheduled npm audit, plus a known-vulnerable-actions check (below).
+# Weekly scheduled npm audit. (The known-vulnerable-actions check moved to
+# zizmor.yml, which runs every zizmor audit.)
 # ci.yml only audits on push/PR (advisory on PRs), so on a quiet repo a newly
 # published high/critical advisory against package-lock.json would never turn
 # CI red. This run fails on the same scope as ci.yml's "Audit dependencies
@@ -10,15 +11,9 @@
 # no npm cache (setup-node's cache post-step fails when ~/.npm was never
 # populated).
 #
-# Second job (vulnerable-actions): zizmor's known-vulnerable-actions audit over
-# the workflows, checking every action reference against GitHub's advisory
-# database. Dependabot alerts never cover SHA-pinned actions (here
-# gitleaks/gitleaks-action in ci.yml); zizmor resolves the SHA to its tag. Other
-# zizmor audits are ignored; zizmor itself erroring fails the job.
-#
 # GHA usage estimate (policies/github-actions-usage.md): ~4–5 scheduled runs per
-# month (+ occasional manual dispatch) × 2 jobs on ubuntu-latest, each billed as
-# at least 1 minute ≈ 8–10 min/month; no artifacts or caches.
+# month (+ occasional manual dispatch) × 1 job on ubuntu-latest, each billed as
+# at least 1 minute ≈ 4–5 min/month; no artifacts or caches.
 #
 # GitHub disables scheduled workflows in a public repository after 60 days with
 # no repository activity. If that happens, re-enable this workflow from the
@@ -28,8 +23,7 @@ name: Dependency audit
 
 on:
   schedule:
-    # Mondays 05:17 UTC — ahead of Dependabot's 06:00 UTC weekly run, off the
-    # top of the hour to avoid scheduler congestion.
+    # Mondays 05:17 UTC — off the top of the hour to avoid scheduler congestion.
     - cron: "17 5 * * 1"
   workflow_dispatch:
 
@@ -42,74 +36,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
 
       - name: Audit dependencies (high/critical)
         # Hard gate (no continue-on-error): a failing scheduled run is the signal.
         run: npm audit --audit-level=high
-
-  # Dependabot alerts are never raised for actions pinned by commit SHA (only
-  # for semver tags), so check pinned actions against GitHub's advisory
-  # database here. zizmor resolves each SHA to its release tag. Only the
-  # known-vulnerable-actions audit fails the job; other zizmor findings are
-  # out of scope for this check.
-  vulnerable-actions:
-    name: Known-vulnerable actions (zizmor)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-      - name: Install zizmor
-        run: "pip install --only-binary=:all: zizmor==1.31.0"
-      - name: Check actions against GitHub security advisories
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Without a token zizmor silently skips its online audits (including
-          # known-vulnerable-actions) and would pass; fail closed instead.
-          if [ -z "${GH_TOKEN:-}" ]; then
-            echo "::error::GH_TOKEN is empty; zizmor would skip its online audits"
-            exit 1
-          fi
-          set +e
-          zizmor --format=json . > "$RUNNER_TEMP/zizmor.json"
-          rc=$?
-          set -e
-          # 0 = no findings, 10-14 = findings by severity; anything else
-          # (e.g. 1) means the audit itself failed, which must not pass.
-          if [ "$rc" -ne 0 ] && { [ "$rc" -lt 10 ] || [ "$rc" -gt 14 ]; }; then
-            echo "::error::zizmor failed (exit $rc)"
-            exit 1
-          fi
-          python3 - <<'PY'
-          import json
-          import os
-          import sys
-
-          findings = [
-              f for f in json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "zizmor.json")))
-              if f["ident"] == "known-vulnerable-actions" and not f.get("ignored")
-          ]
-          for f in findings:
-              loc = (f.get("locations") or [{}])[0]
-              key = loc.get("symbolic", {}).get("key", {})
-              path = key.get("Local", {}).get("verbatim_path", "?") if isinstance(key, dict) else "?"
-              line = loc.get("concrete", {}).get("location", {}).get("start_point", {}).get("row", 0) + 1
-              note = loc.get("symbolic", {}).get("annotation", "")
-              print(f"::error file={path},line={line}::{f['desc']}: {note}")
-          print(f"{len(findings)} known-vulnerable action reference(s)")
-          sys.exit(1 if findings else 0)
-          PY

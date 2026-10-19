@@ -1,0 +1,84 @@
+# .github/workflows/zizmor.yml
+#
+# zizmor static analysis of GitHub Actions workflows and dependabot.yml.
+# Runs every default audit, including the online ones that need a token:
+#   - impostor-commit: a pinned SHA must exist in the action's own repo (not
+#     only in a fork reachable through it).
+#   - ref-version-mismatch: the "# vX.Y.Z" comment must match the pinned SHA.
+#   - known-vulnerable-actions: pinned actions are checked against GitHub's
+#     advisory database (Dependabot never alerts on SHA-pinned actions).
+#   - unpinned-uses: every action, actions/* included, must be SHA-pinned.
+# Any unsuppressed finding fails the run. Suppress a reviewed false positive
+# inline with `# zizmor: ignore[<audit>]` and a reason.
+#
+# Runs on workflow/Dependabot config changes (PR and push to main), weekly so
+# newly published advisories surface on a quiet repo, and on demand.
+#
+# GHA usage estimate (policies/github-actions-usage.md): ~4–5 scheduled runs per
+# month plus a few PR/push runs on workflow changes, 1 job on ubuntu-latest,
+# each billed as at least 1 minute ≈ 5–10 min/month; no artifacts or caches.
+#
+# GitHub disables scheduled workflows in a public repository after 60 days with
+# no repository activity. If that happens, re-enable this workflow from the
+# Actions tab.
+
+name: zizmor
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/dependabot.yml"
+      - "ci/examples/**"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/dependabot.yml"
+      - "ci/examples/**"
+  schedule:
+    # Mondays 05:23 UTC — off the top of the hour to avoid scheduler congestion.
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zizmor:
+    name: Workflow security (zizmor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install zizmor
+        run: "pip install --only-binary=:all: zizmor==1.31.0"
+      - name: Run zizmor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Without a token zizmor silently skips its online audits
+          # (impostor-commit, known-vulnerable-actions) and could pass; fail
+          # closed instead.
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::GH_TOKEN is empty; zizmor would skip its online audits"
+            exit 1
+          fi
+          set +e
+          zizmor --format=github .
+          rc=$?
+          set -e
+          # 0 = no findings; 11-14 = findings (highest severity informational
+          # to high); anything else (1-3) means zizmor itself failed. All
+          # non-zero codes fail the job; this only labels the cause.
+          if [ "$rc" -ge 11 ] && [ "$rc" -le 14 ]; then
+            echo "::error::zizmor reported findings (exit $rc); see annotations above"
+          elif [ "$rc" -ne 0 ]; then
+            echo "::error::zizmor failed to run (exit $rc)"
+          fi
+          exit "$rc"

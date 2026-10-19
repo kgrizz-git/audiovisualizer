@@ -13,10 +13,10 @@ updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
-      time: "06:00"
-      timezone: "UTC"
+      # Monthly on the 18th at 12:00 Eastern (built-in "monthly" only runs on the 1st).
+      interval: cron
+      cronjob: "0 12 18 * *"
+      timezone: "America/New_York"
     # Custom labels replace Dependabot's defaults, so keep "dependencies".
     labels: ["dependencies", "javascript", "license-inventory"]
     groups:
@@ -27,10 +27,10 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
-      time: "06:00"
-      timezone: "UTC"
+      # Monthly on the 18th at 12:00 Eastern (built-in "monthly" only runs on the 1st).
+      interval: cron
+      cronjob: "0 12 18 * *"
+      timezone: "America/New_York"
     groups:
       github-actions-minor:
         update-types: ["minor", "patch"]

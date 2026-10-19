@@ -8,6 +8,14 @@ Last reviewed: 2026-10-15
 ## Unreleased
 
 ### Added
+- CI: full zizmor workflow audit
+  ([`.github/workflows/zizmor.yml`](.github/workflows/zizmor.yml)) on PRs/pushes touching
+  workflows or Dependabot config, weekly (Mondays 05:23 UTC) and `workflow_dispatch`. Runs
+  every default zizmor 1.31.0 audit online, including `impostor-commit` (pinned SHA must be a
+  real commit in the action's repo), `ref-version-mismatch`, `unpinned-uses` and
+  `known-vulnerable-actions`; any finding fails the job. Supersedes the
+  `vulnerable-actions` job in `dependency-audit.yml` (removed; that workflow is now one job,
+  ~4–5 min/month). SemVer: none (CI).
 - CI: in the `vulnerable-actions` job, the zizmor JSON report is now written to `$RUNNER_TEMP` instead of the checkout, so a PR that commits a `zizmor.json` symlink cannot make the shell redirect truncate a workflow file before zizmor scans it (hiding a vulnerable action). SemVer: none (CI).
 - CI: weekly scheduled dependency audit
   ([`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml),
@@ -32,6 +40,14 @@ Last reviewed: 2026-10-15
   instead of raising `KeyError`. SemVer: none (CI).
 
 ### Changed
+- CI: every action in `.github/workflows/` is pinned to a full commit SHA with a
+  `# vX.Y.Z` comment (Dependabot bumps both). `persist-credentials: false` on checkouts
+  that don't push; the license-inventory push job keeps credentials with a documented
+  `zizmor: ignore[artipacked]`. SemVer: none (CI).
+- Dependabot: version updates now run monthly on the 18th at 12:00 America/New_York
+  (`interval: cron`), with a 7-day `cooldown` and explicit `applies-to: version-updates`
+  on the minor/patch groups. Majors still arrive as separate PRs; security updates are
+  unaffected by schedule, cooldown and groups. SemVer: none (tooling).
 - Tooling: bump ESLint 10.10.0→10.11.0, typescript-eslint 8.70.0→8.70.1, and
   Vite 8.3.0→8.3.1. `npm run validate` passes (317 tests). SemVer: none
   (tooling only).

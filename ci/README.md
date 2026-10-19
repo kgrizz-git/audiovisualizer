@@ -21,7 +21,7 @@ Vitest 5 test and v8-coverage pair.
 Use those exact job names when configuring required checks in a repository ruleset /
 branch protection. It is application CI, not seed-template asset validation.
 
-Scheduled (weekly + `workflow_dispatch`, not PR checks):
+Scheduled (weekly + `workflow_dispatch`, not a PR check):
 [`.github/workflows/dependency-audit.yml`](../.github/workflows/dependency-audit.yml) runs
 `npm audit --audit-level=high`; a failure turns the run red.
 

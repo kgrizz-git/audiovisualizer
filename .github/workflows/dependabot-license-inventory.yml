@@ -46,17 +46,17 @@ jobs:
     outputs:
       status: ${{ steps.check.outputs.status }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           cache: npm
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -82,7 +82,7 @@ jobs:
 
       - name: Upload regenerated inventory
         if: steps.check.outputs.status == 'updated'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: license-inventory
           path: inventory/third-party-licenses.md
@@ -116,11 +116,14 @@ jobs:
           gh pr comment "$PR" --body "⚠️ **License policy violation** — \`check_license_inventory.py --check\` reported a license that needs human review. Not auto-fixed; see the *Dependabot license inventory* workflow log."
           exit 1
 
-      - uses: actions/checkout@v7
+      # Credentials must persist: "Commit and push" below pushes with them.
+      # Nothing from this job's workspace is uploaded as an artifact.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: true # zizmor: ignore[artipacked]
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: license-inventory
           path: inventory/

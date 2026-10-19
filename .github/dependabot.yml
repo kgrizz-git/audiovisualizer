@@ -12,25 +12,35 @@ updates:
   # Node / npm dependencies
   - package-ecosystem: npm
     directory: "/"
+    # Wait 7 days after a release before proposing it (version updates only;
+    # security updates are never delayed).
+    cooldown:
+      default-days: 7
     schedule:
-      interval: weekly
-      day: monday
-      time: "06:00"
-      timezone: "UTC"
+      # Monthly on the 18th at 12:00 Eastern (built-in "monthly" only runs on the 1st).
+      interval: cron
+      cronjob: "0 12 18 * *"
+      timezone: "America/New_York"
     # Custom labels replace Dependabot's defaults, so keep "dependencies".
     labels: ["dependencies", "javascript", "license-inventory"]
     groups:
       npm-minor:
         update-types: ["minor", "patch"]
+        applies-to: version-updates
 
   # GitHub Actions versions — always enable this
   - package-ecosystem: github-actions
     directory: "/"
+    # Wait 7 days after a release before proposing it (version updates only;
+    # security updates are never delayed).
+    cooldown:
+      default-days: 7
     schedule:
-      interval: weekly
-      day: monday
-      time: "06:00"
-      timezone: "UTC"
+      # Monthly on the 18th at 12:00 Eastern (built-in "monthly" only runs on the 1st).
+      interval: cron
+      cronjob: "0 12 18 * *"
+      timezone: "America/New_York"
     groups:
       github-actions-minor:
         update-types: ["minor", "patch"]
+        applies-to: version-updates

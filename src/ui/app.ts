@@ -228,7 +228,7 @@ export class AudioVisualizerApp {
     this.element<HTMLButtonElement>('btn-copy-config-link').addEventListener('click', () => void this.copyConfigLink());
 
     const titleInput = this.element<HTMLInputElement>('export-title-input');
-    titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateCanvasAriaLabel(); this.render(); });
+    titleInput.addEventListener('input', () => { this.exportTitle = titleInput.value; this.updateDisplayedTitle(); this.render(); });
 
     const center = PREVIEW_SIZE / 2;
     this.element<HTMLButtonElement>('hud-zoom-in').addEventListener('click', () => {
@@ -377,7 +377,6 @@ export class AudioVisualizerApp {
   private applyHistory(config: RuleConfig | null): void { if (config) { this.currentConfig = config; syncConfigControls((id) => this.element(id), config); this.updateCanvasMode(); this.render(); } }
 
   private updateScoreUi(): void {
-    this.element<HTMLElement>('score-title').textContent = this.currentScore.title;
     this.element<HTMLElement>('score-meta').textContent = `${this.currentScore.tracks.length} voice${this.currentScore.tracks.length === 1 ? '' : 's'} · ${this.currentScore.bpm} BPM`;
     this.updateGroupBadges();
     this.updateControlApplicability();
@@ -386,7 +385,7 @@ export class AudioVisualizerApp {
     const defaults = this.voiceRouter.getDefaults();
     this.element<HTMLSelectElement>('playback-engine-select').value = defaults.engine;
     this.element<HTMLSelectElement>('playback-bank-select').value = defaults.soundbank;
-    this.updateCanvasAriaLabel();
+    this.updateDisplayedTitle();
     const options = this.element<HTMLElement>('voice-filter-options'); options.replaceChildren();
     this.currentScore.tracks.forEach((track) => {
       const label = document.createElement('label'); label.className = 'voice-chip';
@@ -439,10 +438,11 @@ export class AudioVisualizerApp {
     });
   }
 
-  private updateCanvasAriaLabel(): void {
-    const canvas = this.element<HTMLCanvasElement>('visualizer-canvas');
+  /** Stage header and canvas label follow the export title (the score title by default). */
+  private updateDisplayedTitle(): void {
     const title = this.exportTitle.trim() || this.currentScore.title;
-    canvas.setAttribute('aria-label', `Visual score rendering: ${title}`);
+    this.element<HTMLElement>('score-title').textContent = title;
+    this.element<HTMLCanvasElement>('visualizer-canvas').setAttribute('aria-label', `Visual score rendering: ${title}`);
   }
 
   private commitVoiceMix(voices: Map<number, VoicePlaybackSettings>): void {
@@ -679,7 +679,7 @@ export class AudioVisualizerApp {
       showLegend: this.legendVisible,
       backgroundColor: this.backgroundColor(),
       atmosphereColors: this.atmosphereColors(),
-      // No title pill here: the stage header overlay shows it (exports still draw it).
+      // No title pill here: the stage header shows the export title (exports still draw it).
       viewport: this.viewportController.getViewport()
     });
     this.element<HTMLInputElement>('progress-scrubber').value = String(

@@ -132,8 +132,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       # Pin to full commit SHA (Sonar S7637 / supply-chain hygiene).
-      # v3 = Node 24 runtime (v2/Node 20 removed from hosted runners 2026-09-16).
-      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
+      # v3.x = Node 24 runtime (v2/Node 20 removed from hosted runners 2026-09-16).
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -40,6 +40,10 @@ Last reviewed: 2026-10-15
   instead of raising `KeyError`. SemVer: none (CI).
 
 ### Changed
+- Docs: README rewritten with a hero icon, badges (CI, zizmor, license, stack), a render
+  gallery and studio screenshots; dense SoundFont details moved into a collapsible
+  section. Images and the alternate icon concepts live in
+  [`docs/images/`](docs/images/README.md). SemVer: none (docs).
 - CI: every action in `.github/workflows/` is pinned to a full commit SHA with a
   `# vX.Y.Z` comment (Dependabot bumps both). `persist-credentials: false` on checkouts
   that don't push; the license-inventory push job keeps credentials with a documented

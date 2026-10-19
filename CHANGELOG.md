@@ -55,6 +55,9 @@ uses [Semantic Versioning](https://semver.org/).
 - The app now opens with the Bach Prelude in C study instead of the generative study, and every bundled demo MIDI's instruments ship as local samples so the included studies play from SoundFont offline. SemVer: **MINOR**.
 
 ### Fixed
+- Studio: the live 2D preview no longer paints the export-title pill into the canvas,
+  where it showed as a faint duplicate title behind the stage header. PNG and SVG
+  exports still include the export title. SemVer: **PATCH**.
 - Scrubbing the timeline during playback no longer stops it: the playhead seeks while dragging and playback resumes from the release position. SemVer: **PATCH**.
 - 3D pan gestures (right-click drag, shift+left-drag, two-finger swipe) are now always enabled, and manual orbit zoom is folded into the viewport zoom when a gesture ends so repeated pan/zoom cycles no longer drift or get lost on reframe. SemVer: **PATCH**.
 - Fixed play button first-press behavior so pressing play on initial score load or track completion correctly resets playback time to 0 and starts audio from the beginning. SemVer: **PATCH**.

@@ -679,7 +679,7 @@ export class AudioVisualizerApp {
       showLegend: this.legendVisible,
       backgroundColor: this.backgroundColor(),
       atmosphereColors: this.atmosphereColors(),
-      title: this.exportTitle,
+      // No title pill here: the stage header overlay shows it (exports still draw it).
       viewport: this.viewportController.getViewport()
     });
     this.element<HTMLInputElement>('progress-scrubber').value = String(

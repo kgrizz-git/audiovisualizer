@@ -27,9 +27,9 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@types/three` (v0.187.0) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/three/`
 - `@vitest/coverage-v8` (v5.1.0) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/coverage-v8/`
 - `esbuild` (v0.28.2) — MIT ([source](https://github.com/evanw/esbuild)) — see `node_modules/esbuild/`
-- `eslint` (v10.14.0) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/eslint/`
+- `eslint` (v10.15.0) — MIT ([source](https://github.com/eslint/eslint)) — see `node_modules/eslint/`
 - `typescript` (v5.9.3) — Apache-2.0 ([source](https://github.com/microsoft/TypeScript)) — see `node_modules/typescript/`
-- `typescript-eslint` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/typescript-eslint/`
+- `typescript-eslint` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/typescript-eslint/`
 - `vite` (v8.3.8) — MIT ([source](https://github.com/vitejs/vite)) — see `node_modules/vite/`
 - `vitest` (v5.1.0) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/vitest/`
 
@@ -98,7 +98,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@esbuild/win32-x64` (v0.28.2) — MIT — see `node_modules/@esbuild/win32-x64/`
 - `@eslint-community/eslint-utils` (v4.10.1) — MIT ([source](https://github.com/eslint-community/eslint-utils)) — see `node_modules/@eslint-community/eslint-utils/`
 - `@eslint-community/regexpp` (v4.12.2) — MIT ([source](https://github.com/eslint-community/regexpp)) — see `node_modules/@eslint-community/regexpp/`
-- `@eslint/config-array` (v0.23.5) — Apache-2.0 ([source](https://github.com/eslint/rewrite)) — see `node_modules/@eslint/config-array/`
+- `@eslint/config-array` (v0.23.6) — Apache-2.0 ([source](https://github.com/eslint/rewrite)) — see `node_modules/@eslint/config-array/`
 - `@eslint/config-helpers` (v0.7.0) — Apache-2.0 ([source](https://github.com/eslint/rewrite)) — see `node_modules/@eslint/config-helpers/`
 - `@eslint/core` (v1.2.1) — Apache-2.0 ([source](https://github.com/eslint/rewrite)) — see `node_modules/@eslint/core/`
 - `@eslint/object-schema` (v3.0.5) — Apache-2.0 ([source](https://github.com/eslint/rewrite)) — see `node_modules/@eslint/object-schema/`
@@ -108,6 +108,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@humanfs/types` (v0.15.0) — Apache-2.0 ([source](https://github.com/humanwhocodes/humanfs)) — see `node_modules/@humanfs/types/`
 - `@humanwhocodes/module-importer` (v1.0.1) — Apache-2.0 ([source](https://github.com/humanwhocodes/module-importer)) — see `node_modules/@humanwhocodes/module-importer/`
 - `@humanwhocodes/retry` (v0.4.3) — Apache-2.0 ([source](https://github.com/humanwhocodes/retry)) — see `node_modules/@humanwhocodes/retry/`
+- `@isaacs/nonrecursive-glob-match` (v1.1.0) — BlueOak-1.0.0 — see `node_modules/@isaacs/nonrecursive-glob-match/`
 - `@jridgewell/resolve-uri` (v3.1.2) — MIT ([source](https://github.com/jridgewell/resolve-uri)) — see `node_modules/@jridgewell/resolve-uri/`
 - `@jridgewell/sourcemap-codec` (v1.6.0) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/sourcemap-codec/`
 - `@jridgewell/trace-mapping` (v0.3.31) — MIT ([source](https://github.com/jridgewell/sourcemaps)) — see `node_modules/@jridgewell/trace-mapping/`
@@ -141,16 +142,16 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `@types/json-schema` (v7.0.15) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/json-schema/`
 - `@types/stats.js` (v0.17.4) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/stats.js/`
 - `@types/webxr` (v0.5.24) — MIT ([source](https://github.com/DefinitelyTyped/DefinitelyTyped)) — see `node_modules/@types/webxr/`
-- `@typescript-eslint/eslint-plugin` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/eslint-plugin/`
-- `@typescript-eslint/parser` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/parser/`
-- `@typescript-eslint/project-service` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/project-service/`
-- `@typescript-eslint/scope-manager` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/scope-manager/`
-- `@typescript-eslint/tsconfig-utils` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/tsconfig-utils/`
-- `@typescript-eslint/type-utils` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/type-utils/`
-- `@typescript-eslint/types` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/types/`
-- `@typescript-eslint/typescript-estree` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/typescript-estree/`
-- `@typescript-eslint/utils` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/utils/`
-- `@typescript-eslint/visitor-keys` (v8.72.2) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/visitor-keys/`
+- `@typescript-eslint/eslint-plugin` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/eslint-plugin/`
+- `@typescript-eslint/parser` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/parser/`
+- `@typescript-eslint/project-service` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/project-service/`
+- `@typescript-eslint/scope-manager` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/scope-manager/`
+- `@typescript-eslint/tsconfig-utils` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/tsconfig-utils/`
+- `@typescript-eslint/type-utils` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/type-utils/`
+- `@typescript-eslint/types` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/types/`
+- `@typescript-eslint/typescript-estree` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/typescript-estree/`
+- `@typescript-eslint/utils` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/utils/`
+- `@typescript-eslint/visitor-keys` (v8.73.0) — MIT ([source](https://github.com/typescript-eslint/typescript-eslint)) — see `node_modules/@typescript-eslint/visitor-keys/`
 - `@vitest/istanbul-lib-coverage` (v2.1.0) — MIT ([source](https://github.com/vitest-dev/istanbuljs)) — see `node_modules/@vitest/istanbul-lib-coverage/`
 - `@vitest/istanbul-lib-report` (v2.1.0) — MIT ([source](https://github.com/vitest-dev/istanbuljs)) — see `node_modules/@vitest/istanbul-lib-report/`
 - `@vitest/mocker` (v5.1.0) — MIT ([source](https://github.com/vitest-dev/vitest)) — see `node_modules/@vitest/mocker/`
@@ -161,7 +162,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `assertion-error` (v2.0.1) — MIT ([source](https://github.com/chaijs/assertion-error)) — see `node_modules/assertion-error/`
 - `ast-v8-to-istanbul` (v1.0.7) — MIT ([source](https://github.com/AriPerkkio/ast-v8-to-istanbul)) — see `node_modules/ast-v8-to-istanbul/`
 - `balanced-match` (v4.0.4) — MIT ([source](https://github.com/juliangruber/balanced-match)) — see `node_modules/balanced-match/`
-- `brace-expansion` (v5.0.12) — MIT ([source](https://github.com/juliangruber/brace-expansion)) — see `node_modules/brace-expansion/`
+- `brace-expansion` (v5.0.13) — MIT ([source](https://github.com/juliangruber/brace-expansion)) — see `node_modules/brace-expansion/`
 - `cacheable` (v2.5.0) — MIT ([source](https://github.com/jaredwray/cacheable)) — see `node_modules/cacheable/`
 - `chai` (v6.3.0) — MIT ([source](https://github.com/chaijs/chai)) — see `node_modules/chai/`
 - `cross-spawn` (v7.0.6) — MIT ([source](https://github.com/moxystudio/node-cross-spawn)) — see `node_modules/cross-spawn/`
@@ -195,7 +196,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `hookified` (v1.15.1) — MIT ([source](https://github.com/jaredwray/hookified)) — see `node_modules/hookified/`
 - `hookified` (v2.2.0) — MIT ([source](https://github.com/jaredwray/hookified)) — see `node_modules/hookified/`
 - `ignore` (v5.3.2) — MIT ([source](https://github.com/kaelzhang/node-ignore)) — see `node_modules/ignore/`
-- `ignore` (v7.0.14) — MIT ([source](https://github.com/kaelzhang/node-ignore)) — see `node_modules/ignore/`
+- `ignore` (v7.0.16) — MIT ([source](https://github.com/kaelzhang/node-ignore)) — see `node_modules/ignore/`
 - `imurmurhash` (v0.1.4) — MIT ([source](https://github.com/jensyt/imurmurhash-js)) — see `node_modules/imurmurhash/`
 - `is-extglob` (v2.1.1) — MIT ([source](https://github.com/jonschlinkert/is-extglob)) — see `node_modules/is-extglob/`
 - `is-glob` (v4.0.3) — MIT ([source](https://github.com/micromatch/is-glob)) — see `node_modules/is-glob/`
@@ -209,7 +210,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 - `magic-string` (v1.4.5) — MIT ([source](https://github.com/Rich-Harris/magic-string)) — see `node_modules/magic-string/`
 - `magicast` (v0.5.5) — MIT ([source](https://github.com/unjs/magicast)) — see `node_modules/magicast/`
 - `meshoptimizer` (v1.1.1) — MIT ([source](https://github.com/zeux/meshoptimizer)) — see `node_modules/meshoptimizer/`
-- `minimatch` (v10.2.6) — BlueOak-1.0.0 ([source](https://github.com/isaacs/minimatch)) — see `node_modules/minimatch/`
+- `minimatch` (v11.0.9) — BlueOak-1.0.0 ([source](https://github.com/isaacs/minimatch)) — see `node_modules/minimatch/`
 - `ms` (v2.1.3) — MIT ([source](https://github.com/vercel/ms)) — see `node_modules/ms/`
 - `nanoid` (v3.3.20) — MIT ([source](https://github.com/ai/nanoid)) — see `node_modules/nanoid/`
 - `natural-compare` (v1.4.0) — MIT ([source](https://github.com/litejs/natural-compare-lite)) — see `node_modules/natural-compare/`
@@ -263,7 +264,7 @@ review with `--human-review`. Do not hand-edit the dependency lists.
 
 | Category | Production | Development |
 |----------|------------|-------------|
-| Permissive | 4 | 193 |
+| Permissive | 4 | 194 |
 | Weak Copyleft | 13 | 12 |
 | Strong Copyleft | 0 | 0 |
 | Unknown/Check | 0 | 0 |

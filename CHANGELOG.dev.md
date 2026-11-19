@@ -40,6 +40,16 @@ Last reviewed: 2026-10-15
   instead of raising `KeyError`. SemVer: none (CI).
 
 ### Changed
+- Security (dev toolchain): `eslint` 10.14.0 → 10.15.0 and `typescript-eslint`
+  8.72.2 → 8.73.0, which resolves the locked `minimatch` to 11.0.9 and closes
+  Dependabot alert #10 (GHSA-g3hv-75wg-m249, medium: glob-pattern amplification
+  DoS in `minimatch` < 11.0.1). Dependabot could not auto-fix it — `minimatch` is a
+  transitive development dependency whose patched version is a major bump reachable
+  only by bumping two direct parents, so the security update needs a multi-parent
+  unlock. Transitive churn: `brace-expansion` 5.0.13, `@eslint/config-array` 0.23.6,
+  new `@isaacs/nonrecursive-glob-match` 1.1.0. `npm audit` reports 0
+  vulnerabilities. Dev-only; no production dependency touched. SemVer: **PATCH** if
+  released (security, dev tooling).
 - Tooling: `package.json` / `package-lock.json` version synced to `VERSION` (0.5.0);
   it had stayed at 0.1.0. README gains a version badge read from `package.json`.
   SemVer: none (metadata).
